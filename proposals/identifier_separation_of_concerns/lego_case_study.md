@@ -23,6 +23,7 @@ michael.wagner@synctwin.ai
 - [USD scene sketch](#usd-scene-sketch)
 - [Approach A: `assetInfo` sub-dictionaries](#approach-a-assetinfo-sub-dictionaries)
 - [Approach B: applied schema with typed properties](#approach-b-applied-schema-with-typed-properties)
+- [Approach C: namespaced custom attributes (no schema)](#approach-c-namespaced-custom-attributes-no-schema)
 - [Comparison in the LEGO context](#comparison-in-the-lego-context)
 
 ---
@@ -540,16 +541,54 @@ Note that `buildVariant` is not part of the minimal base `SourceIdentifierAPI`; 
 
 ---
 
+## Approach C: namespaced custom attributes (no schema)
+
+A third option sits between Approaches A and B: author source identifiers directly as namespaced `custom` attributes on the prim, without declaring or applying any schema. The `sourceId:<system>:<field>` namespace prefix is a pure authoring convention — no plugin, no `apiSchemas` entry.
+
+```usda
+def Mesh "FrontSlope_1"
+{
+    custom string sourceId:lego:designId  = "61409"
+    custom string sourceId:lego:elementId = "4541191"
+    custom string sourceId:lego:ldrawPart = "61409b"
+    custom int    sourceId:lego:color:ldraw   = 0
+    custom int    sourceId:lego:color:legoLdd = 26
+    custom int    sourceId:lego:color:blink   = 11
+
+    custom string sourceId:bricklink:id  = "61409"
+    custom int    sourceId:bricklink:colorId = 11
+
+    custom string sourceId:brickowl:baseBoid        = "912280"
+    custom string sourceId:brickowl:colorVariantBoid = "912280-38"
+}
+```
+
+This is valid USD. Custom attributes compose and round-trip without loss. Any tool can enumerate source identifiers by scanning for properties whose name matches `sourceId:*`, without needing a schema loaded — a meaningful step up from having to know an `assetInfo` key path. The full LEGO identifier package (Design ID, Element ID, LDraw part number, multiple color IDs) fits naturally as individual typed properties, with no pressure to conform to a common schema field set.
+
+The cost is the absence of schema backing: custom attributes do not appear in `UsdPrimDefinition`, carry no fallback values, and receive no schema-driven validation or GUI presentation of unauthored fields. A tool that wants to present "what source identifiers could this prim carry?" cannot answer from schema introspection alone — it can only report what has been authored.
+
+**Observations under Approach C:**
+
+- No schema distribution required. Any vendor can adopt the `sourceId:<system>:<field>` namespace convention immediately, following only an agreed prefix convention.
+- The namespace prefix itself provides lightweight discoverability: `sourceId:*` property scans work across tools and pipelines without prior coordination beyond the prefix convention.
+- The full heterogeneous identifier package fits without compromise — every system gets as many fields as it needs, typed appropriately.
+- Governance risk shifts entirely to the naming convention: without a registry or enforced prefix rules, `sourceId:lego:designId` authored by one vendor and `sourceId:lego:design_id` authored by another are invisible conflicts.
+- This approach is closest to how the `sourceId:<system>:<field>` property names would look *within* Approach B's schema — the difference is solely whether an `apiSchemas` entry backs those property names with a schema definition.
+
+---
+
 ## Comparison in the LEGO context
 
-| Concern | Approach A (`assetInfo` dict) | Approach B (applied schema) |
-|---------|------------------------------|----------------------------|
-| Storing the full LEGO identifier package (designId, elementId, ldrawPart, colorIds) | Natural fit — nested dictionaries hold whatever the system requires | Requires a domain-specific schema (`LegoPartIdentifierAPI`) or falls back to `customData` for extra fields |
-| Storing BrickOwl base BOID + color variant BOID | Two keys in the `brickowl` sub-dictionary | Two schema properties on the `SourceIdentifierAPI:brickowl` instance, or a single opaque BOID string |
-| Adding a new marketplace (e.g., Rebrickable color IDs) | New sub-dictionary, no schema changes | New schema instance; base schema update may or may not be needed |
-| BOM traversal: find all prims where `elementId == "4541191"` | Dictionary key path lookup: `assetInfo["sourceIdentifiers"]["lego"]["elementId"]` | Typed USD property query on `legoId:elementId` (if `LegoPartIdentifierAPI` is loaded) |
-| Discoverability: does this prim carry source identifiers? | Requires reading `assetInfo` content | Applied schema visible in `UsdPrimDefinition`; tools see schema presence without reading values |
-| Cross-system color ID package | Pack all color IDs into a nested `colorIds` dict — flexible, unvalidated | Requires schema properties per color system, or accepting that color IDs fall into `customData` |
-| Variant-specific BOM | `assetInfo` composes element-wise through variant selection; the active variant's authored keys win | Applied schema properties compose through variant selection identically |
-| Schema distribution burden | None — dictionaries have no schema dependency | Domain-specific schemas must be distributed as plugins; tools without the plugin round-trip but cannot validate |
+| Concern | Approach A (`assetInfo` dict) | Approach B (applied schema) | Approach C (namespaced custom attrs) |
+|---------|------------------------------|----------------------------|--------------------------------------|
+| Storing the full LEGO identifier package (designId, elementId, ldrawPart, colorIds) | Natural fit — nested dicts hold whatever each system requires | Requires domain-specific schema or falls back to `customData` for extra fields | Natural fit — one `custom` attribute per field, no schema constraint |
+| Storing BrickOwl base BOID + color variant BOID | Two keys in the `brickowl` sub-dictionary | Two schema properties, or single opaque string | Two `custom` attributes: `sourceId:brickowl:baseBoid`, `sourceId:brickowl:colorVariantBoid` |
+| Adding a new marketplace (e.g., Rebrickable) | New sub-dictionary, no schema changes | New schema instance; schema may need updating | New `custom string sourceId:rebrickable:id`, no schema changes |
+| BOM traversal: find all prims where `elementId == "4541191"` | Dictionary key path: `assetInfo["sourceIdentifiers"]["lego"]["elementId"]` | Typed property query on `legoId:elementId` (schema must be loaded) | Property name scan: `sourceId:lego:elementId` — no schema needed |
+| Discoverability: does this prim carry source identifiers? | Requires reading `assetInfo` content | Applied schema visible in `UsdPrimDefinition` without reading values | Requires attribute name scan (`sourceId:*`); convention-based, not schema-based |
+| Cross-system color ID package | Nested `colorIds` dict — flexible, unvalidated | Schema properties per color system, or `customData` fallback | One `custom int` per color system — flexible, unvalidated |
+| Variant-specific BOM | `assetInfo` composes element-wise; variant overrides explicit | Schema properties compose through variant selection identically | Custom attributes compose through variant selection identically |
+| Schema distribution burden | None | Domain-specific schemas must be distributed as plugins | None |
+| Type enforcement / validation | No | Yes (for schema-defined properties) | No |
+| GUI presentation of unauthored properties | No | Yes (schema-driven) | No |
 
