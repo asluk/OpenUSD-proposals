@@ -1,0 +1,274 @@
+#usda 1.0
+(
+    doc = """
+    Sample USDA: Digital Battery Passport (IDTA 02035-1) encoded in OpenUSD.
+
+    Contains:
+      - Illustrative schema class definitions for DppNameplateAPI,
+        BatteryNameplateAPI, and MarkingAPI.
+      - A sample battery prim (Battery_A12345X75EN) showing a complete
+        DBP Nameplate encoding, including source identifier entries
+        (sourceId:dpp:*) per the Identifier Separation of Concerns proposal.
+
+    NOTE: The class definitions below are illustrative. In a deployed pipeline
+    the schemas would be registered via plugInfo.json and a schema plugin,
+    not inlined in a stage file. The sourceId:dpp:* custom attributes follow
+    the Identifier Separation of Concerns proposal (see README.md).
+    """
+    defaultPrim = "Battery_A12345X75EN"
+    upAxis = "Y"
+    metersPerUnit = 0.01
+)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Schema class definitions (illustrative)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Generic DPP nameplate (IDTA-02006 origin) ─────────────────────────────────
+class "DppNameplateAPI" (
+    inherits = </APISchemaBase>
+    doc = """Generic digital product nameplate.
+    Encodes IDTA-02006 Digital Nameplate for Industrial Equipment fields.
+    Applicable to any product with a digital product passport."""
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+) {
+    asset dpp:uriOfTheProduct (
+        doc = """Unique URI identifying this product passport instance.
+        (AAS: URIOfTheProduct, xs:anyURI, mandatory)
+        Cross-system identifier also written to sourceId:dpp:uriOfTheProduct."""
+    )
+    string dpp:manufacturerName (
+        doc = """Legally valid name of the manufacturer.
+        (AAS: ManufacturerName, MultiLanguageProperty, mandatory)
+        Primary language value only; language variants in customData."""
+    )
+    string dpp:serialNumber (
+        doc = """Per-instance serial number of this battery unit.
+        (AAS: SerialNumber, xs:string, mandatory)"""
+    )
+    string dpp:dateOfManufacture (
+        doc = """Manufacturing date in ISO 8601 format YYYY-MM-DD.
+        (AAS: DateOfManufacture, xs:date, mandatory)"""
+    )
+    string dpp:dateOfPuttingIntoService (
+        doc = """Service start date in ISO 8601 format YYYY-MM-DD.
+        (AAS: DateOfPuttingIntoService, xs:date, optional 0..1)
+        Not authored if absent in the source DBP."""
+    )
+    string dpp:uniqueFacilityIdentifier (
+        doc = """Unique identifier of the manufacturing facility.
+        (AAS: UniqueFacilityIdentifier, xs:string, mandatory)
+        Location identifier — distinct from product URI and manufacturer ID."""
+    )
+}
+
+# ── Battery-specific extension (IDTA-02035-1 additions) ───────────────────────
+class "BatteryNameplateAPI" (
+    inherits = </APISchemaBase>
+    doc = """Battery-specific nameplate extension.
+    Encodes the five fields added by IDTA-02035-1 over the IDTA-02006 base.
+    Apply together with DppNameplateAPI."""
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+) {
+    token dpp:lifeCycleStage (
+        allowedTokens = ["original", "repurposed", "re-used", "remanufactured", "waste"]
+        doc = """Current lifecycle state of the battery per EU Battery Regulation.
+        (AAS: LifeCycleStage, ECLASS IRDI enum, mandatory)
+        Token maps to ECLASS IRDI via lookup table in dpp_openusd_bidirectional_mapping.md."""
+    )
+    string dpp:operatorIdentifier (
+        doc = """Unique battery operator identifier per ISO/IEC 15459.
+        (AAS: OperatorIdentifier, xs:string, optional 0..1)"""
+    )
+    string dpp:manufacturerIdentifier (
+        doc = """Formal identifier of the manufacturer.
+        (AAS: ManufacturerIdentifier, xs:string, mandatory)
+        Cross-system identifier also written to sourceId:dpp:manufacturerIdentifier.
+        Do NOT use assetInfo[name] for this field."""
+    )
+    asset[] dpp:euDeclarationOfConformity (
+        doc = """Asset paths to EU Declaration of Conformity documents.
+        (AAS: EUDeclarationOfConformity, SML of xs:string DocumentIdentifiers, mandatory)
+        Written ONLY when document identifiers are resolvable URIs or file paths.
+        For verbatim AAS document identifier strings (opaque keys), use
+        sourceId:dpp:euDeclarationOfConformityIds (string[]) instead."""
+    )
+    asset[] dpp:testReportCompliance (
+        doc = """Asset paths to compliance test reports.
+        (AAS: ResultsOfTestReportsProvingCompliance, SML of xs:string DocumentIdentifiers, mandatory)
+        Same source id convention as dpp:euDeclarationOfConformity."""
+    )
+}
+
+# ── Per-marking schema ─────────────────────────────────────────────────────────
+class "MarkingAPI" (
+    inherits = </APISchemaBase>
+    doc = """Applied schema for a single marking entry within the Markings SML.
+    Apply to child Scope prims under a Markings scope prim."""
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+) {
+    token marking:name (
+        doc = """Marking type identifier.
+        (AAS: MarkingName, xs:string, mandatory)
+        Preferred value: IRDI from IEC CDD/ECLASS,
+        e.g. CE marking = 0173-1#07-DAA603#004."""
+    )
+    string marking:certificateDesignation (
+        doc = """Certificate or approval designation number.
+        (AAS: DesignationOfCertificateOrApproval, xs:string, optional)"""
+    )
+    string marking:issueDate (
+        doc = """Certificate issue date in ISO 8601 format YYYY-MM-DD.
+        (AAS: IssueDate, xs:date, optional)"""
+    )
+    string marking:expiryDate (
+        doc = """Certificate expiry date in ISO 8601 format YYYY-MM-DD.
+        (AAS: ExpiryDate, xs:date, optional)"""
+    )
+    asset marking:file (
+        doc = """Image file of the conformity symbol.
+        (AAS: MarkingFile, File, optional)"""
+    )
+    string[] marking:additionalText (
+        doc = """Additional explanatory text, e.g. notified body ID.
+        (AAS: MarkingAdditionalText, xs:string multi-value, optional)"""
+    )
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Sample DPP instance
+#  Source: fictional battery unit, illustrates a complete DBP Nameplate
+#  encoding including source identifier entries.
+# ══════════════════════════════════════════════════════════════════════════════
+
+def Xform "Battery_A12345X75EN" (
+    kind = "component"
+    prepend apiSchemas = ["DppNameplateAPI", "BatteryNameplateAPI"]
+
+    customData = {
+        # AAS Submodel semantic IDs preserved for provenance
+        string "aas:submodelSemanticId:nameplate" = "https://admin-shell.io/idta/nameplate/3/0"
+        string "aas:submodelSemanticId:battery"   = "https://admin-shell.io/idta/digitalbatterypassport/nameplate/1/0/Nameplate"
+
+        # AAS field semantic IDs (selected)
+        string "aas:semanticId:uriOfTheProduct"           = "0112/2///61987#ABN590#002"
+        string "aas:semanticId:manufacturerName"          = "0112/2///61987#ABA565#009"
+        string "aas:semanticId:serialNumber"              = "0112/2///61987#ABA951#009"
+        string "aas:semanticId:dateOfManufacture"         = "0112/2///61987#ABB757#007"
+        string "aas:semanticId:uniqueFacilityIdentifier"  = "https://admin-shell.io/idta/nameplate/3/0/UniqueFacilityIdentifier"
+
+        # ManufacturerName language variants (MLP)
+        dictionary "dpp:manufacturerName:i18n" = {
+            string "de" = "Muster AG"
+            string "en" = "Muster AG"
+        }
+    }
+
+    assetInfo = {
+        # Fallback for USD tools that predate source id support.
+        # Authoritative location is sourceId:dpp:uriOfTheProduct below.
+        asset identifier = @https://dcqr.com/?m=R123456789@
+    }
+)
+{
+    # ── Source identifier entries ──────────────────────────────────────────────
+    # Primary cross-system identifiers per the Identifier Separation of
+    # Concerns proposal (sourceId:dpp:* namespace).
+    # These store external AAS identifiers verbatim as plain strings,
+    # free from SdfAssetPath path-resolution semantics.
+
+    custom string   sourceId:dpp:uriOfTheProduct              = "https://dcqr.com/?m=R123456789"
+    custom string   sourceId:dpp:manufacturerIdentifier       = "XYZ-123456"
+
+    # Document identifiers for EU DoC and test reports — opaque AAS keys.
+    # asset[] attributes below are written additionally because these happen
+    # to be resolvable file paths in this example.
+    custom string[] sourceId:dpp:euDeclarationOfConformityIds = [
+        "urn:example:doc:eu-conformity-2024-001"
+    ]
+    custom string[] sourceId:dpp:testReportComplianceIds      = [
+        "urn:example:doc:test-report-iec62619-2024-001",
+        "urn:example:doc:test-report-un38-3-2024-001"
+    ]
+
+    # ── DppNameplateAPI fields ─────────────────────────────────────────────────
+
+    asset  dpp:uriOfTheProduct          = @https://dcqr.com/?m=R123456789@
+    string dpp:manufacturerName         = "Muster AG"
+    string dpp:serialNumber             = "A12345-X75EN"
+    string dpp:dateOfManufacture        = "2022-01-15"
+    string dpp:dateOfPuttingIntoService = "2022-06-01"
+    string dpp:uniqueFacilityIdentifier = "GLN:4012345000016"
+
+    # ── BatteryNameplateAPI fields ─────────────────────────────────────────────
+
+    token  dpp:lifeCycleStage         = "original"
+    # ECLASS IRDI for "original": 0173-1#07-ACC020#001
+
+    string dpp:operatorIdentifier     = "UN:DE123456789"
+    string dpp:manufacturerIdentifier = "XYZ-123456"
+
+    # asset[] written because the document identifiers are also resolvable paths
+    asset[] dpp:euDeclarationOfConformity = [
+        @./docs/eu_declaration_of_conformity_en.pdf@
+    ]
+    asset[] dpp:testReportCompliance = [
+        @./docs/test_report_iec62619.pdf@,
+        @./docs/test_report_un38_3.pdf@
+    ]
+
+    # ── Address information (flat namespaced attributes, Option 1) ─────────────
+
+    string dpp:address:street       = "Musterstraße 1"
+    string dpp:address:zipcode      = "12345"
+    string dpp:address:cityTown     = "Musterstadt"
+    string dpp:address:nationalCode = "DE"
+    string dpp:address:email        = "contact@muster-ag.de"
+    asset  dpp:address:additionalLink = @https://www.muster-ag.de@
+
+    # ── Markings ──────────────────────────────────────────────────────────────
+    # Each Marking_NN child prim maps to one AAS Markings__NN__ SMC.
+    # Zero-padded index preserves original SML ordering on round-trip.
+
+    def Scope "Markings"
+    {
+        def Scope "Marking_00" (
+            prepend apiSchemas = ["MarkingAPI"]
+        )
+        {
+            # CE marking — IRDI from IEC CDD/ECLASS
+            token    marking:name                   = "0173-1#07-DAA603#004"
+            string   marking:certificateDesignation = "KEMA99IECEX1105/128"
+            string   marking:issueDate              = "2022-01-01"
+            string   marking:expiryDate             = "2028-01-01"
+            asset    marking:file                   = @./markings/ce_mark.png@
+            string[] marking:additionalText         = ["Notified body: 0123"]
+        }
+
+        def Scope "Marking_01" (
+            prepend apiSchemas = ["MarkingAPI"]
+        )
+        {
+            # WEEE — Waste Electrical and Electronic Equipment symbol
+            token marking:name = "WEEE"
+            asset marking:file = @./markings/weee_mark.png@
+        }
+
+        def Scope "Marking_02" (
+            prepend apiSchemas = ["MarkingAPI"]
+        )
+        {
+            # Separate collection symbol per EU Battery Regulation Annex VI
+            token    marking:name           = "0173-1#07-DAA614#003"
+            string[] marking:additionalText = ["Min. capacity: 95 Wh"]
+        }
+    }
+}
