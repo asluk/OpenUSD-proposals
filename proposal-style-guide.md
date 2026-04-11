@@ -142,3 +142,74 @@ PR #105 uses "The core observation is that..." or similar framing
 devices. These are effective *once*. Do not replicate them. Find
 your own framing device, or better, let the evidence lead to the
 conclusion without announcing it.
+
+---
+
+## 3. Quality Passes
+
+After the draft is structurally complete, run these passes in order.
+Each pass has a distinct focus. Do not combine them — you will miss
+things.
+
+### Pass 1: Overconfident Claims
+
+Read every assertion and ask: "Can I verify this?" Flag:
+
+- **Universals** ("all", "every", "always", "never", "universally")
+  — downgrade to "nearly all", "most", "typically"
+- **Unverifiable numbers** ("millions of users", "billions of
+  dollars") — replace with qualitative language ("large user bases",
+  "significant market") or cite a source
+- **Industry requirements stated as fact** ("This is a hard
+  requirement") — hedge to "widely regarded as a prerequisite" or
+  "commonly expected"
+- **Absolute technical claims** ("X is unreliable", "Y is
+  impossible") — soften to "X is challenging", "Y has not been
+  demonstrated"
+
+The principle: reviewers who care about rigor will catch overstated
+claims and discount the entire section. Hedging costs nothing;
+overclaiming costs credibility.
+
+### Pass 2: Fact-Check
+
+Verify every factual claim against primary sources. LLMs hallucinate
+technical details with high confidence. In the exact geometry
+proposal, 5 factual errors were found across 680 lines. Common
+failure modes:
+
+- **Schema precision** — Read `schema.usda` directly; do not trust
+  cached knowledge. Example: UsdGeomNurbsPatch *does* have trim
+  curves (RiTrimCurve encoding), but the first draft said
+  "unsupported."
+- **Vendor/product claims** — Verify every product name, company
+  attribution, and feature claim. Example: "Autodesk Platform
+  Services" was cited as a USD integration but could not be verified.
+- **Standards references** — Check ISO numbers, RFC numbers, year
+  of publication, and exact titles. Example: the glossary was claimed
+  to map to "PRC, STEP, Parasolid, ACIS, and Open Cascade" but
+  actually maps to a different set of kernels.
+- **Open-source vs commercial** — Verify licensing. Open Cascade
+  (LGPL) was grouped with "commercial kernels" in the first draft.
+- **Feature absence claims** — "USD does not support X" is dangerous.
+  Search the codebase. A missed feature makes the whole argument
+  weaker.
+
+Chunk the fact-check into digestible pieces (5 chunks worked well
+for a 680-line document): Products & Platforms, USD Technical Claims,
+Standards & Theory, External Links, Organizational Claims.
+
+### Pass 3: Hero Use Cases
+
+After writing domain-specific use cases, step back and identify the
+1–2 scenarios that cut across multiple domains. Elevate these to
+a cross-cutting section *before* the domain-specific material.
+Readers who skim will hit the strongest motivation first.
+
+### Pass 4: Self-Contained References
+
+Any link to an external document that might 404 for the reader
+(org-restricted repos, working group internal docs) should be
+replaced with inline content or an appendix. If the external
+document is short enough, fold it in. The proposal should stand
+alone.
