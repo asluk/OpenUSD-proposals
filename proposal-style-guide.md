@@ -309,3 +309,81 @@ Before opening a PR, verify:
 - [ ] All names anonymized
 - [ ] Document is self-contained (no required external documents)
 - [ ] Squashed to a single commit on top of the base branch
+
+---
+
+## 6. Lessons from PR #3 (IP Protection Proposal)
+
+The IP Protection proposal (PR #3 on `asluk/OpenUSD-proposals`) went
+through its own language refinement, revealing additional patterns
+worth generalizing.
+
+### Reduce AI-isms
+
+The second commit explicitly aimed to "reduce AI-isms and diverge from
+identifiers proposal voice." Common AI writing patterns to watch for:
+
+- **Walls of text.** Break dense paragraphs into bullets and sub-bullets.
+  Reviewers skim; give them structure.
+- **Overly smooth transitions.** AI prose tends to connect everything
+  too neatly. Real technical writing has rougher edges — direct
+  statements, occasional sentence fragments, questions that hang.
+- **Hedging pileups.** One hedge per claim is enough. "It is worth
+  noting that it may potentially be the case that..." is three hedges
+  where one would do.
+- **Symmetrical phrasing.** AI tends to produce parallel constructions
+  across sections ("In domain X, the challenge is Y. In domain Z, the
+  challenge is W."). Vary the structure between parallel sections.
+
+### Avoid Prescriptive Language in Problem Statements
+
+PR #3's third commit softened language "to avoid reading as proposed
+USD changes." A problem statement should:
+
+- Frame gaps, not solutions.
+- Use the "USD role" column in tables to point to open questions,
+  not name specific mechanisms.
+- Make any forward-looking suggestions conditional: "If the community
+  determines that X is desirable, a follow-up proposal could explore Y."
+- Add disclaimers on illustrative code blocks: these are examples of
+  the *problem*, not proposed syntax.
+
+### USD Terminology Precision
+
+- **"variant"** has a specific meaning in USD (variant sets/selections).
+  Do not use it casually to mean "alternative" or "approach." This was
+  caught and fixed in PR #3.
+- **"final"** is not a current USD keyword. Fact-check every claim
+  about USD language-level features against the actual spec.
+- Avoid ambiguity with terms like "flatten," "compose," "override,"
+  "opinion" — these all have precise USD semantics.
+
+### Vendor Neutrality
+
+PR #3 dropped specific vendor platform names and product mentions
+from the body text. Guidelines:
+
+- Name companies in the contributor list and use cases, not in
+  technical analysis.
+- Replace "Vendor X's product Y does Z" with "PLM systems typically
+  provide Z."
+- If a specific product is essential context, use it in a use case
+  section with attribution, not in design principles.
+
+### Line Width
+
+Wrap prose at ~75 characters. This is a readability choice — GitHub
+diffs, terminal editors, and side-by-side reviews all benefit from
+shorter lines. PR #105 did not enforce this; PR #3 did.
+
+### Multi-Author Proposals
+
+PR #3 was co-authored by practitioners from three companies plus an
+AI agent. When multiple humans contribute:
+
+- Credit all authors in the header.
+- Use `Co-Authored-By` trailers in commits.
+- Ensure the voice is consistent — one author (or the AI) should do
+  the final language pass.
+- Remove internal references (JIRA links, internal doc IDs) before
+  pushing.
