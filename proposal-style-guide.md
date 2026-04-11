@@ -213,3 +213,99 @@ Any link to an external document that might 404 for the reader
 replaced with inline content or an appendix. If the external
 document is short enough, fold it in. The proposal should stand
 alone.
+
+---
+
+## 4. Operational Lessons (AI-Assisted Drafting)
+
+These are process lessons from drafting the exact geometry proposal
+with an AI agent across a multi-hour session.
+
+### Chunk Writes Into Phases
+
+Do not attempt to write a 600-line document in one pass. Break it
+into 4–6 phases of ~100–150 lines each. Commit after every phase.
+Context windows are finite and unpredictable — a compaction event
+mid-write can lose uncommitted work.
+
+Proven phase structure for a problem statement proposal:
+
+1. Introduction + Motivation + Problem Statement (~150 lines)
+2. Industry Use Cases (~100 lines)
+3. Existing Mechanisms in USD (~100 lines)
+4. Design Considerations (~150 lines)
+5. Relationships + Next Steps + Appendices (~100 lines)
+
+### Use sed for Large File Edits
+
+Once a document exceeds ~500 lines, the read/write cycle in an AI
+agent's context window becomes dangerous: reading the file consumes
+enough context that the subsequent write triggers compaction before
+it can execute. Use `sed` for targeted in-place edits instead.
+
+Example — inserting content at a specific line:
+
+```bash
+sed -i '660r /dev/stdin' README.md << 'EOF'
+## Appendix A: New Content
+
+Content goes here.
+EOF
+```
+
+Example — replacing a specific line:
+
+```bash
+sed -i 's/old exact text/new exact text/' README.md
+```
+
+### Plan Before Writing (TASK.md)
+
+Before starting a large document, write a TASK.md with:
+
+- Phase breakdown with target line counts
+- Ordered checklist (mark items done as you go)
+- Key constraints and decisions
+
+This prevents context overrun and gives a recovery point after
+compaction.
+
+### Commit Early, Commit Often
+
+Every completed phase gets its own commit. Squash later when the
+author is satisfied. Losing work to a context window reset is
+avoidable if you commit after each meaningful unit.
+
+### AI Disclosure
+
+Include an appendix (not a footnote) disclosing AI assistance.
+Be specific about what the AI did and what the human did. Readers
+who are AI-cautious will look for this; transparency builds trust.
+If the proposal's structure follows a prior proposal, say so
+explicitly: "familiar but not repetitive" is the goal.
+
+### Anonymize Before Pushing
+
+Strip all real names from commits, branch metadata, and document
+text before pushing to public branches. Use role-based references
+("a TAC reviewer noted...") instead of names.
+
+---
+
+## 5. Checklist
+
+Before opening a PR, verify:
+
+- [ ] Section order follows the proven progression (§1)
+- [ ] Folder name does not mirror PR #105's naming pattern
+- [ ] No consecutive paragraphs share the same opening structure
+- [ ] No "core observation is that..." or similar PR #105 framing
+- [ ] Bold-opener lists are not the only list style used
+- [ ] All universals hedged ("nearly all", "typically", "most")
+- [ ] All factual claims verified against primary sources
+- [ ] Hero use cases appear before domain-specific material
+- [ ] External links that may 404 are replaced with inline content
+- [ ] AI disclosure appendix is present and specific
+- [ ] All names anonymized
+- [ ] Document is self-contained (no required external documents)
+- [ ] Squashed to a single commit on top of the base branch
