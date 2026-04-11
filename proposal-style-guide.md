@@ -388,3 +388,79 @@ AI agent. When multiple humans contribute:
   the final language pass.
 - Remove internal references (JIRA links, internal doc IDs) before
   pushing.
+
+---
+
+## 7. Lessons from PR #4027 (AI-Assisted Contribution Guidelines)
+
+PR #4027 on `PixarAnimationStudios/OpenUSD` proposes contribution
+guidelines for AI-assisted work. These principles apply directly to
+proposal writing.
+
+### Ownership: "The Agent Wrote It" Is Not an Explanation
+
+Every line is the contributor's responsibility. Be prepared to
+explain, at the depth a reviewer requires:
+
+- Why a particular framing or structure was chosen over alternatives
+- What real-world scenarios were considered and how they informed
+  the design
+- Where domain judgment shaped the result — not just what the
+  document says, but why it is the right thing to say
+
+This means the human author must read every section critically
+before submission. AI can draft; humans must own.
+
+### Review Guides
+
+For non-trivial proposals, include a review guide in the PR
+description. A review guide should cover:
+
+- What changed and why, organized by logical concern (not file list)
+- Design decisions that were considered and the reasoning behind
+  the chosen approach
+- Known limitations, deferred work, and follow-up items
+
+The goal: a reviewer can read the guide, understand the intent, and
+focus on whether the proposal is right for the ecosystem rather than
+reverse-engineering motivation from the document.
+
+### Scope to Reviewable Units
+
+When a proposal covers multiple concerns, evaluate whether they are
+separable. A problem statement bundled with a schema design risks
+delaying both. The exact geometry work used a two-proposal strategy
+for this reason: Proposal 1 (problem statement) can be reviewed and
+accepted independently of Proposal 2 (schema).
+
+This also applies within a single document: if the Design
+Considerations section raises a framework-level question, call it
+out in an Open Question rather than embedding an implicit proposal.
+
+### Reduce Reviewer Burden
+
+AI tooling can increase the volume of proposals faster than reviewers
+can absorb them. Take active steps to make review efficient:
+
+- Include a reading order and estimated review time
+- Lead with an executive summary that gives the verdict up front
+- Extract deep dives into separate detail files so the main document
+  stays at 400–600 lines
+- Use the COMPARISON.md restructure as a model: main doc became a
+  15–20 minute review guide, with six detail files for those who
+  want depth
+
+### Transparency
+
+- Disclose AI assistance in an appendix (not hidden in a footnote)
+- Use `Co-Authored-By` trailers on commits
+- Reviewers may ask additional probing questions about AI-assisted
+  sections — welcome this as normal review, not adversarial scrutiny
+
+### The Human Standard
+
+"Reviewers may use their own AI tools to analyze submissions. The
+standard is the same in both directions: the human is responsible
+for the judgment." This cuts both ways — the proposal author must
+exercise judgment over what the AI produced, and reviewers will
+exercise judgment over the result.
