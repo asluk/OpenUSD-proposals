@@ -93,7 +93,7 @@ The DBP Nameplate is a Submodel Template of the Asset Administration Shell (AAS)
 | [BatteryNameplate (Submodel)](#batterynameplate-submodel) | both | Prim with `DppNameplateAPI` + `BatteryNameplateAPI` | Partial | AAS envelope (Asset, AAS) not round-tripped; Submodel instance only |
 | [URIOfTheProduct](#urioftheproduct) | `DppNameplateAPI` | `sourceId:dpp:uriOfTheProduct` (string) + `dpp:uriOfTheProduct` (asset) | Lossless | Source id entry is the primary cross-system identifier; `assetInfo["identifier"]` written as fallback |
 | [ManufacturerName](#manufacturername) | `DppNameplateAPI` | `dpp:manufacturerName` (string) | Lossy | Primary language value only; language tag lost |
-| [AddressInformation](#addressinformation) | `DppNameplateAPI` | `dpp:address:*` attributes or child prim | Lossless | All mandatory fields preserved |
+| [ContactInformation](#contactinformation) | `DppNameplateAPI` | `dpp:contact:*` attributes or child prim | Lossless | All mandatory fields preserved |
 | [SerialNumber](#serialnumber) | `DppNameplateAPI` | `dpp:serialNumber` (string) | Lossless | Direct string mapping |
 | [DateOfManufacture](#dateofmanufacture) | `DppNameplateAPI` | `dpp:dateOfManufacture` (string) | Lossless | ISO 8601 string preserved |
 | [DateOfPuttingIntoService](#dateofputtingintoservice) | `DppNameplateAPI` | `dpp:dateOfPuttingIntoService` (string) | Lossless | ISO 8601 string preserved; absent if not authored |
@@ -127,19 +127,53 @@ Both schemas use the `dpp:` namespace prefix. The prim `kind` should be `compone
 # ── Generic DPP nameplate (IDTA-02006 origin) ─────────────────────────────────
 class "DppNameplateAPI" (
     inherits = </APISchemaBase>
-    doc = "Generic digital product nameplate. Encodes IDTA-02006 Digital Nameplate for Industrial Equipment fields. Applicable to any product with a digital product passport."
+    doc = "Full IDTA 02006-3-0 Digital Nameplate for Industrial Equipment base schema. Applicable to any product with a digital nameplate or digital product passport. For battery passport workflows apply together with BatteryNameplateAPI; for full industrial equipment workflows apply together with IndustrialEquipmentAPI. See digital_nameplate_openusd_bidirectional_mapping.md for per-field documentation of fields marked (IDTA 02006-3-0)."
     customData = {
         token apiSchemaType = "singleApply"
     }
 ) {
+    # ── Mandatory identification ───────────────────────────────────────────────
     asset dpp:uriOfTheProduct (
-        doc = "Unique URI identifying this product passport instance. (AAS: URIOfTheProduct) Also written to sourceId:dpp:uriOfTheProduct for cross-system discoverability."
+        doc = "Unique URI identifying this product passport instance. (AAS: URIOfTheProduct, mandatory) Also written to sourceId:dpp:uriOfTheProduct for cross-system discoverability."
     )
     string dpp:manufacturerName (
-        doc = "Legally valid manufacturer name. (AAS: ManufacturerName, MLP)"
+        doc = "Legally valid manufacturer name. (AAS: ManufacturerName, MLP, mandatory) Primary language value; language variants in customData."
     )
+
+    # ── Optional product classification (IDTA 02006-3-0) ─────────────────────
+    string dpp:manufacturerProductDesignation (
+        doc = "Short description or model name of the product. (AAS: ManufacturerProductDesignation, MLP, optional)"
+    )
+    string dpp:manufacturerProductRoot (
+        doc = "Highest-level product grouping defined by the manufacturer. (AAS: ManufacturerProductRoot, MLP, optional)"
+    )
+    string dpp:manufacturerProductFamily (
+        doc = "Product family designation. (AAS: ManufacturerProductFamily, MLP, optional)"
+    )
+    string dpp:manufacturerProductType (
+        doc = "Product type or variant designation. (AAS: ManufacturerProductType, MLP, optional)"
+    )
+    string dpp:orderCode (
+        doc = "Manufacturer order code / catalog number. (AAS: OrderCodeOfManufacturer, MLP, optional) Also written to sourceId:dpp:orderCode when used as a cross-system catalog key."
+    )
+    string dpp:articleNumber (
+        doc = "Manufacturer product article number. (AAS: ProductArticleNumberOfManufacturer, MLP, optional) Also written to sourceId:dpp:articleNumber when used as a PLM/ERP cross-system key."
+    )
+
+    # ── Instance and batch identifiers ────────────────────────────────────────
     string dpp:serialNumber (
-        doc = "Per-instance serial number. (AAS: SerialNumber)"
+        doc = "Per-instance serial number. (AAS: SerialNumber, mandatory in battery passport context)"
+    )
+    string dpp:batchNumber (
+        doc = "Manufacturing batch or lot number. (AAS: BatchNumber, xs:string, optional — IDTA 02006-3-0)"
+    )
+
+    # ── Origin, dates, and facility ───────────────────────────────────────────
+    string dpp:productCountryOfOrigin (
+        doc = "ISO 3166-1 alpha-2 country code of origin. (AAS: ProductCountryOfOrigin, xs:string, optional — IDTA 02006-3-0)"
+    )
+    string dpp:yearOfConstruction (
+        doc = "Year of manufacture in YYYY format. (AAS: YearOfConstruction, xs:string, optional — IDTA 02006-3-0)"
     )
     string dpp:dateOfManufacture (
         doc = "Manufacturing date in ISO 8601 format YYYY-MM-DD. (AAS: DateOfManufacture)"
@@ -149,6 +183,73 @@ class "DppNameplateAPI" (
     )
     string dpp:uniqueFacilityIdentifier (
         doc = "Unique identifier of the manufacturing facility. (AAS: UniqueFacilityIdentifier)"
+    )
+
+    # ── Version information (IDTA 02006-3-0) ──────────────────────────────────
+    string dpp:hardwareVersion (
+        doc = "Hardware revision string. (AAS: HardwareVersion, MLP, optional)"
+    )
+    string dpp:firmwareVersion (
+        doc = "Firmware revision string. (AAS: FirmwareVersion, MLP, optional)"
+    )
+    string dpp:softwareVersion (
+        doc = "Software revision string. (AAS: SoftwareVersion, MLP, optional)"
+    )
+
+    # ── Media (IDTA 02006-3-0) ────────────────────────────────────────────────
+    asset dpp:companyLogo (
+        doc = "Manufacturer company logo image. (AAS: CompanyLogo, File, optional)"
+    )
+
+    # ── Contact information (IDTA 02002-1 drop-in) ────────────────────────────
+    # Flat Option 1 encoding. For Option 2 (child prim) see ContactInformation field section.
+    string dpp:contact:street (
+        doc = "Street address. (AAS: ContactInformation/Street, MLP, optional)"
+    )
+    string dpp:contact:zipcode (
+        doc = "Postal code. (AAS: ContactInformation/Zipcode, MLP, optional)"
+    )
+    string dpp:contact:cityTown (
+        doc = "City or town. (AAS: ContactInformation/CityTown, MLP, optional)"
+    )
+    string dpp:contact:stateCounty (
+        doc = "State, county, or province. (AAS: ContactInformation/StateCounty, MLP, optional)"
+    )
+    string dpp:contact:nationalCode (
+        doc = "ISO 3166-1 alpha-2 country code for contact address. (AAS: ContactInformation/NationalCode, MLP, optional)"
+    )
+    string dpp:contact:poBox (
+        doc = "Post office box. (AAS: ContactInformation/POBox, MLP, optional)"
+    )
+    string dpp:contact:company (
+        doc = "Company name at the contact address. (AAS: ContactInformation/Company, MLP, optional)"
+    )
+    string dpp:contact:department (
+        doc = "Department within the company. (AAS: ContactInformation/Department, MLP, optional)"
+    )
+    string dpp:contact:timeZone (
+        doc = "IANA time zone identifier. (AAS: ContactInformation/TimeZone, xs:string, optional)"
+    )
+    string dpp:contact:phone (
+        doc = "Primary telephone number. (AAS: ContactInformation/Phone/TelephoneNumber, MLP, optional)"
+    )
+    string dpp:contact:fax (
+        doc = "Primary fax number. (AAS: ContactInformation/Fax/FaxNumber, MLP, optional)"
+    )
+    string dpp:contact:email (
+        doc = "Primary email address. (AAS: ContactInformation/Email/EmailAddress, xs:string, optional)"
+    )
+    asset dpp:contact:additionalLink (
+        doc = "Web address or URI. (AAS: ContactInformation/IPCommunication/AddressOfAdditionalLink, xs:anyURI, optional)"
+    )
+    string dpp:contact:nameOfContact (
+        doc = "Family name of the primary contact. (AAS: ContactInformation/NameOfContact, MLP, optional)"
+    )
+    string dpp:contact:firstName (
+        doc = "First name of the primary contact. (AAS: ContactInformation/FirstName, MLP, optional)"
+    )
+    string dpp:contact:remarks (
+        doc = "Additional address remarks. (AAS: ContactInformation/AddressRemarks, MLP, optional)"
     )
 }
 
@@ -189,9 +290,8 @@ class "MarkingAPI" (
     token marking:name (
         doc = "Marking type. Preferred: IRDI from IEC CDD/ECLASS (e.g. CE = 0173-1#07-DAA603#004). (AAS: MarkingName)"
     )
-    string marking:certificateDesignation (
-        doc = "Certificate or approval designation. Optional. (AAS: DesignationOfCertificateOrApproval)"
-    )
+    # DesignationOfCertificateOrApproval is encoded as a source identifier:
+    # sourceId:dpp:marking:certificationId on the Marking_NN prim instance.
     string marking:issueDate (
         doc = "Certificate issue date in ISO 8601 format. Optional. (AAS: IssueDate)"
     )
@@ -260,8 +360,8 @@ def Xform "Battery_A12345X75EN" (
     # ── Markings ──────────────────────────────────────────────────────────────
     def Scope "Markings" {
         def Scope "Marking_00" (prepend apiSchemas = ["MarkingAPI"]) {
+                custom string sourceId:dpp:marking:certificationId = "KEMA99IECEX1105/128"
             token    marking:name                   = "0173-1#07-DAA603#004"
-            string   marking:certificateDesignation = "KEMA99IECEX1105/128"
             string   marking:issueDate              = "2022-01-01"
             string   marking:expiryDate             = "2028-01-01"
             asset    marking:file                   = @./markings/marking_ce.png@
@@ -378,7 +478,7 @@ Read `dpp:manufacturerName` (string). Reconstruct as MLP with a single entry. If
 
 ---
 
-### AddressInformation
+### ContactInformation
 
 The manufacturer's physical address is structured in AAS as an SMC drop-in from IDTA 02002-1 Contact Information. The mandatory fields per DIN DKE SPEC 99100 are Street, Zipcode, CityTown, NationalCode; optionally Email and AddressOfAdditionalLink.
 
@@ -386,20 +486,20 @@ The manufacturer's physical address is structured in AAS as an SMC drop-in from 
 
 Two encoding options exist:
 
-**Option 1 — Namespaced attributes (flat, recommended for round-trip):** Attributes with the `dpp:address:` prefix on the same prim. Simple to author; flat list of attributes.
+**Option 1 — Namespaced attributes (flat, recommended for round-trip):** Attributes with the `dpp:contact:` prefix on the same prim. Simple to author; flat list of attributes.
 
 **Option 2 — Child prim:** A child `Scope` prim (e.g., `Address`) under the battery prim. Cleaner namespace separation; allows the address to be referenced or overridden independently. Recommended when address data is shared across multiple battery instances or updated independently; requires agreement on prim naming for round-trip.
 
 ##### Properties
 
-| DBP (AddressInformation) | USD Attribute | AAS Type | USD Type |
+| DBP (ContactInformation) | USD Attribute | AAS Type | USD Type |
 |---|---|---|---|
-| Street | `dpp:address:street` | MLP | `string` |
-| Zipcode | `dpp:address:zipcode` | MLP | `string` |
-| CityTown | `dpp:address:cityTown` | MLP | `string` |
-| NationalCode | `dpp:address:nationalCode` | MLP | `string` |
-| Email | `dpp:address:email` | string (optional) | `string` |
-| AddressOfAdditionalLink | `dpp:address:additionalLink` | `xs:anyURI` (optional) | `asset` |
+| Street | `dpp:contact:street` | MLP | `string` |
+| Zipcode | `dpp:contact:zipcode` | MLP | `string` |
+| CityTown | `dpp:contact:cityTown` | MLP | `string` |
+| NationalCode | `dpp:contact:nationalCode` | MLP | `string` |
+| Email | `dpp:contact:email` | string (optional) | `string` |
+| AddressOfAdditionalLink | `dpp:contact:additionalLink` | `xs:anyURI` (optional) | `asset` |
 
 ##### Usage Example — Option 1 (namespaced attributes)
 
@@ -407,12 +507,12 @@ Two encoding options exist:
 def Xform "Battery_A12345X75EN" (
     prepend apiSchemas = ["DppNameplateAPI", "BatteryNameplateAPI"]
 ) {
-    string dpp:address:street       = "Sample Street 1"
-    string dpp:address:zipcode      = "12345"
-    string dpp:address:cityTown     = "City"
-    string dpp:address:nationalCode = "DE"
-    string dpp:address:email        = "contact@muster-ag.de"
-    asset  dpp:address:additionalLink = @https://www.muster-ag.de@
+    string dpp:contact:street       = "Sample Street 1"
+    string dpp:contact:zipcode      = "12345"
+    string dpp:contact:cityTown     = "City"
+    string dpp:contact:nationalCode = "DE"
+    string dpp:contact:email        = "contact@muster-ag.de"
+    asset  dpp:contact:additionalLink = @https://www.muster-ag.de@
 }
 ```
 
@@ -435,18 +535,18 @@ def Xform "Battery_A12345X75EN" (
 
 #### USD → DBP
 
-Read `dpp:address:*` attributes (Option 1) or the child prim named `Address` (Option 2). Reconstruct as SMC `AddressInformation` using the drop-in from IDTA 02002-1. Map each attribute to the corresponding MLP SubmodelElement.
+Read `dpp:contact:*` attributes (Option 1) or the child prim named `Address` (Option 2). Reconstruct as SMC `ContactInformation` using the drop-in from IDTA 02002-1. Map each attribute to the corresponding MLP SubmodelElement.
 
 #### Round-trip
 
 | DBP Field | USD Attribute | Fidelity |
 |---|---|---|
-| Street | `dpp:address:street` | Lossless |
-| Zipcode | `dpp:address:zipcode` | Lossless |
-| CityTown | `dpp:address:cityTown` | Lossless |
-| NationalCode | `dpp:address:nationalCode` | Lossless |
-| Email | `dpp:address:email` | Lossless |
-| AddressOfAdditionalLink | `dpp:address:additionalLink` | Lossless |
+| Street | `dpp:contact:street` | Lossless |
+| Zipcode | `dpp:contact:zipcode` | Lossless |
+| CityTown | `dpp:contact:cityTown` | Lossless |
+| NationalCode | `dpp:contact:nationalCode` | Lossless |
+| Email | `dpp:contact:email` | Lossless |
+| AddressOfAdditionalLink | `dpp:contact:additionalLink` | Lossless |
 | Language variants (MLP) | `customData` | Lossy — same as ManufacturerName |
 
 ---
@@ -563,11 +663,13 @@ Each `Markings__NN__` SMC is written as a child prim under a `Markings` Scope, w
 | DBP (Markings__00__) | USD Attribute | AAS Type | USD Type |
 |---|---|---|---|
 | MarkingName | `marking:name` | `xs:string` (IRDI preferred) | `token` |
-| DesignationOfCertificateOrApproval | `marking:certificateDesignation` | `xs:string` | `string` |
+| DesignationOfCertificateOrApproval | `sourceId:dpp:marking:certificationId` | `xs:string` | `string` |
 | IssueDate | `marking:issueDate` | `xs:date` | `string` (ISO 8601) |
 | ExpiryDate | `marking:expiryDate` | `xs:date` | `string` (ISO 8601) |
 | MarkingFile | `marking:file` | `File` | `asset` |
 | MarkingAdditionalText | `marking:additionalText` | `xs:string[]` | `string[]` |
+
+`sourceId:dpp:marking:certificationId` is the sole encoding for the certificate or approval number. Using a source id rather than a schema attribute avoids duplication and enables cross-system linking to approval databases (ATEX, IECEx, etc.) without requiring `MarkingAPI` schema knowledge. Omitted when no certificate designation is present.
 
 `MarkingName` preferred value is an IRDI from IEC CDD/ECLASS (e.g., CE = `0173-1#07-DAA603#004`). Free-text names are stored as `token` values but may be subject to token normalisation.
 
@@ -576,8 +678,8 @@ Each `Markings__NN__` SMC is written as a child prim under a `Markings` Scope, w
 ```usda
 def Scope "Markings" {
     def Scope "Marking_00" (prepend apiSchemas = ["MarkingAPI"]) {
+        custom string sourceId:dpp:marking:certificationId = "KEMA99IECEX1105/128"
         token    marking:name                   = "0173-1#07-DAA603#004"
-        string   marking:certificateDesignation = "KEMA99IECEX1105/128"
         string   marking:issueDate              = "2022-01-01"
         string   marking:expiryDate             = "2028-01-01"
         asset    marking:file                   = @./markings/marking_ce.png@
@@ -602,7 +704,7 @@ def Scope "Markings" {
 | DBP Field | USD Attribute | Fidelity |
 |---|---|---|
 | MarkingName | `marking:name` (token) | Lossless if IRDI token; lossy if free-text token normalised |
-| DesignationOfCertificateOrApproval | `marking:certificateDesignation` (string) | Lossless |
+| DesignationOfCertificateOrApproval | `sourceId:dpp:marking:certificationId` (string) | Lossless |
 | IssueDate | `marking:issueDate` (string) | Lossless |
 | ExpiryDate | `marking:expiryDate` (string) | Lossless |
 | MarkingFile | `marking:file` (asset) | Lossless (path preserved) |
@@ -817,7 +919,7 @@ This table is required for lossless round-trip of `LifeCycleStage`.
 | URIOfTheProduct | Both | Lossless | Primary: `sourceId:dpp:uriOfTheProduct`; fallback chain: `dpp:uriOfTheProduct` → `assetInfo["identifier"]` |
 | ManufacturerName (primary value) | Both | Lossless | — |
 | ManufacturerName (language variants) | Both | Lossy | Preserved only via `customData` convention |
-| AddressInformation (all fields) | Both | Lossless | — |
+| ContactInformation (all fields) | Both | Lossless | — |
 | SerialNumber | Both | Lossless | — |
 | DateOfManufacture | Both | Lossless | String must be valid ISO 8601 |
 | DateOfPuttingIntoService | Both | Lossless | Absent field handled correctly in both directions |
