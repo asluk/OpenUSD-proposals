@@ -135,7 +135,7 @@ class "MarkingAPI" (
     )
     asset marking:file (
         doc = """Image file of the conformity symbol.
-        (AAS: MarkingFile, File, optional)"""
+        (AAS: MarkingFile, File, mandatory)"""
     )
     string[] marking:additionalText (
         doc = """Additional explanatory text, e.g. notified body ID.

@@ -169,8 +169,8 @@ class "DppNameplateAPI" (
     )
 
     # ── Origin, dates, and facility ───────────────────────────────────────────
-    string dpp:productCountryOfOrigin (
-        doc = "ISO 3166-1 alpha-2 country code of origin. (AAS: ProductCountryOfOrigin, xs:string, optional — IDTA 02006-3-0)"
+    string dpp:countryOfOrigin (
+        doc = "ISO 3166-1 alpha-2 country code of origin. (AAS: CountryOfOrigin, xs:string, optional — IDTA 02006-3-0)"
     )
     string dpp:yearOfConstruction (
         doc = "Year of manufacture in YYYY format. (AAS: YearOfConstruction, xs:string, optional — IDTA 02006-3-0)"

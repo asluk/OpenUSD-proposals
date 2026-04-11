@@ -97,9 +97,9 @@ class "DppNameplateAPI" (
     )
 
     # ── Origin, dates, and facility ───────────────────────────────────────────
-    string dpp:productCountryOfOrigin (
+    string dpp:countryOfOrigin (
         doc = """ISO 3166-1 alpha-2 country of origin.
-        (AAS: ProductCountryOfOrigin, xs:string, optional)"""
+        (AAS: CountryOfOrigin, xs:string, optional)"""
     )
     string dpp:yearOfConstruction (
         doc = """Year of manufacture in YYYY format.
@@ -236,7 +236,7 @@ class "MarkingAPI" (
     )
     asset marking:file (
         doc = """Image file of the conformity symbol.
-        (AAS: MarkingFile, File, optional)"""
+        (AAS: MarkingFile, File, mandatory)"""
     )
     string[] marking:additionalText (
         doc = """Additional explanatory text, e.g. notified body ID.
@@ -373,7 +373,7 @@ def Xform "Pump_MusterAG_CM5_3" (
 
     # ── DppNameplateAPI — origin, dates, and facility ─────────────────────────
 
-    string dpp:productCountryOfOrigin   = "DE"
+    string dpp:countryOfOrigin          = "DE"
     string dpp:yearOfConstruction       = "2024"
     string dpp:dateOfManufacture        = "2024-02-15"
     # dpp:dateOfPuttingIntoService not authored (absent in source AAS)
@@ -487,10 +487,7 @@ def Xform "Pump_MusterAG_CM5_3" (
 
     def Scope "AssetSpecificProperties"
     {
-        def Scope "GuidelineProps_00"
-        {
-            # Properties per IEC 60034 (rotating electrical machines)
-            string guideline:conformityDeclaration = "IEC 60034"
+        def Scope "GuidelineProps_00" (
             customData = {
                 string "aas:semanticId" = "0112/2///61987#ABN492#001"
                 dictionary "guideline:arbitraryProperties" = {
@@ -503,13 +500,13 @@ def Xform "Pump_MusterAG_CM5_3" (
                     string "EfficiencyClass"     = "IE3"
                 }
             }
+        )
+        {
+            # Properties per IEC 60034 (rotating electrical machines)
+            string guideline:conformityDeclaration = "IEC 60034"
         }
 
-        def Scope "GuidelineProps_01"
-        {
-            # Properties per EN 13849 (safety of machinery — safety-related
-            # parts of control systems)
-            string guideline:conformityDeclaration = "EN ISO 13849-1"
+        def Scope "GuidelineProps_01" (
             customData = {
                 dictionary "guideline:arbitraryProperties" = {
                     string "PerformanceLevel" = "PLd"
@@ -518,6 +515,11 @@ def Xform "Pump_MusterAG_CM5_3" (
                     string "DCavg"            = "90 %"
                 }
             }
+        )
+        {
+            # Properties per EN 13849 (safety of machinery — safety-related
+            # parts of control systems)
+            string guideline:conformityDeclaration = "EN ISO 13849-1"
         }
     }
 }

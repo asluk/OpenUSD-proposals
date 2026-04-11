@@ -94,16 +94,16 @@ DppNameplateAPI          (this document — full IDTA 02006-3-0 base, dpp: names
 | [DigitalNameplate (Submodel)](#digitalnameplate-submodel) | Prim with `DppNameplateAPI` + `IndustrialEquipmentAPI` | Partial | AAS envelope not round-tripped |
 | [URIOfTheProduct](#urioftheproduct) | `sourceId:dpp:uriOfTheProduct` (string) + `dpp:uriOfTheProduct` (asset) | Lossless | Source id is primary |
 | [ManufacturerName](#manufacturername) | `dpp:manufacturerName` (string) | Lossy | Primary language only |
-| [ManufacturerProductDesignation](#manufacturerproductdesignation) | `dpp:manufacturerProductDesignation` (string) | Lossy | Optional |
+| [ManufacturerProductDesignation](#manufacturerproductdesignation) | `dpp:manufacturerProductDesignation` (string) | Lossy | Mandatory (1) |
 | [ContactInformation](#contactinformation) | `dpp:contact:*` attrs or child prim | Partial | Complex nesting; see field section |
 | [ManufacturerProductRoot](#manufacturerproductrootfamilytype) | `dpp:manufacturerProductRoot` (string) | Lossy | Optional |
 | [ManufacturerProductFamily](#manufacturerproductrootfamilytype) | `dpp:manufacturerProductFamily` (string) | Lossy | Optional |
 | [ManufacturerProductType](#manufacturerproductrootfamilytype) | `dpp:manufacturerProductType` (string) | Lossy | Optional |
-| [OrderCodeOfManufacturer](#ordercodeofmanufacturer) | `sourceId:dpp:orderCode` (string) + `dpp:orderCode` (string) | Lossy | Optional; source id recommended |
+| [OrderCodeOfManufacturer](#ordercodeofmanufacturer) | `sourceId:dpp:orderCode` (string) + `dpp:orderCode` (string) | Lossy | Mandatory (1); source id recommended |
 | [ProductArticleNumberOfManufacturer](#productarticlenumberofmanufacturer) | `sourceId:dpp:articleNumber` (string) + `dpp:articleNumber` (string) | Lossy | Optional; source id recommended |
 | [SerialNumber](#serialnumber) | `dpp:serialNumber` (string) | Lossless | Optional |
-| [BatchNumber](#batchnumber) | `dpp:batchNumber` (string) | Lossless | Optional |
-| [ProductCountryOfOrigin](#productcountryoforigin) | `dpp:productCountryOfOrigin` (string) | Lossless | Optional; ISO 3166-1 |
+| [BatchNumber](#batchnumber) | `dpp:batchNumber` (string) | Lossless | Optional; not in v3.0 template |
+| [CountryOfOrigin](#countryoforigin) | `dpp:countryOfOrigin` (string) | Lossless | Optional; ISO 3166-1 |
 | [YearOfConstruction](#yearofconstruction) | `dpp:yearOfConstruction` (string) | Lossless | Optional; YYYY |
 | [DateOfManufacture](#dateofmanufacture) | `dpp:dateOfManufacture` (string) | Lossless | Optional; ISO 8601 |
 | [UniqueFacilityIdentifier](#uniquefacilityidentifier) | `dpp:uniqueFacilityIdentifier` (string) | Lossless | Optional; v3.0 addition |
@@ -155,10 +155,10 @@ class "DppNameplateAPI" (
         doc = "Product family designation. (AAS: ManufacturerProductFamily, MLP, optional)"
     )
     string dpp:manufacturerProductType (
-        doc = "Product type or variant designation. (AAS: ManufacturerProductType, MLP, optional)"
+        doc = "Product type or variant designation. (AAS: ManufacturerProductType, xs:string Property, optional)"
     )
     string dpp:orderCode (
-        doc = "Order code / catalog number. (AAS: OrderCodeOfManufacturer, MLP, optional) Also written to sourceId:dpp:orderCode."
+        doc = "Order code / catalog number. (AAS: OrderCodeOfManufacturer, xs:string Property, mandatory) Also written to sourceId:dpp:orderCode."
     )
     string dpp:articleNumber (
         doc = "Product article number. (AAS: ProductArticleNumberOfManufacturer, MLP, optional) Also written to sourceId:dpp:articleNumber."
@@ -173,8 +173,8 @@ class "DppNameplateAPI" (
     )
 
     # ── Origin, dates, and facility ───────────────────────────────────────────
-    string dpp:productCountryOfOrigin (
-        doc = "ISO 3166-1 alpha-2 country of origin. (AAS: ProductCountryOfOrigin, xs:string, optional)"
+    string dpp:countryOfOrigin (
+        doc = "ISO 3166-1 alpha-2 country of origin. (AAS: CountryOfOrigin, xs:string, optional)"
     )
     string dpp:yearOfConstruction (
         doc = "Year of manufacture YYYY. (AAS: YearOfConstruction, xs:string, optional)"
@@ -191,13 +191,13 @@ class "DppNameplateAPI" (
 
     # ── Version information ────────────────────────────────────────────────────
     string dpp:hardwareVersion (
-        doc = "Hardware revision string. (AAS: HardwareVersion, MLP, optional)"
+        doc = "Hardware revision string. (AAS: HardwareVersion, xs:string Property, optional)"
     )
     string dpp:firmwareVersion (
-        doc = "Firmware revision string. (AAS: FirmwareVersion, MLP, optional)"
+        doc = "Firmware revision string. (AAS: FirmwareVersion, xs:string Property, optional)"
     )
     string dpp:softwareVersion (
-        doc = "Software revision string. (AAS: SoftwareVersion, MLP, optional)"
+        doc = "Software revision string. (AAS: SoftwareVersion, xs:string Property, optional)"
     )
 
     # ── Media ─────────────────────────────────────────────────────────────────
@@ -288,7 +288,7 @@ class "MarkingAPI" (
         doc = "Expiry date ISO 8601 YYYY-MM-DD. (AAS: ExpiryDate, optional)"
     )
     asset marking:file (
-        doc = "Conformity symbol image. (AAS: MarkingFile, File, optional)"
+        doc = "Conformity symbol image. (AAS: MarkingFile, File, mandatory)"
     )
     string[] marking:additionalText (
         doc = "Additional explanatory text. (AAS: MarkingAdditionalText, SML of xs:string, optional)"
@@ -374,7 +374,7 @@ def Xform "Pump_MusterAG_CM5_3" (
     string dpp:articleNumber                = "CM5-3-I-A-E-AVBE"
     string dpp:serialNumber                 = "SN-20240001"
     string dpp:batchNumber                  = "BL-2024-Q1-042"
-    string dpp:productCountryOfOrigin       = "DE"
+    string dpp:countryOfOrigin              = "DE"
     string dpp:yearOfConstruction           = "2024"
     string dpp:dateOfManufacture            = "2024-02-15"
     string dpp:uniqueFacilityIdentifier     = "GLN:4012345000016"
@@ -492,14 +492,14 @@ Legally valid manufacturer name. AAS type MLP; primary string to attribute, lang
 
 ### ManufacturerProductDesignation
 
-Short description or model name of the product. Optional (0..1). MLP — same encoding as `ManufacturerName`; language variants to `customData["dpp:manufacturerProductDesignation:i18n"]`.
+Short description or model name of the product. Mandatory (1). MLP — same encoding as `ManufacturerName`; language variants to `customData["dpp:manufacturerProductDesignation:i18n"]`.
 
 ##### Properties
 
 | | Name | AAS Type | USD Type | Notes |
 |---|---|---|---|---|
-| AAS | `ManufacturerProductDesignation` | MLP | — | Optional (0..1). semanticId: `0112/2///61987#ABA567#009` |
-| OpenUSD | `dpp:manufacturerProductDesignation` | — | `string` | Not authored if absent |
+| AAS | `ManufacturerProductDesignation` | MLP | — | Mandatory (1). semanticId: `0112/2///61987#ABA567#009` |
+| OpenUSD | `dpp:manufacturerProductDesignation` | — | `string` | Primary language value |
 
 #### Round-trip: Lossy (language variants); absent field handled correctly
 
@@ -585,7 +585,7 @@ def Xform "Pump_MusterAG_CM5_3" (prepend apiSchemas = ["DppNameplateAPI", "Indus
 
 ### ManufacturerProductRoot / ManufacturerProductFamily / ManufacturerProductType
 
-Three-level product classification hierarchy defined by the manufacturer. All are MLP (0..1). Same encoding pattern: primary string to attribute, language variants to `customData["dpp:<field>:i18n"]`.
+Three-level product classification hierarchy defined by the manufacturer. All optional (0..1). `ManufacturerProductRoot` and `ManufacturerProductFamily` are MLP; `ManufacturerProductType` is a plain `xs:string` Property (not MLP) in the v3.0 template. MLP fields follow the same encoding pattern as `ManufacturerName`; language variants to `customData["dpp:<field>:i18n"]`. No i18n customData entry is needed for `ManufacturerProductType`.
 
 | AAS idShort | semanticId | USD Attribute |
 |---|---|---|
@@ -599,7 +599,7 @@ Three-level product classification hierarchy defined by the manufacturer. All ar
 
 ### OrderCodeOfManufacturer
 
-The manufacturer's order code or catalog number. Although MLP-typed (it can be localized), the primary value is typically a cross-system catalog key appearing in PLM and procurement systems. Stored as both a source id entry and a schema attribute.
+The manufacturer's order code or catalog number. Mandatory (1). `xs:string` Property (not MLP) in the v3.0 template. The value is typically a cross-system catalog key appearing in PLM and procurement systems. Stored as both a source id entry and a schema attribute.
 
 #### AAS → USD
 
@@ -610,13 +610,13 @@ The manufacturer's order code or catalog number. Although MLP-typed (it can be l
 
 | | Name | AAS Type | USD Type | Notes |
 |---|---|---|---|---|
-| AAS | `OrderCodeOfManufacturer` | MLP | — | Optional (0..1). semanticId: `0112/2///61987#ABA950#009` |
+| AAS | `OrderCodeOfManufacturer` | `xs:string` | — | Mandatory (1). semanticId: `0112/2///61987#ABA950#009` |
 | OpenUSD (primary) | `sourceId:dpp:orderCode` | — | `string` | Verbatim cross-system key |
-| OpenUSD (schema attr) | `dpp:orderCode` | — | `string` | Primary language value |
+| OpenUSD (schema attr) | `dpp:orderCode` | — | `string` | Value |
 
 #### USD → AAS
 
-Read `dpp:orderCode`; fallback `sourceId:dpp:orderCode`. Reconstruct as MLP. If `customData["dpp:orderCode:i18n"]` present, reconstruct full MLP.
+Read `dpp:orderCode`; fallback `sourceId:dpp:orderCode`. Reconstruct as `xs:string` Property.
 
 #### Round-trip: Lossy (language variants); value lossless via source id
 
@@ -657,6 +657,10 @@ Per-instance serial number. Optional in IDTA 02006-3-0 (0..1); mandatory in the 
 
 Manufacturing batch or lot number. Optional (0..1).
 
+```{note}
+`BatchNumber` is not present in the IDTA 02006-3-0 v3.0 JSON template. It may be used as a pipeline extension or may appear in future revisions. The mapping below is included for completeness; verify against the official specification before depending on it.
+```
+
 ##### Properties
 
 | | Name | AAS Type | USD Type | Notes |
@@ -668,7 +672,7 @@ Manufacturing batch or lot number. Optional (0..1).
 
 ---
 
-### ProductCountryOfOrigin
+### CountryOfOrigin
 
 ISO 3166-1 alpha-2 country code for the country where the product was manufactured. Optional (0..1).
 
@@ -676,8 +680,8 @@ ISO 3166-1 alpha-2 country code for the country where the product was manufactur
 
 | | Name | AAS Type | USD Type | Notes |
 |---|---|---|---|---|
-| AAS | `ProductCountryOfOrigin` | `xs:string` | — | Optional (0..1) |
-| OpenUSD | `dpp:productCountryOfOrigin` | — | `string` | Two-letter code, e.g. `"DE"` |
+| AAS | `CountryOfOrigin` | `xs:string` | — | Optional (0..1) |
+| OpenUSD | `dpp:countryOfOrigin` | — | `string` | Two-letter code, e.g. `"DE"` |
 
 #### Round-trip: Lossless
 
@@ -730,7 +734,7 @@ Unique identifier for the manufacturing facility. Introduced in IDTA 02006-3-0 v
 
 ### HardwareVersion / FirmwareVersion / SoftwareVersion
 
-Hardware, firmware, and software revision strings. All MLP (0..1). In practice these are language-neutral version designations; language variants follow the `customData["dpp:<field>:i18n"]` convention.
+Hardware, firmware, and software revision strings. All `xs:string` Property (0..1) in the v3.0 template — not MLP. In practice version designations are language-neutral; no i18n customData is needed for these fields.
 
 | AAS idShort | USD Attribute |
 |---|---|
@@ -738,7 +742,7 @@ Hardware, firmware, and software revision strings. All MLP (0..1). In practice t
 | `FirmwareVersion` | `dpp:firmwareVersion` |
 | `SoftwareVersion` | `dpp:softwareVersion` |
 
-#### Round-trip: Lossy (language variants; practically lossless for version strings)
+#### Round-trip: Lossless
 
 ---
 
@@ -782,14 +786,14 @@ Each `Markings__NN__` SMC → `Marking_NN` (zero-padded index preserves SML orde
 
 ##### Properties (per Marking)
 
-| AAS | USD Attribute | AAS Type | USD Type |
-|---|---|---|---|
-| MarkingName | `marking:name` | `xs:string` | `token` (IRDI preferred) |
-| DesignationOfCertificateOrApproval | `sourceId:dpp:marking:certificationId` | `xs:string` | `string` |
-| IssueDate | `marking:issueDate` | `xs:date` | `string` ISO 8601 |
-| ExpiryDate | `marking:expiryDate` | `xs:date` | `string` ISO 8601 |
-| MarkingFile | `marking:file` | `File` | `asset` |
-| MarkingAdditionalText | `marking:additionalText` | SML of `xs:string` | `string[]` |
+| AAS | USD Attribute | AAS Type | USD Type | Notes |
+|---|---|---|---|---|
+| MarkingName | `marking:name` | `xs:string` | `token` (IRDI preferred) | Mandatory (1) |
+| DesignationOfCertificateOrApproval | `sourceId:dpp:marking:certificationId` | `xs:string` | `string` | Optional (0..1) |
+| IssueDate | `marking:issueDate` | `xs:date` | `string` ISO 8601 | Optional (0..1) |
+| ExpiryDate | `marking:expiryDate` | `xs:date` | `string` ISO 8601 | Optional (0..1) |
+| MarkingFile | `marking:file` | `File` | `asset` | Mandatory (1) |
+| MarkingAdditionalText | `marking:additionalText` | SML of `xs:string` | `string[]` | Optional (0..*) |
 
 `sourceId:dpp:marking:certificationId` is the sole encoding for the certificate or approval number. Using a source id rather than a schema attribute avoids duplication and enables cross-system linking to approval databases (ATEX, IECEx, etc.) without requiring `MarkingAPI` schema knowledge. Omitted when no certificate designation is present.
 
@@ -934,7 +938,7 @@ No Digital Nameplate SubmodelElement is relationship-typed. Drop on export.
 | ProductArticleNumberOfManufacturer (value) | Both | Lossless | Via `sourceId:dpp:articleNumber` |
 | SerialNumber | Both | Lossless | — |
 | BatchNumber | Both | Lossless | — |
-| ProductCountryOfOrigin | Both | Lossless | — |
+| CountryOfOrigin | Both | Lossless | — |
 | YearOfConstruction | Both | Lossless | Must be YYYY |
 | DateOfManufacture | Both | Lossless | Must be valid ISO 8601 |
 | UniqueFacilityIdentifier | Both | Lossless | — |
@@ -1009,13 +1013,13 @@ assetInfo = {
 |---|---|---|---|
 | `dpp:uriOfTheProduct` | ✓ mandatory | ✓ mandatory | — |
 | `dpp:manufacturerName` | ✓ mandatory | ✓ mandatory | — |
-| `dpp:manufacturerProductDesignation` | ✓ optional | — | Industrial only in practice |
+| `dpp:manufacturerProductDesignation` | ✓ mandatory | — | — |
 | `dpp:manufacturerProductRoot/Family/Type` | ✓ optional | — | Industrial only |
-| `dpp:orderCode` | ✓ optional | — | Industrial only |
+| `dpp:orderCode` | ✓ mandatory | — | — |
 | `dpp:articleNumber` | ✓ optional | — | Industrial only |
 | `dpp:serialNumber` | ✓ optional | ✓ mandatory | Cardinality differs by domain |
-| `dpp:batchNumber` | ✓ optional | — | Industrial only |
-| `dpp:productCountryOfOrigin` | ✓ optional | — | Industrial only |
+| `dpp:batchNumber` | ✓ optional | — | Not in v3.0 template; pipeline extension |
+| `dpp:countryOfOrigin` | ✓ optional | — | — |
 | `dpp:yearOfConstruction` | ✓ optional | — | Industrial only |
 | `dpp:dateOfManufacture` | ✓ optional | ✓ mandatory | — |
 | `dpp:dateOfPuttingIntoService` | — | ✓ optional | Battery passport specific |

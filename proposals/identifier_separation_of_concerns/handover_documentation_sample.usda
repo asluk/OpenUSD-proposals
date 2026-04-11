@@ -1,0 +1,455 @@
+#usda 1.0
+(
+    doc = """
+    Sample USDA: Handover Documentation (IDTA 02004-2-0) encoded in OpenUSD.
+
+    Contains:
+      - Illustrative schema class definitions for HandoverDocumentationAPI,
+        DocumentAPI, DocumentVersionAPI, DocumentIdAPI, and
+        DocumentClassificationAPI.
+      - A sample product prim (Pump_MusterAG_CM5_3) showing a Handover
+        Documentation encoding with two documents:
+          Document_00: EU Declaration of Conformity (cross-referenced from the
+                       DPP Nameplate via sourceId:dpp:euDeclarationOfConformityIds)
+          Document_01: Operating Manual — two language versions (EN + DE),
+                       with the German version linked as a translation.
+
+    NOTE: The class definitions below are illustrative. In a deployed pipeline
+    the schemas would be registered via plugInfo.json and a schema plugin,
+    not inlined in a stage file. The sourceId:doc:* custom attributes follow
+    the Identifier Separation of Concerns proposal (see README.md).
+    """
+    defaultPrim = "Pump_MusterAG_CM5_3"
+    upAxis = "Y"
+    metersPerUnit = 0.01
+)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Schema class definitions (illustrative)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Handover Documentation submodel marker ────────────────────────────────────
+class "HandoverDocumentationAPI" (
+    inherits = </APISchemaBase>
+    doc = """Signals IDTA 02004-2-0 Handover Documentation content.
+    Applied to a product prim alongside DppNameplateAPI / IndustrialEquipmentAPI,
+    or to a standalone HandoverDocumentation scope prim in a documentation-only
+    layer. Document entries live in a Documents/ child scope prim containing
+    Document_NN children with DocumentAPI applied.
+    Submodel semanticId: 0173-1#01-AHF578#003."""
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+) {
+    # No direct attributes.
+    # This schema is a discoverer: tooling can find all prims carrying
+    # handover documentation by checking for HandoverDocumentationAPI.
+}
+
+# ── Per-document entry ────────────────────────────────────────────────────────
+class "DocumentAPI" (
+    inherits = </APISchemaBase>
+    doc = """Applied to Document_NN child scope prims under the Documents/ scope.
+    Each instance corresponds to one Document SMC entry in the IDTA 02004-2-0
+    Documents SML. Content lives in DocumentIds/, DocumentClassifications/, and
+    DocumentVersions/ child scope prims.
+    The original AAS idShort (e.g. 'EUDeclarationOfConformity') is preserved
+    in customData['aas:idShort']."""
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+) {
+    rel doc:documentedEntities (
+        doc = """USD relationships to prims this document covers (intra-stage).
+        AAS: DocumentedEntities (SML[ReferenceElement]).
+        For cross-stage or AAS external refs use
+        sourceId:doc:documentedEntityIds (string[])."""
+    )
+}
+
+# ── Per-document-version entry ────────────────────────────────────────────────
+class "DocumentVersionAPI" (
+    inherits = </APISchemaBase>
+    doc = """Applied to DocumentVersion_NN child scope prims under
+    Document_NN/DocumentVersions/. Encodes a single DocumentVersion SMC from
+    the DocumentVersions SML."""
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+) {
+    string[] doc:languages (
+        doc = """BCP 47 language codes for this document version,
+        e.g. ['en', 'de']. (AAS: Language, SML of xs:string Property, mandatory)"""
+    )
+    string doc:version (
+        doc = """Version designation string, e.g. 'V1.2'.
+        (AAS: Version, xs:string, mandatory)"""
+    )
+    string doc:title (
+        doc = """Document title in the primary language.
+        Language variants in customData['doc:title:i18n'].
+        (AAS: Title, MLP, mandatory)"""
+    )
+    string doc:subtitle (
+        doc = """Document subtitle in the primary language.
+        Not authored if absent. (AAS: Subtitle, MLP, optional)"""
+    )
+    string doc:description (
+        doc = """Short description or abstract in the primary language.
+        Language variants in customData['doc:description:i18n'].
+        (AAS: Description, MLP, mandatory)"""
+    )
+    string doc:keywords (
+        doc = """Keywords string in the primary language (space- or comma-separated).
+        Not authored if absent. (AAS: KeyWords, MLP, optional)"""
+    )
+    token doc:status (
+        allowedTokens = ["Released", "InReview", "Withdrawn"]
+        doc = """Lifecycle status of this document version.
+        (AAS: StatusValue, xs:string, mandatory)"""
+    )
+    string doc:statusSetDate (
+        doc = """Date the current status was set, ISO 8601 YYYY-MM-DD.
+        (AAS: StatusSetDate, xs:date, mandatory)"""
+    )
+    string doc:organizationShortName (
+        doc = """Short name of the issuing organisation.
+        (AAS: OrganizationShortName, xs:string, mandatory)"""
+    )
+    string doc:organizationOfficialName (
+        doc = """Official legal name of the issuing organisation.
+        (AAS: OrganizationOfficialName, xs:string, mandatory)"""
+    )
+    asset[] doc:digitalFiles (
+        doc = """File assets for this document version. Multiple entries for
+        multi-format delivery (e.g. PDF + XML).
+        (AAS: DigitalFiles, SML of File, mandatory)"""
+    )
+    asset doc:previewFile (
+        doc = """Preview or thumbnail image of the document.
+        Not authored if absent. (AAS: PreviewFile, File, optional)"""
+    )
+    rel doc:refersToEntities (
+        doc = """Related document version prims (intra-stage).
+        AAS: RefersToEntities (SML[ReferenceElement]).
+        For cross-stage use sourceId:doc:refersToEntityIds (string[])."""
+    )
+    rel doc:basedOnReferences (
+        doc = """Document versions this version is derived from (intra-stage).
+        AAS: BasedOnReferences (SML[ReferenceElement]).
+        For cross-stage use sourceId:doc:basedOnReferenceIds (string[])."""
+    )
+    rel doc:translationOfEntities (
+        doc = """Source-language document versions this version translates (intra-stage).
+        AAS: TranslationOfEntities (SML[ReferenceElement]).
+        For cross-stage use sourceId:doc:translationOfEntityIds (string[])."""
+    )
+}
+
+# ── Per-document-identifier entry ─────────────────────────────────────────────
+class "DocumentIdAPI" (
+    inherits = </APISchemaBase>
+    doc = """Applied to DocumentId_NN child scope prims under
+    Document_NN/DocumentIds/. Each instance corresponds to one SMC entry in
+    the DocumentIds SML. The entry where docId:isPrimary = true is the
+    canonical cross-system document identifier."""
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+) {
+    string docId:documentDomainId (
+        doc = """The domain or system that issued this identifier,
+        e.g. 'https://www.example.com/aas/'.
+        (AAS: DocumentDomainId, xs:string, mandatory)"""
+    )
+    string docId:documentIdentifier (
+        doc = """The document identifier value within the domain.
+        Must survive cross-system transit verbatim.
+        (AAS: DocumentIdentifier, xs:string, mandatory)"""
+    )
+    bool docId:isPrimary (
+        doc = """True if this is the primary/canonical identifier for the document.
+        Only one entry per Document should have isPrimary = true.
+        (AAS: DocumentIsPrimary, xs:boolean, optional)"""
+    )
+}
+
+# ── Per-classification entry ──────────────────────────────────────────────────
+class "DocumentClassificationAPI" (
+    inherits = </APISchemaBase>
+    doc = """Applied to DocumentClassification_NN child scope prims under
+    Document_NN/DocumentClassifications/. Each instance corresponds to one SMC
+    entry in the DocumentClassifications SML. A document may carry
+    classifications in multiple systems."""
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+) {
+    string docClass:classificationSystem (
+        doc = """Classification system name, e.g. 'VDI2770:2020', 'IEC61355-1'.
+        (AAS: ClassificationSystem, xs:string, mandatory)"""
+    )
+    string docClass:classId (
+        doc = """Class code within the system, e.g. '06-01'.
+        (AAS: ClassId, xs:string, mandatory)"""
+    )
+    string docClass:className (
+        doc = """Human-readable class name, primary language.
+        Language variants in customData['docClass:className:i18n'].
+        (AAS: ClassName, MLP, mandatory)"""
+    )
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Sample instance
+#  Source: fictional centrifugal pump (Muster AG CM5-3), illustrates a complete
+#  Handover Documentation encoding co-located with a product prim.
+#
+#  Document_00  EU Declaration of Conformity
+#               → cross-referenced by the DPP battery passport via
+#                 sourceId:dpp:euDeclarationOfConformityIds (see dpp_sample.usda)
+#
+#  Document_01  Operating Manual — two language versions:
+#               DocumentVersion_00  English edition
+#               DocumentVersion_01  German edition (translation of EN)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def Xform "Pump_MusterAG_CM5_3" (
+    kind = "component"
+    prepend apiSchemas = ["HandoverDocumentationAPI"]
+
+    customData = {
+        # AAS Submodel semantic ID
+        string "aas:submodelSemanticId" = "0173-1#01-AHF578#003"
+    }
+)
+{
+    # ── Documents ─────────────────────────────────────────────────────────────
+
+    def Scope "Documents"
+    {
+        # ── Document_00: EU Declaration of Conformity ─────────────────────────
+        # The DocumentIdentifier "urn:example:doc:eu-conformity-2024-001" matches
+        # the value in sourceId:dpp:euDeclarationOfConformityIds in dpp_sample.usda,
+        # enabling cross-document cross-referencing between the DPP Nameplate and
+        # this Handover Documentation submodel on the same stage.
+
+        def Scope "Document_00" (
+            prepend apiSchemas = ["DocumentAPI"]
+            customData = {
+                string "aas:idShort" = "EUDeclarationOfConformity"
+            }
+        )
+        {
+            # Convenience projection of primary DocumentId onto the Document prim.
+            # Authoritative values are in DocumentIds/DocumentId_00 below.
+            custom string sourceId:doc:documentId       = "urn:example:doc:eu-conformity-2024-001"
+            custom string sourceId:doc:documentDomainId = "https://products.muster-ag.de/docs/"
+
+            # This document covers the product prim itself.
+            rel doc:documentedEntities = </Pump_MusterAG_CM5_3>
+
+            def Scope "DocumentIds"
+            {
+                def Scope "DocumentId_00" (
+                    prepend apiSchemas = ["DocumentIdAPI"]
+                )
+                {
+                    # Primary identifier — matches sourceId:dpp:euDeclarationOfConformityIds
+                    string docId:documentDomainId   = "https://products.muster-ag.de/docs/"
+                    string docId:documentIdentifier = "urn:example:doc:eu-conformity-2024-001"
+                    bool   docId:isPrimary          = true
+                }
+
+                def Scope "DocumentId_01" (
+                    prepend apiSchemas = ["DocumentIdAPI"]
+                )
+                {
+                    # Notified body document reference number
+                    string docId:documentDomainId   = "VDI2770"
+                    string docId:documentIdentifier = "MUSTER-AG_DOC_CM5-3_2024_EN"
+                    # isPrimary omitted (not the primary identifier)
+                }
+            }
+
+            def Scope "DocumentClassifications"
+            {
+                def Scope "DocumentClassification_00" (
+                    prepend apiSchemas = ["DocumentClassificationAPI"]
+                    customData = {
+                        dictionary "docClass:className:i18n" = {
+                            string "de" = "Zertifikate und Konformitätserklärungen"
+                            string "en" = "Certificates and declarations of conformity"
+                        }
+                    }
+                )
+                {
+                    string docClass:classificationSystem = "VDI2770:2020"
+                    string docClass:classId              = "06-01"
+                    string docClass:className            = "Certificates and declarations of conformity"
+                }
+            }
+
+            def Scope "DocumentVersions"
+            {
+                def Scope "DocumentVersion_00" (
+                    prepend apiSchemas = ["DocumentVersionAPI"]
+                    customData = {
+                        # MIME type for round-trip fidelity (no USD asset type equivalent)
+                        string "doc:digitalFilesMimeTypes[0]" = "application/pdf"
+
+                        dictionary "doc:title:i18n" = {
+                            string "en" = "EU Declaration of Conformity — CM5-3 Centrifugal Pump"
+                        }
+                        dictionary "doc:description:i18n" = {
+                            string "en" = "EU Declaration of Conformity per Machinery Directive 2006/42/EC for the CM5-3 centrifugal pump series."
+                        }
+                    }
+                )
+                {
+                    string[] doc:languages          = ["en"]
+                    string   doc:version            = "V1.0"
+                    string   doc:title              = "EU Declaration of Conformity — CM5-3 Centrifugal Pump"
+                    string   doc:description        = "EU Declaration of Conformity per Machinery Directive 2006/42/EC for the CM5-3 centrifugal pump series."
+                    token    doc:status             = "Released"
+                    string   doc:statusSetDate      = "2024-03-01"
+                    string   doc:organizationShortName    = "Muster AG"
+                    string   doc:organizationOfficialName = "Muster Aktiengesellschaft"
+                    asset[]  doc:digitalFiles       = [@./docs/eu_declaration_of_conformity_cm5-3_en.pdf@]
+                    asset    doc:previewFile        = @./docs/previews/eu_doc_preview.png@
+                }
+            }
+        }
+
+        # ── Document_01: Operating Manual ─────────────────────────────────────
+        # Two language versions: EN (primary) and DE (translation of EN).
+        # DocumentVersion_01 links back to DocumentVersion_00 via
+        # rel doc:translationOfEntities to make the translation relationship
+        # explicit within the stage.
+
+        def Scope "Document_01" (
+            prepend apiSchemas = ["DocumentAPI"]
+            customData = {
+                string "aas:idShort" = "OperatingManual"
+            }
+        )
+        {
+            # Convenience projection from primary DocumentId (DocumentId_00 below)
+            custom string sourceId:doc:documentId       = "urn:example:doc:operating-manual-cm5-3-2024"
+            custom string sourceId:doc:documentDomainId = "https://products.muster-ag.de/docs/"
+
+            rel doc:documentedEntities = </Pump_MusterAG_CM5_3>
+
+            def Scope "DocumentIds"
+            {
+                def Scope "DocumentId_00" (
+                    prepend apiSchemas = ["DocumentIdAPI"]
+                )
+                {
+                    string docId:documentDomainId   = "https://products.muster-ag.de/docs/"
+                    string docId:documentIdentifier = "urn:example:doc:operating-manual-cm5-3-2024"
+                    bool   docId:isPrimary          = true
+                }
+
+                def Scope "DocumentId_01" (
+                    prepend apiSchemas = ["DocumentIdAPI"]
+                )
+                {
+                    # ERP document number
+                    string docId:documentDomainId   = "ERP:MUSTER-AG"
+                    string docId:documentIdentifier = "DOC-OPM-CM53-2024"
+                }
+            }
+
+            def Scope "DocumentClassifications"
+            {
+                def Scope "DocumentClassification_00" (
+                    prepend apiSchemas = ["DocumentClassificationAPI"]
+                    customData = {
+                        dictionary "docClass:className:i18n" = {
+                            string "de" = "Betriebsanleitung"
+                            string "en" = "Operating manual"
+                        }
+                    }
+                )
+                {
+                    string docClass:classificationSystem = "VDI2770:2020"
+                    string docClass:classId              = "03-02"
+                    string docClass:className            = "Operating manual"
+                }
+            }
+
+            def Scope "DocumentVersions"
+            {
+                # ── Version 00: English edition ───────────────────────────────
+                def Scope "DocumentVersion_00" (
+                    prepend apiSchemas = ["DocumentVersionAPI"]
+                    customData = {
+                        string "doc:digitalFilesMimeTypes[0]" = "application/pdf"
+
+                        dictionary "doc:title:i18n" = {
+                            string "en" = "Operating Manual — CM5-3 Centrifugal Pump"
+                        }
+                        dictionary "doc:description:i18n" = {
+                            string "en" = "Installation, commissioning, operation, and maintenance instructions for the CM5-3 series centrifugal pump."
+                        }
+                        dictionary "doc:keywords:i18n" = {
+                            string "en" = "centrifugal pump installation commissioning maintenance"
+                        }
+                    }
+                )
+                {
+                    string[] doc:languages          = ["en"]
+                    string   doc:version            = "V2.1"
+                    string   doc:title              = "Operating Manual — CM5-3 Centrifugal Pump"
+                    string   doc:subtitle           = "Installation, Commissioning, Operation, Maintenance"
+                    string   doc:description        = "Installation, commissioning, operation, and maintenance instructions for the CM5-3 series centrifugal pump."
+                    string   doc:keywords           = "centrifugal pump installation commissioning maintenance"
+                    token    doc:status             = "Released"
+                    string   doc:statusSetDate      = "2024-06-15"
+                    string   doc:organizationShortName    = "Muster AG"
+                    string   doc:organizationOfficialName = "Muster Aktiengesellschaft"
+                    asset[]  doc:digitalFiles       = [@./docs/operating_manual_cm5-3_en.pdf@]
+                    asset    doc:previewFile        = @./docs/previews/operating_manual_cover_en.png@
+                }
+
+                # ── Version 01: German edition (translation of EN) ─────────────
+                def Scope "DocumentVersion_01" (
+                    prepend apiSchemas = ["DocumentVersionAPI"]
+                    customData = {
+                        string "doc:digitalFilesMimeTypes[0]" = "application/pdf"
+
+                        dictionary "doc:title:i18n" = {
+                            string "de" = "Betriebsanleitung — Kreiselpumpe CM5-3"
+                        }
+                        dictionary "doc:description:i18n" = {
+                            string "de" = "Montage-, Inbetriebnahme-, Betriebs- und Wartungsanleitung für die Kreiselpumpe der Baureihe CM5-3."
+                        }
+                        dictionary "doc:keywords:i18n" = {
+                            string "de" = "Kreiselpumpe Montage Inbetriebnahme Wartung"
+                        }
+                    }
+                )
+                {
+                    string[] doc:languages          = ["de"]
+                    string   doc:version            = "V2.1"
+                    string   doc:title              = "Betriebsanleitung — Kreiselpumpe CM5-3"
+                    string   doc:subtitle           = "Montage, Inbetriebnahme, Betrieb, Wartung"
+                    string   doc:description        = "Montage-, Inbetriebnahme-, Betriebs- und Wartungsanleitung für die Kreiselpumpe der Baureihe CM5-3."
+                    string   doc:keywords           = "Kreiselpumpe Montage Inbetriebnahme Wartung"
+                    token    doc:status             = "Released"
+                    string   doc:statusSetDate      = "2024-06-15"
+                    string   doc:organizationShortName    = "Muster AG"
+                    string   doc:organizationOfficialName = "Muster Aktiengesellschaft"
+                    asset[]  doc:digitalFiles       = [@./docs/operating_manual_cm5-3_de.pdf@]
+                    asset    doc:previewFile        = @./docs/previews/operating_manual_cover_de.png@
+
+                    # This version is a translation of the English DocumentVersion_00.
+                    rel doc:translationOfEntities = </Pump_MusterAG_CM5_3/Documents/Document_01/DocumentVersions/DocumentVersion_00>
+                }
+            }
+        }
+    }
+}
