@@ -8,13 +8,14 @@ structural model. It is intended for anyone — human or AI — drafting
 future OpenUSD proposals who wants the organizational clarity of
 PR #105 without producing prose that reads like a copy.
 
-### Audience Constraints
+### Reading Experience
 
-Several TAC reviewers are AI-cautious. They will scrutinize documents
-that feel templated, repetitive across proposals, or that pattern-match
-to LLM output. The goal is a document that feels *familiar* in
-organization but *fresh* in voice. As Aaron put it: "the reading
-experience should feel familiar but not repetitive."
+TAC reviews a high volume of proposals. This guide aims to make that
+job easier — proposals that follow a consistent structure are faster
+to evaluate, while varied prose keeps each one engaging on its own
+terms. The goal is a document that feels *familiar* in organization
+but *fresh* in voice: "the reading experience should feel familiar
+but not repetitive."
 
 ---
 
