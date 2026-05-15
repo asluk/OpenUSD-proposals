@@ -1,0 +1,525 @@
+#usda 1.0
+(
+    doc = """
+    Sample USDA: IDTA 02006-3-0 Digital Nameplate for Industrial Equipment encoded in OpenUSD.
+
+    Contains:
+      - Illustrative schema class definitions for DppNameplateAPI,
+        IndustrialEquipmentAPI, MarkingAPI, and ExplosionSafetyAPI.
+      - A sample industrial equipment prim (Pump_MusterAG_CM5_3) showing a
+        complete Digital Nameplate encoding, including:
+          * source identifier entries (sourceId:dpp:*) per the Identifier
+            Separation of Concerns proposal
+          * full contact information (flat Option 1 encoding)
+          * markings with an ATEX explosion safety entry
+          * AssetSpecificProperties with guideline-specific technical data
+
+    NOTE: The class definitions below are illustrative. In a deployed pipeline
+    the schemas would be registered via plugInfo.json and a schema plugin,
+    not inlined in a stage file. The sourceId:dpp:* custom attributes follow
+    the Identifier Separation of Concerns proposal (see README.md).
+
+    References:
+      IDTA 02006-3-0  Digital Nameplate for Industrial Equipment (December 2023)
+      IDTA 02002-1-0  Contact Information SMT
+      digital_nameplate_openusd_bidirectional_mapping.md  — bidirectional mapping
+    """
+    defaultPrim = "Pump_MusterAG_CM5_3"
+    upAxis = "Y"
+    metersPerUnit = 0.01
+)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Schema class definitions (illustrative)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Full IDTA 02006-3-0 Digital Nameplate base ────────────────────────────────
+class "DppNameplateAPI" (
+    inherits = </APISchemaBase>
+    doc = """Full IDTA 02006-3-0 Digital Nameplate base schema.
+    Applicable to any product with a digital nameplate or digital product passport.
+    For battery passport workflows apply together with BatteryNameplateAPI.
+    For full industrial equipment workflows apply together with IndustrialEquipmentAPI.
+    See digital_nameplate_openusd_bidirectional_mapping.md for per-field documentation."""
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+) {
+    # ── Mandatory identification ───────────────────────────────────────────────
+    asset dpp:uriOfTheProduct (
+        doc = """Globally unique URI for this product / product passport instance.
+        (AAS: URIOfTheProduct, xs:anyURI, mandatory)
+        Cross-system identifier also written to sourceId:dpp:uriOfTheProduct."""
+    )
+    string dpp:manufacturerName (
+        doc = """Legally valid name of the manufacturer.
+        (AAS: ManufacturerName, MLP, mandatory)
+        Primary language value only; language variants in customData."""
+    )
+
+    # ── Optional product classification ───────────────────────────────────────
+    string dpp:manufacturerProductDesignation (
+        doc = """Short description or model name of the product.
+        (AAS: ManufacturerProductDesignation, MLP, optional)"""
+    )
+    string dpp:manufacturerProductRoot (
+        doc = """Highest-level product grouping defined by the manufacturer.
+        (AAS: ManufacturerProductRoot, MLP, optional)"""
+    )
+    string dpp:manufacturerProductFamily (
+        doc = """Product family designation.
+        (AAS: ManufacturerProductFamily, MLP, optional)"""
+    )
+    string dpp:manufacturerProductType (
+        doc = """Product type or variant designation.
+        (AAS: ManufacturerProductType, MLP, optional)"""
+    )
+    string dpp:orderCode (
+        doc = """Manufacturer order code / catalog number.
+        (AAS: OrderCodeOfManufacturer, MLP, optional)
+        Cross-system catalog key also written to sourceId:dpp:orderCode."""
+    )
+    string dpp:articleNumber (
+        doc = """Manufacturer product article number.
+        (AAS: ProductArticleNumberOfManufacturer, MLP, optional)
+        PLM/ERP type-level key also written to sourceId:dpp:articleNumber."""
+    )
+
+    # ── Instance and batch identifiers ────────────────────────────────────────
+    string dpp:serialNumber (
+        doc = """Per-instance serial number.
+        (AAS: SerialNumber, xs:string)"""
+    )
+    string dpp:batchNumber (
+        doc = """Manufacturing batch or lot number.
+        (AAS: BatchNumber, xs:string, optional)"""
+    )
+
+    # ── Origin, dates, and facility ───────────────────────────────────────────
+    string dpp:countryOfOrigin (
+        doc = """ISO 3166-1 alpha-2 country of origin.
+        (AAS: CountryOfOrigin, xs:string, optional)"""
+    )
+    string dpp:yearOfConstruction (
+        doc = """Year of manufacture in YYYY format.
+        (AAS: YearOfConstruction, xs:string, optional)"""
+    )
+    string dpp:dateOfManufacture (
+        doc = """Manufacturing date in ISO 8601 format YYYY-MM-DD.
+        (AAS: DateOfManufacture, xs:date)"""
+    )
+    string dpp:dateOfPuttingIntoService (
+        doc = """Service start date in ISO 8601 format YYYY-MM-DD. Optional.
+        (AAS: DateOfPuttingIntoService, xs:date, optional 0..1)"""
+    )
+    string dpp:uniqueFacilityIdentifier (
+        doc = """Unique identifier of the manufacturing facility.
+        (AAS: UniqueFacilityIdentifier, xs:string)
+        Location identifier — distinct from product URI and order codes."""
+    )
+
+    # ── Version information ────────────────────────────────────────────────────
+    string dpp:hardwareVersion (
+        doc = """Hardware revision string.
+        (AAS: HardwareVersion, MLP, optional)"""
+    )
+    string dpp:firmwareVersion (
+        doc = """Firmware revision string.
+        (AAS: FirmwareVersion, MLP, optional)"""
+    )
+    string dpp:softwareVersion (
+        doc = """Software revision string.
+        (AAS: SoftwareVersion, MLP, optional)"""
+    )
+
+    # ── Media ─────────────────────────────────────────────────────────────────
+    asset dpp:companyLogo (
+        doc = """Manufacturer company logo image.
+        (AAS: CompanyLogo, File, optional)"""
+    )
+
+    # ── Contact information — flat encoding (Option 1) ────────────────────────
+    # See mapping doc for Option 2 (child ContactInformation prim).
+    string dpp:contact:street (
+        doc = "(AAS: ContactInformation/Street, MLP)"
+    )
+    string dpp:contact:zipcode (
+        doc = "(AAS: ContactInformation/Zipcode, MLP)"
+    )
+    string dpp:contact:cityTown (
+        doc = "(AAS: ContactInformation/CityTown, MLP)"
+    )
+    string dpp:contact:stateCounty (
+        doc = "(AAS: ContactInformation/StateCounty, MLP)"
+    )
+    string dpp:contact:nationalCode (
+        doc = "(AAS: ContactInformation/NationalCode, MLP) ISO 3166-1 alpha-2"
+    )
+    string dpp:contact:poBox (
+        doc = "(AAS: ContactInformation/POBox, MLP)"
+    )
+    string dpp:contact:company (
+        doc = "(AAS: ContactInformation/Company, MLP)"
+    )
+    string dpp:contact:department (
+        doc = "(AAS: ContactInformation/Department, MLP)"
+    )
+    string dpp:contact:timeZone (
+        doc = "(AAS: ContactInformation/TimeZone, xs:string) IANA TZ identifier"
+    )
+    string dpp:contact:phone (
+        doc = "(AAS: ContactInformation/Phone/TelephoneNumber) Primary entry only"
+    )
+    string dpp:contact:fax (
+        doc = "(AAS: ContactInformation/Fax/FaxNumber) Primary entry only"
+    )
+    string dpp:contact:email (
+        doc = "(AAS: ContactInformation/Email/EmailAddress)"
+    )
+    asset dpp:contact:additionalLink (
+        doc = "(AAS: ContactInformation/IPCommunication/AddressOfAdditionalLink)"
+    )
+    string dpp:contact:nameOfContact (
+        doc = "(AAS: ContactInformation/NameOfContact, MLP)"
+    )
+    string dpp:contact:firstName (
+        doc = "(AAS: ContactInformation/FirstName, MLP)"
+    )
+    string dpp:contact:remarks (
+        doc = "(AAS: ContactInformation/AddressRemarks, MLP)"
+    )
+}
+
+# ── Industrial equipment extension ────────────────────────────────────────────
+class "IndustrialEquipmentAPI" (
+    inherits = </APISchemaBase>
+    doc = """Industrial equipment extension for DppNameplateAPI.
+    Signals full IDTA 02006-3-0 encoding including optional
+    Markings/ExplosionSafeties and AssetSpecificProperties child prim structures.
+    Apply together with DppNameplateAPI for industrial equipment.
+    Do NOT apply for battery passport prims (use BatteryNameplateAPI instead)."""
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+) {
+    # No top-level attributes. This schema acts as a discoverer: tooling can
+    # find all fully-encoded IDTA 02006-3-0 industrial nameplate prims by
+    # checking for IndustrialEquipmentAPI in the applied schemas list.
+}
+
+# ── Per-marking schema (shared with battery passport pipeline) ────────────────
+class "MarkingAPI" (
+    inherits = </APISchemaBase>
+    doc = """Applied schema for a single Marking entry within the Markings SML.
+    Apply to Marking_NN child Scope prims under a Markings scope prim.
+    Compatible with both DppNameplateAPI and BatteryNameplateAPI workflows."""
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+) {
+    token marking:name (
+        doc = """Marking type identifier.
+        (AAS: MarkingName, xs:string, mandatory)
+        Preferred value: IRDI from IEC CDD/ECLASS,
+        e.g. CE marking = 0173-1#07-DAA603#004."""
+    )
+    # DesignationOfCertificateOrApproval is encoded as a source identifier:
+    # sourceId:dpp:marking:certificationId on the Marking_NN prim instance.
+    string marking:issueDate (
+        doc = """Certificate issue date in ISO 8601 format YYYY-MM-DD.
+        (AAS: IssueDate, xs:date, optional)"""
+    )
+    string marking:expiryDate (
+        doc = """Certificate expiry date in ISO 8601 format YYYY-MM-DD.
+        (AAS: ExpiryDate, xs:date, optional)"""
+    )
+    asset marking:file (
+        doc = """Image file of the conformity symbol.
+        (AAS: MarkingFile, File, mandatory)"""
+    )
+    string[] marking:additionalText (
+        doc = """Additional explanatory text, e.g. notified body ID.
+        (AAS: MarkingAdditionalText, SML of xs:string, optional)"""
+    )
+}
+
+# ── Per-explosion-safety schema (industrial equipment only) ───────────────────
+class "ExplosionSafetyAPI" (
+    inherits = </APISchemaBase>
+    doc = """Applied schema for a single ExplosionSafety entry.
+    Apply to ExplosionSafety_NN child Scope prims nested under
+    Markings/Marking_NN/ExplosionSafeties/.
+    Encodes common fields of the IDTA 02006-3-0 ExplosionSafety SMC.
+    Deep sub-SMCs (AmbientConditions, ProcessConditions, ExternalElectricalCircuit)
+    require further child prims for full fidelity."""
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+) {
+    string explosionSafety:typeOfApproval (
+        doc = """Explosion protection approval type, e.g. ATEX, IECEx.
+        (AAS: TypeOfApproval, MLP, optional)"""
+    )
+    string explosionSafety:approvalAgency (
+        doc = """Testing or certification agency name.
+        (AAS: ApprovalAgencyTestingInstitute, MLP, optional)"""
+    )
+    string explosionSafety:typeOfProtection (
+        doc = """Explosion protection concept, e.g. Ex d IIB T4, Ex e, Ex ia.
+        (AAS: TypeOfProtection, MLP, optional)"""
+    )
+    string explosionSafety:ratedInsulationVoltage (
+        doc = """Rated insulation voltage with unit.
+        (AAS: RatedInsulationVoltage, MLP, optional)"""
+    )
+    asset explosionSafety:instructionControlDrawing (
+        doc = """Instruction or control drawing file.
+        (AAS: InstructionControlDrawing, File, optional)"""
+    )
+    string explosionSafety:specificConditionsForUse (
+        doc = """Conditions required for safe use.
+        (AAS: SpecificConditionsForUse, MLP, optional)"""
+    )
+    string explosionSafety:incompleteDevice (
+        doc = """Incomplete device indication per ATEX/IECEx.
+        (AAS: IncompleteDevice, MLP, optional)"""
+    )
+}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Sample Digital Nameplate instance
+#  Source: fictional centrifugal pump, illustrates a complete IDTA 02006-3-0
+#  encoding including source identifier entries, explosion safety marking,
+#  and asset-specific properties.
+# ══════════════════════════════════════════════════════════════════════════════
+
+def Xform "Pump_MusterAG_CM5_3" (
+    kind = "component"
+    prepend apiSchemas = ["DppNameplateAPI", "IndustrialEquipmentAPI"]
+
+    customData = {
+        # AAS Submodel semantic ID preserved for provenance
+        string "aas:submodelSemanticId" = "https://admin-shell.io/idta/nameplate/3/0"
+
+        # AAS field semantic IDs (selected)
+        string "aas:semanticId:uriOfTheProduct"              = "0112/2///61987#ABN590#002"
+        string "aas:semanticId:manufacturerName"             = "0112/2///61987#ABA565#009"
+        string "aas:semanticId:manufacturerProductFamily"    = "0112/2///61987#ABA580#009"
+        string "aas:semanticId:manufacturerProductType"      = "0112/2///61987#ABA566#009"
+        string "aas:semanticId:orderCode"                    = "0112/2///61987#ABA950#009"
+        string "aas:semanticId:articleNumber"                = "0112/2///61987#ABA581#009"
+        string "aas:semanticId:serialNumber"                 = "0112/2///61987#ABA951#009"
+        string "aas:semanticId:batchNumber"                  = "0112/2///61987#ABA952#009"
+        string "aas:semanticId:yearOfConstruction"           = "0112/2///61987#ABE966#001"
+        string "aas:semanticId:dateOfManufacture"            = "0112/2///61987#ABB757#007"
+        string "aas:semanticId:uniqueFacilityIdentifier"     = "https://admin-shell.io/idta/nameplate/3/0/UniqueFacilityIdentifier"
+        string "aas:semanticId:companyLogo"                  = "0112/2///61987#ABA588#001"
+
+        # MultiLanguageProperty language variants
+        dictionary "dpp:manufacturerName:i18n" = {
+            string "de" = "Muster AG"
+            string "en" = "Muster AG"
+        }
+        dictionary "dpp:manufacturerProductDesignation:i18n" = {
+            string "de" = "Kreiselpumpe"
+            string "en" = "Centrifugal Pump"
+        }
+        dictionary "dpp:manufacturerProductFamily:i18n" = {
+            string "de" = "CM-Baureihe"
+            string "en" = "CM series"
+        }
+        dictionary "dpp:hardwareVersion:i18n" = {
+            string "en" = "HW-Rev-C"
+        }
+    }
+
+    assetInfo = {
+        # Fallback for USD tools that predate source id support.
+        # Authoritative location is sourceId:dpp:uriOfTheProduct below.
+        asset identifier = @https://products.muster-ag.de/cm5-3/SN-20240001@
+    }
+)
+{
+    # ── Source identifier entries ──────────────────────────────────────────────
+    # Primary cross-system identifiers per the Identifier Separation of
+    # Concerns proposal (sourceId:dpp:* namespace).
+    # These store external AAS identifiers verbatim as plain strings,
+    # free from SdfAssetPath path-resolution semantics.
+
+    custom string sourceId:dpp:uriOfTheProduct = "https://products.muster-ag.de/cm5-3/SN-20240001"
+    custom string sourceId:dpp:orderCode       = "96402234"
+    custom string sourceId:dpp:articleNumber   = "CM5-3-I-A-E-AVBE"
+
+    # ── DppNameplateAPI — mandatory identification ────────────────────────────
+
+    asset  dpp:uriOfTheProduct = @https://products.muster-ag.de/cm5-3/SN-20240001@
+    string dpp:manufacturerName = "Muster AG"
+
+    # ── DppNameplateAPI — product classification ──────────────────────────────
+
+    string dpp:manufacturerProductDesignation = "Centrifugal Pump"
+    string dpp:manufacturerProductRoot        = "Pumps"
+    string dpp:manufacturerProductFamily      = "CM series"
+    string dpp:manufacturerProductType        = "CM 5-3"
+    string dpp:orderCode                      = "96402234"
+    string dpp:articleNumber                  = "CM5-3-I-A-E-AVBE"
+
+    # ── DppNameplateAPI — instance and batch identifiers ──────────────────────
+
+    string dpp:serialNumber = "SN-20240001"
+    string dpp:batchNumber  = "BL-2024-Q1-042"
+
+    # ── DppNameplateAPI — origin, dates, and facility ─────────────────────────
+
+    string dpp:countryOfOrigin          = "DE"
+    string dpp:yearOfConstruction       = "2024"
+    string dpp:dateOfManufacture        = "2024-02-15"
+    # dpp:dateOfPuttingIntoService not authored (absent in source AAS)
+    string dpp:uniqueFacilityIdentifier = "GLN:4012345000016"
+
+    # ── DppNameplateAPI — version information ─────────────────────────────────
+
+    string dpp:hardwareVersion = "HW-Rev-C"
+    string dpp:firmwareVersion = "FW-2.4.1"
+    string dpp:softwareVersion = "SW-3.0.0"
+
+    # ── DppNameplateAPI — media ───────────────────────────────────────────────
+
+    asset dpp:companyLogo = @./media/muster_ag_logo.png@
+    # MIME type preserved in customData (not encodable in asset type):
+    # customData["dpp:companyLogo:mimeType"] = "image/png"
+
+    # ── DppNameplateAPI — contact information (Option 1, flat attributes) ──────
+    # Covers the postal address and primary contact point.
+    # For multiple phone entries or full IDTA 02002-1 fidelity, use
+    # the child ContactInformation prim (Option 2) instead.
+
+    string dpp:contact:street       = "Musterstraße 1"
+    string dpp:contact:zipcode      = "12345"
+    string dpp:contact:cityTown     = "Musterstadt"
+    string dpp:contact:stateCounty  = "Bayern"
+    string dpp:contact:nationalCode = "DE"
+    string dpp:contact:company      = "Muster AG"
+    string dpp:contact:department   = "Customer Service"
+    string dpp:contact:timeZone     = "Europe/Berlin"
+    string dpp:contact:phone        = "+49 123 456-0"
+    string dpp:contact:fax          = "+49 123 456-100"
+    string dpp:contact:email        = "contact@muster-ag.de"
+    asset  dpp:contact:additionalLink = @https://www.muster-ag.de@
+
+    # ── Markings ──────────────────────────────────────────────────────────────
+    # Each Marking_NN child prim maps to one AAS Markings__NN__ SMC.
+    # Zero-padded index preserves original SML ordering on round-trip.
+
+    def Scope "Markings"
+    {
+        def Scope "Marking_00" (
+            prepend apiSchemas = ["MarkingAPI"]
+        )
+        {
+            # CE marking — IRDI from IEC CDD/ECLASS
+            custom string sourceId:dpp:marking:certificationId = "BVS 21 ATEX E 001 X"
+            token    marking:name                   = "0173-1#07-DAA603#004"
+            string   marking:issueDate              = "2024-01-10"
+            string   marking:expiryDate             = "2029-01-10"
+            asset    marking:file                   = @./markings/ce_mark.png@
+            string[] marking:additionalText         = ["Notified body: 0158"]
+
+            # ── ExplosionSafeties nested within this marking ───────────────────
+            # Present because this pump has an ATEX approval.
+            # Each ExplosionSafety_NN child maps to one ExplosionSafeties__NN__ SMC.
+
+            def Scope "ExplosionSafeties"
+            {
+                def Scope "ExplosionSafety_00" (
+                    prepend apiSchemas = ["ExplosionSafetyAPI"]
+                )
+                {
+                    string explosionSafety:typeOfApproval            = "ATEX"
+                    string explosionSafety:approvalAgency            = "BVS Bochum"
+                    string explosionSafety:typeOfProtection          = "Ex d IIB T4 Gb"
+                    string explosionSafety:ratedInsulationVoltage    = "690 V"
+                    asset  explosionSafety:instructionControlDrawing = @./docs/atex_instruction_drawing.pdf@
+                    string explosionSafety:specificConditionsForUse  = "See supplementary sheet BVS 21 ATEX E 001 X/01"
+                    string explosionSafety:incompleteDevice          = "No"
+
+                    # AmbientConditions sub-SMC — encoded as custom attributes
+                    # on a dedicated child prim for full IDTA 02006-3-0 fidelity.
+                    def Scope "AmbientConditions"
+                    {
+                        custom string ambientConditions:deviceCategory      = "II 2G"
+                        custom string ambientConditions:equipmentProtLevel  = "Gb"
+                        custom string ambientConditions:ambientTemperature  = "-20 °C … +40 °C"
+                        custom string ambientConditions:relativeHumidity    = "0 … 100 %"
+                    }
+                }
+            }
+        }
+
+        def Scope "Marking_01" (
+            prepend apiSchemas = ["MarkingAPI"]
+        )
+        {
+            # WEEE — Waste Electrical and Electronic Equipment symbol
+            token marking:name = "WEEE"
+            asset marking:file = @./markings/weee_mark.png@
+        }
+
+        def Scope "Marking_02" (
+            prepend apiSchemas = ["MarkingAPI"]
+        )
+        {
+            # IECEx approval marking
+            custom string sourceId:dpp:marking:certificationId = "IECEx BVS 21.0003X"
+            token  marking:name                   = "IECEx"
+            string marking:issueDate              = "2024-02-01"
+            string marking:expiryDate             = "2029-02-01"
+            asset  marking:file                   = @./markings/iecex_mark.png@
+        }
+    }
+
+    # ── AssetSpecificProperties ───────────────────────────────────────────────
+    # Application-specific technical properties not covered by the standard
+    # nameplate fields. Each GuidelineProps_NN child prim corresponds to one
+    # GuidelineSpecificProperties__NN__ SMC in the AAS submodel.
+
+    def Scope "AssetSpecificProperties"
+    {
+        def Scope "GuidelineProps_00" (
+            customData = {
+                string "aas:semanticId" = "0112/2///61987#ABN492#001"
+                dictionary "guideline:arbitraryProperties" = {
+                    string "RatedPower"         = "1500 W"
+                    string "RatedVoltage"        = "400 V / 690 V"
+                    string "RatedFrequency"      = "50 Hz"
+                    string "RatedSpeed"          = "2900 rpm"
+                    string "ProtectionClass"     = "IP55"
+                    string "InsulationClass"     = "F"
+                    string "EfficiencyClass"     = "IE3"
+                }
+            }
+        )
+        {
+            # Properties per IEC 60034 (rotating electrical machines)
+            string guideline:conformityDeclaration = "IEC 60034"
+        }
+
+        def Scope "GuidelineProps_01" (
+            customData = {
+                dictionary "guideline:arbitraryProperties" = {
+                    string "PerformanceLevel" = "PLd"
+                    string "Category"         = "3"
+                    string "MTTFd"            = "100 years"
+                    string "DCavg"            = "90 %"
+                }
+            }
+        )
+        {
+            # Properties per EN 13849 (safety of machinery — safety-related
+            # parts of control systems)
+            string guideline:conformityDeclaration = "EN ISO 13849-1"
+        }
+    }
+}
