@@ -716,6 +716,419 @@ transform(inout ArrayVector3d coordinates, in WKT crsIn, in WKT crsOut)
 
 The OpenUSD plugin system is employed to register implementations.
 
+### Normative runtime behavior
+
+The schema described above is *data*: it declares a CRS and associates it with
+part of the scene graph. It does not, by itself, move anything.
+Everything a georeferenced scene actually *means* — where a prim ends up,
+which way is up, what happens when the CRS cannot be honored —
+is runtime behavior, and it must be specified as precisely as the schema is,
+or independent implementations will not agree.
+
+This section specifies that behavior normatively.
+
+The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY**
+are to be interpreted as described in [BCP 14](https://www.rfc-editor.org/info/bcp14)
+([RFC 2119](https://www.rfc-editor.org/rfc/rfc2119),
+[RFC 8174](https://www.rfc-editor.org/rfc/rfc8174)).
+
+Three scoping notes, because they determine how much of this is actually contentious:
+
+1. **This specifies observable behavior, not implementation.**
+   The rules below define a function from a composed stage to a world transform
+   per prim. They say nothing about *where* that function runs.
+   A Hydra 2.0 scene index filter, a stage-level resolver called from
+   `UsdGeomXformCache`-style query code, an OpenExec network, and a flatten-time
+   converter are all conformant if they compute the same answer
+   (see [Runtime independence](#runtime-independence-and-flattening)).
+2. **This is independent of how the anchor position is carried.**
+   The rules are written against an abstract quantity, the *anchor position*,
+   defined below. Whether that value is carried as a
+   `double3 xformOp:translate` under `!resetXformStack!` (as in the schema section above)
+   or as a dedicated `crs:position` attribute (as in the codeless prototype)
+   is a separate schema question — see
+   [Note on the binding and position carriers](#note-on-the-binding-and-position-carriers).
+   None of the rules below change with that choice.
+3. **These rules are derived from measurement, not from first principles alone.**
+   Each rule that could plausibly be implemented a different way is annotated
+   with the error that the plausible-but-wrong alternative produces on a real scene.
+   Sources for those figures are in
+   [Reference implementations and measured conformance](#reference-implementations-and-measured-conformance).
+
+#### Terminology
+
+| Term | Definition |
+|------|------------|
+| **Source CRS** of a prim | The CRS resolved for that prim by [CRS resolution](#crs-resolution) (R1–R3). |
+| **Target CRS** | The single CRS into which the runtime harmonizes the composed stage (R4–R5). |
+| **Anchor position** | The prim's authored position expressed in its source CRS, as an ordered triple. |
+| **Georeferenced prim** | A prim that has both a resolvable source CRS and an authored anchor position. |
+| **Anchor** of a prim `P` | The nearest prim at or above `P` (self included) that is a georeferenced prim. |
+| **Anchor frame** | The rigid transform from an anchor's local Cartesian frame into the target CRS (R6–R7). |
+| **Resolver** | The component implementing this section. |
+| **CRS-aware consumer** | A consumer that implements this section, or that detects and refuses per R18–R20. |
+| **CRS-unaware consumer** | Any other consumer. |
+
+#### CRS resolution
+
+**R1 — Inheritance.**
+A prim's source CRS **MUST** be resolved by walking from the prim toward the
+root of the composed stage and selecting an authored binding.
+A prim with no authored binding at or above it has no source CRS
+and **MUST** be left to ordinary USD composition, unmodified.
+
+**R2 — Nearest wins by default.**
+Where more than one ancestor carries a binding, the **nearest** binding
+**MUST** win, unless an ancestor binding declares itself stronger than its
+descendants, in which case that ancestor binding **MUST** win.
+Where several ancestors declare themselves stronger, the **outermost** such
+ancestor **MUST** win.
+
+**R3 — Alignment with material binding resolution.**
+CRS binding resolution **SHOULD** follow `UsdShadeMaterialBindingAPI`
+resolution semantics, including purpose-restricted bindings and
+collection-based bindings, with the same precedence ladder:
+
+> purpose-specific collection **>** purpose-specific direct **>**
+> all-purpose collection **>** all-purpose direct
+
+and, among competing collection bindings at one prim, the
+lexicographically smallest binding name winning.
+The intent of R3 is that a user who already understands material binding
+does not have to learn a second, subtly different resolution model.
+
+#### Target CRS
+
+**R4 — Determination.**
+The target CRS **MUST** be determined in this order:
+
+1. an explicit target supplied by the host application or API caller;
+2. otherwise, the source CRS resolved for the composed `defaultPrim`
+   of the root layer stack;
+3. otherwise, an implementation-defined default,
+   which **SHOULD** be a geocentric CRS on the relevant celestial body
+   (WGS 84 geocentric, EPSG:4978, for Earth).
+
+**R5 — Single target per resolve.**
+A single resolve pass **MUST** use one target CRS for the whole stage.
+Prims whose source CRS differs from the target CRS **MUST** be reprojected;
+prims whose source CRS is the target CRS **MUST NOT** be perturbed
+by an identity round-trip through the transformation engine.
+
+#### The resolved transform
+
+This is the core of the specification.
+
+**R6 — An anchor resolves to a frame, not a point.**
+The world transform of a georeferenced prim **MUST** be a full rigid transform —
+orientation *and* translation — not a translation alone.
+
+*Why this is normative and not obvious:* the naive implementation reprojects the
+anchor position and writes it into the translation of an otherwise identity matrix.
+That is correct only at the point where the source and target axes happen to align.
+A subtree's local `+Z` must point along the **ellipsoidal normal** at the anchor,
+which in New York is roughly 49° away from geocentric `+Z`.
+A position-only resolver therefore lays every asset on its side everywhere except
+at the pole; measured against closed-form geodesy, a building 1000 m east /
+500 m north of its anchor lands **~410 m** from truth.
+
+**R7 — Composition frame is chosen by the *source* CRS type.**
+The anchor frame **MUST** be constructed according to the kind of CRS the anchor is bound to:
+
+| Anchor's source CRS | Anchor frame | Descendant offsets are interpreted as |
+|---------------------|--------------|----------------------------------------|
+| Geographic or geocentric | The topocentric (east-north-up) basis at the anchor position, with origin at the anchor position transformed into the target CRS | Local metric offsets in that topocentric frame |
+| Projected (UTM, State Plane, site-calibrated, …) | The anchor's **grid plane** | Offsets in the anchor's grid coordinates and units |
+
+For a **projected** anchor, a descendant's origin **MUST** be computed by adding
+the descendant's offset to the anchor's position *in grid coordinates*
+and transforming the resulting grid point into the target CRS.
+It **MUST NOT** be lifted through the anchor's topocentric basis.
+
+*Why:* grid axes are not topocentric axes. They differ by grid convergence and
+point scale. Lifting grid-authored offsets through a true east-north-up basis
+introduces a real, systematic error — measured at **4.86 m** over a ~420 m
+anchor-to-corner lever in a UTM 17N-under-UTM 30N scene.
+Both paths land the same corner at **0.0 mm** when the frame is selected correctly.
+
+This rule is the specific answer to the concern that composing a local transform
+onto an anchor position is "not correct in the general case for a spherical target CRS."
+It is not correct in general — R7 is the constraint that makes it correct,
+and it is selected from the *source* CRS, which the runtime already has in hand.
+
+**R8 — Descendants compose as ordinary `UsdGeomXformable`.**
+For a prim `D` whose anchor is `A` and `D ≠ A`,
+the world transform **MUST** be
+
+```text
+world(D) = localToAnchor(D) ∘ anchorFrame(A)
+```
+
+where `localToAnchor(D)` is `D`'s ordinary authored local-to-world transform
+expressed relative to `A`, computed from the standard `UsdGeomXformable` stack
+with no geospatial interpretation applied to it.
+Everything below an anchor is plain USD.
+
+For the projected case of R7, the translation component of `world(D)`
+is computed in-plane as specified there, and the rotation and scale components
+**MUST** be taken from `localToAnchor(D)` unchanged.
+
+**R9 — A prim with its own anchor position is an anchor.**
+If a prim carries its own anchor position and a resolvable binding,
+its world transform **MUST** be its own anchor frame (R6/R7).
+Its ancestors' *georeferencing* **MUST NOT** additionally accumulate onto it —
+two georeferenced positions in one chain are two absolute statements,
+not a base and an offset.
+
+This makes anchor-versus-child an **authoring** distinction with real
+consequences, and it is the most common way to get a georeferenced scene wrong:
+authoring a corner as an independent georeferenced leaf when relative placement
+was intended puts it **418.9 m** off; re-authoring it as an ordinary Cartesian
+child of the building brings it to **0.000 mm**.
+See [Validation](#validation-obligations) (V1).
+
+**R10 — Precision.**
+All CRS coordinates, anchor positions, anchor frames, and resolved world
+transforms **MUST** be computed and carried in double precision.
+Resolved absolute coordinates **MUST NOT** be written into single-precision
+geometry attributes such as `point3f[] points`.
+
+R6–R8 make this a property of the design rather than a request:
+the large magnitudes (~6.4 × 10⁶ m for an Earth-surface geocentric position)
+are confined to the double-precision anchor frame, and vertices below the anchor
+remain small local offsets. Measured, absolute float32 geocentric positions lose
+**162 mm** at that magnitude, while the same geometry expressed as localized
+float32 offsets under a double-precision anchor holds **0.0003 mm** —
+a factor of roughly **4.8 × 10⁵**.
+
+#### Interaction with the `UsdGeomXformable` stack
+
+**R11 — Resolution is a computed view.**
+A resolver **MUST NOT** write resolved transforms, injected anchor frames,
+or reprojected coordinates back into the authored layers of the stage it is resolving.
+Resolution produces a computed representation —
+a scene index, a query result, an execution network output, or a new output layer.
+
+**R12 — `resetXformStack` semantics.**
+An anchor frame establishes a fresh basis: the transforms of the anchor's
+ancestors **MUST NOT** be composed on top of an already-resolved world transform.
+Where the computed representation has a `resetXformStack` concept
+(as Hydra's xform schema does), the resolver **SHOULD** set it on the computed
+xform it emits for the anchor, to express exactly that.
+
+R11 and R12 are not in tension, and the distinction is worth stating plainly
+because it is easy to read them as contradictory.
+The *semantic* — "do not re-compose this matrix under its parents" — is required.
+What R11 constrains is *where that semantic is recorded*:
+on a transient computed data source, not in an authored layer.
+
+**R13 — Idempotence.**
+Resolving an already-resolved stage **MUST** be a no-op with respect to
+world transforms. A stage that has been flattened into the target CRS (R22)
+carries no unresolved bindings, and re-running a resolver over it
+**MUST NOT** apply the transformation a second time.
+
+#### Axis order, units, and epoch
+
+**R14 — Axis order is fixed at the USD boundary.**
+The anchor position **MUST** be ordered
+`(x = longitude or easting, y = latitude or northing, z = height)`,
+regardless of the axis order declared by the CRS authority in the WKT.
+The resolver **MUST NOT** re-order the components based on the WKT `AXIS` clauses;
+it **MUST** hand them to the transformation engine in that fixed order
+(the `always_xy` convention).
+
+USD is not the right place to relitigate authority axis order.
+Fixing it at the boundary means a scene reads the same regardless of which
+authority defined the CRS, and it removes an entire class of silent
+easting/northing transposition bugs — which are not detectable by inspection,
+because a transposed coordinate is usually still a valid coordinate.
+This rule closes [open question 2](#open-questions).
+
+**R15 — Units.**
+The units of the anchor position are those declared by the bound CRS,
+not `metersPerUnit`. Where the CRS's linear unit differs from the stage's
+linear unit, the resolver **MUST** apply the conversion when producing
+world transforms in the target CRS, and **MUST NOT** assume metres.
+
+**R16 — Coordinate epoch.**
+Where a CRS carries a coordinate epoch (for dynamic datums),
+the resolver **MUST** pass that epoch to the transformation engine as the
+time coordinate of a 4D transform.
+Where no epoch is authored, the resolver **MUST NOT** invent one.
+
+#### Failure and degradation semantics
+
+This is the part of the runtime contract that is most often left unstated,
+and it is the part that determines whether a georeferenced scene fails
+loudly or quietly.
+
+**R17 — No silent fallback.**
+Where a resolver cannot compute a required transform — no registered
+transformation engine, unparseable or unsupported WKT, a missing
+transformation grid, or a point outside the domain of validity of the
+transformation — it **MUST NOT** fall back to placing the prim using its
+unresolved authored transform, and **MUST NOT** substitute an identity transform.
+It **MUST** report the failure and **MUST** either omit the affected prims
+or refuse the stage.
+
+**R18 — Declaring that resolution is required.**
+A stage that requires CRS resolution for correct placement **MUST** declare it,
+so that a consumer which does not implement this section can detect that fact
+before traversing. The prototype uses layer metadata
+(`customLayerData['crsResolutionRequired'] = true`).
+
+**R19 — Detect and refuse.**
+A consumer that encounters the R18 declaration and does not implement this
+section **MUST NOT** silently place the content.
+It **MUST** refuse the stage, defer to a resolver, or surface the condition to the user.
+
+**R20 — Graceful degradation is limited to metadata.**
+Where reprojection is unavailable, CRS *metadata* **MUST** be preserved through
+read/write round-trips even though placement cannot be computed.
+Preserving the metadata is what makes the failure recoverable later.
+
+*Why R17–R19 rather than "ignore the binding if unsupported":* ignoring the
+binding is exactly the silent-misplacement failure.
+A coexisting scene opened by a CRS-unaware consumer with no resolver places
+its content **6,369 km** from truth, with no error raised —
+the content is simply drawn at its bare local offset, near the planet's centre.
+That is indistinguishable, to the consumer, from a correct scene.
+The trade being made is deliberate: a declaration plus refusal is a
+**loud and recoverable** failure, where ignoring the binding is a
+**silent and unrecoverable** one.
+
+Two honest caveats. A declaration is a *contract, not an enforcement* —
+a non-conformant consumer will still ignore it.
+And it is one more thing an author can omit, which is why R18 compliance
+belongs in the validator (V3 below) and is caught at authoring time.
+
+*Open:* whether the R18 declaration belongs in layer metadata (one cheap
+O(1) check before traversal, but coarse and untyped) or in a prim-level applied
+schema (typed and validatable, but requires traversal to discover) is a genuine
+open question for the working group. The prototype implements the layer-metadata
+form; the prim-level form is a small addition and the two are not exclusive.
+
+#### Runtime independence and flattening
+
+**R21 — Renderer independence.**
+Nothing in R1–R20 depends on Hydra, on rendering, or on any particular
+evaluation architecture. A conformant implementation is one that produces the
+specified world transforms; the mechanism is unconstrained.
+Query paths (bounding boxes, point instancing, physics, `UsdGeomXformCache`-style
+world transform queries) are subject to the same rules as rendering.
+
+**R22 — Flattening to a target CRS.**
+Flattening a georeferenced stage into a single target CRS is defined as
+evaluating R1–R16 and *then* writing the results, and **MUST** produce world
+transforms identical to a resolve pass over the same stage with the same target CRS.
+A stage produced this way:
+
+- **MUST** record the target CRS it was flattened into;
+- **MUST NOT** retain the R18 declaration, since resolution is no longer required;
+- **SHOULD** retain the CRS definitions and the original bindings where possible,
+  since discarding them makes the flattening irreversible and loses
+  the information a validator or a later re-resolve would need.
+
+R21 and R22 exist because "does this work without a renderer" is the first
+question a GIS or AECO pipeline asks, and the answer needs to be structural
+rather than a promise. It is structural here: the rules are stated over the
+composed stage, and the two reference implementations share no runtime code
+(one is a Hydra 2.0 scene index in C++, one is a stage-level resolver in Python)
+yet agree to the tolerance in R23.
+
+#### Conformance and tolerance
+
+**R23 — Conformance is measured, and requires a stated tolerance.**
+An implementation claiming conformance **MUST** state the tolerance at which
+it agrees with the reference behavior, and **MUST** state it as a distance
+in target-CRS units at a stated coordinate magnitude —
+not as a count of matching digits, which is not meaningful across CRS families.
+
+Exact bit-for-bit agreement between independent implementations is not achievable
+and **SHOULD NOT** be required: transformation engines differ in grid handling
+and in the order of floating-point operations. A tolerance of **1 mm** at
+Earth-surface magnitudes is proposed as the conformance threshold, which is
+below the accuracy of any survey control this data is derived from,
+and is met with roughly a factor of 1.5 of headroom by the reference pair.
+
+#### Validation obligations
+
+The rules above imply a small set of mechanically checkable asset invariants.
+These are stated here because a runtime specification that cannot be
+validated at authoring time will be violated at render time.
+`usdchecker` is the natural home.
+
+| | Invariant | Rule | Consequence if violated |
+|---|-----------|------|--------------------------|
+| **V1** | Anchor-versus-child is unambiguous: a prim carrying an anchor position beneath another such prim is flagged unless it declares an overriding binding | R9 | 418.9 m misplacement |
+| **V2** | Descendant offsets are authored in the frame the anchor's CRS implies | R7 | 4.86 m misplacement |
+| **V3** | A stage carrying CRS bindings declares that resolution is required | R18 | 6,369 km silent misplacement |
+| **V4** | A binding resolves to a prim that actually carries a valid CRS definition | R1 | Resolver failure at load |
+| **V5** | A georeferenced prim does not also carry a conflicting authored transform | R9, R11 | Ambiguous placement |
+
+A coordinate-neutral authored scene is what makes V1–V5 checkable at all:
+the CRS intent is still present as data. Once placement has been baked into
+a matrix, the intent has been collapsed and there is nothing left to validate against.
+
+#### Note on the binding and position carriers
+
+Two schema-level choices are deliberately *not* fixed by this section,
+because the runtime behavior above does not depend on either:
+
+| Question | Option A (schema section above) | Option B (codeless prototype) |
+|----------|--------------------------------|-------------------------------|
+| How is the binding edge discovered? | A USD `references` arc to the CRS prim, established by `Bind()` | A `crs:binding` relationship, resolved by traversal |
+| How is the anchor position carried? | `double3 xformOp:translate` with `!resetXformStack!` authored into the layer | A dedicated `double3 crs:position` attribute |
+
+R1–R23 are written over *the resolved binding* and *the anchor position*,
+and hold under either column.
+The substantive difference between them is R11: option A authors
+`resetXformStack` into the layer, which means the scene is no longer
+coordinate-neutral and V1–V5 lose the data they check against;
+option B keeps the authored scene neutral and carries the reset semantic
+on the computed representation only, per R12.
+
+Both were built and measured against each other on the same scene
+(a multi-CRS scene with a building in NAD83 / UTM 17N under a WGS 84 / UTM 30N anchor).
+They place the same building corner at the same geocentric point to **0.0 mm**.
+So this is not a correctness question between the two —
+it is a question about composability, hand-editability, and what remains
+inspectable for validation, and it is the right one for the working group to settle.
+
+#### Reference implementations and measured conformance
+
+Every figure quoted above is produced by a runnable test, not by estimation.
+
+| Claim | Rule | Source |
+|-------|------|--------|
+| Baked and coordinate-neutral authoring agree to 0.0 mm | — | `testenv_equivalence.py` (multi-CRS scene) |
+| Position-only anchor resolution is ~410 m wrong | R6 | `test_anchor_injection.py` |
+| Projected offsets lifted through ENU are 4.86 m wrong | R7 | `test_coexist_vs_baked.py` |
+| Anchor-versus-child ambiguity is 418.9 m | R9 | `test_illformed_assets.py` (G1) |
+| Absolute float32 loses 162 mm; localized float32 holds 0.0003 mm | R10 | `test_float32_localization.py` |
+| No declaration means 6,369 km of silent misplacement | R17–R19 | `test_illformed_assets.py` (G3) |
+| Two independent runtimes agree within the R23 tolerance | R21, R23 | Two-runtime parity test, below |
+
+The two-runtime agreement is the substantive evidence for R21 and R23.
+A C++ Hydra 2.0 scene index and an independent Python stage-level resolver,
+sharing no runtime code, resolve the same real dataset
+(a 3,526-vertex railway asset) into the same target CRS:
+**median 0.40 mm, worst 0.68 mm**, against a 1 mm threshold.
+Across five CRS families and both hemispheres —
+UTM 18N, UTM 56S, NZTM2000, UTM 17S at the equator, UTM 33N at 78°N —
+the same single code path reproduces closed-form geodesy at **0.0 mm**,
+with the authored EPSG code as the only difference between cases.
+Both are wired as continuous tests, and have been run on Linux and Windows.
+
+Implementations:
+
+| Implementation | Form | Location |
+|----------------|------|----------|
+| Hydra 2.0 scene index filter | C++, auto-inserted, PROJ-backed | [asluk/OpenUSD `extras/usd/examples/usdGeospatialSceneIndex`](https://github.com/asluk/OpenUSD/tree/aluk/geospatial-crs-prototype/extras/usd/examples/usdGeospatialSceneIndex) |
+| Stage-level resolver | Python reference, PROJ-backed | [asluk/OpenUSD `extras/usd/examples/usdGeospatial`](https://github.com/asluk/OpenUSD/tree/aluk/geospatial-crs-prototype/extras/usd/examples/usdGeospatial) |
+| Typed C++ schema prototype | C++, PROJ integration | [mistafunk/USD `geospatial-prototype`](https://github.com/mistafunk/USD/tree/geospatial-prototype/pxr/usd/usdGeospatial) |
+
 ### Default Implementation using the "PROJ" library
 
 The OpenSource [PROJ](https://proj.org/) library can be used to create a bidirectional "transformer" object by parsing the USD WKT2 string and defining the target Coordinate Reference System (CRS) by its EPSG code.
@@ -941,15 +1354,22 @@ and informed the final design.
    Should the runtime enforce consistency, convert automatically,
    or leave it to the authoring tool?
 
-2. **Axis mapping.**
+2. **Axis mapping.** *(proposed resolution: [R14](#axis-order-units-and-epoch))*
    Geospatial CRS axis orders vary
    (some are Easting/Northing, others Northing/Easting).
    How does this interact with USD's coordinate conventions?
+   R14 proposes fixing the order at the USD boundary
+   (`x = longitude/easting, y = latitude/northing, z = height`,
+   the `always_xy` convention) regardless of what the authority declares.
+   Confirmation from the working group would close this.
 
 3. **Third-party library abstraction.**
    What is the concrete API for plugging in PROJ, GDAL,
    or other CRS transformation libraries?
    Is this a USD plugin interface or a build-time dependency?
+   The behavior such a plugin must implement is now specified in
+   [Normative runtime behavior](#normative-runtime-behavior);
+   what remains open is the interface signature and the registration mechanism.
 
 4. **WKT validation.**
    Should OpenUSD validate WKT strings at authoring time?
@@ -986,7 +1406,12 @@ and informed the final design.
    Correct reprojection requires PROJ or an equivalent library.
    If no CRS library is available, the runtime cannot reproject.
    Mitigation: graceful degradation — CRS metadata is preserved
-   even without a reprojection engine.
+   even without a reprojection engine
+   ([R20](#failure-and-degradation-semantics)).
+   Note that degradation is limited to *metadata*: a runtime that cannot
+   reproject **MUST NOT** place the content anyway
+   ([R17](#failure-and-degradation-semantics)),
+   because unresolved placement is silently wrong rather than visibly absent.
 
 3. **Performance.**
    Per-prim reprojection at render time
@@ -1026,6 +1451,8 @@ Working prototype implementations exist:
 | Implementation | Approach | Repository |
 |----------------|----------|------------|
 | **usdGeospatial schema** | C++ typed schema + applied API, PROJ integration | [mistafunk/USD (geospatial-prototype branch)](https://github.com/mistafunk/USD/tree/geospatial-prototype/pxr/usd/usdGeospatial) |
+| **Hydra 2.0 scene index filter** | Codeless schema + C++ auto-inserted scene index, PROJ-backed | [asluk/OpenUSD (geospatial-crs-prototype branch)](https://github.com/asluk/OpenUSD/tree/aluk/geospatial-crs-prototype/extras/usd/examples/usdGeospatialSceneIndex) |
+| **Stage-level resolver** | Codeless schema + Python reference runtime, PROJ-backed | [asluk/OpenUSD (geospatial-crs-prototype branch)](https://github.com/asluk/OpenUSD/tree/aluk/geospatial-crs-prototype/extras/usd/examples/usdGeospatial) |
 | **POC: Asset primvar** | Python + primvar with asset path | [mistafunk/aousd-geospatial-pocs (David de Koning)](https://github.com/mistafunk/aousd-geospatial-pocs) |
 | **POC: String primvar + inherits** | Python + WKT in primvar + class inherits | [mistafunk/aousd-geospatial-pocs (David de Koning)](https://github.com/mistafunk/aousd-geospatial-pocs) |
 | **POC: Class inheritance** | Python + abstract class with manual parent-walk | [mistafunk/aousd-geospatial-pocs (Simon Haegler)](https://github.com/mistafunk/aousd-geospatial-pocs) |
