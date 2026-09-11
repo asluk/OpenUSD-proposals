@@ -767,11 +767,18 @@ learn a second, subtly different resolution model in order to place a building.
 
 #### Which CRS the scene resolves into
 
-Everything in a single resolve pass lands in one target CRS, determined in this
-order: a target supplied explicitly by the host application or API caller;
-otherwise the CRS bound to the composed `defaultPrim` of the root layer stack;
-otherwise a geocentric CRS on the relevant celestial body — WGS 84 geocentric,
-EPSG:4978, for Earth.
+Everything in a single resolve pass lands in one target CRS: the one supplied by
+the host application or API caller, or where the caller supplies none, the CRS
+bound to the composed `defaultPrim` of the root layer stack. A caller-supplied
+target is what lets two georeferenced stages with different `defaultPrim`
+bindings be brought into one scene, and it is the case the PROJ example above
+already demonstrates by transforming into EPSG:10499.
+
+Where neither is available — a stage carrying CRS bindings with nothing bound to
+its `defaultPrim`, opened without a target — there is no default to fall back
+on. Picking one silently would place the whole scene somewhere nobody asked for,
+so this is handled the same way as any other transform that cannot be computed,
+and it is an authoring-time error a checker catches.
 
 A prim whose CRS already *is* the target is left alone rather than sent on an
 identity round trip through the transformation engine, which would only
@@ -996,6 +1003,7 @@ home.
 | Descendant offsets are authored in the frame the anchor's CRS implies | 4.86 m misplacement |
 | A stage carrying CRS bindings declares that resolution is required | 6,369 km silent misplacement |
 | A binding resolves to a prim that actually carries a valid CRS definition | Resolver failure at load |
+| A stage carrying CRS bindings has a CRS bound to its `defaultPrim`, so a target exists without one being supplied | No determinable target CRS |
 | A georeferenced prim does not also carry a conflicting authored transform | Ambiguous placement |
 
 A coordinate-neutral authored scene is what makes these checkable at all: the
