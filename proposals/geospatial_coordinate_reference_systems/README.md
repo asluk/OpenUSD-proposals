@@ -740,9 +740,12 @@ filter, a stage-level resolver behind world-transform queries, an execution
 network, and a flatten-time converter are four places to implement this
 description, not four behaviors.
 
-Where a choice could plausibly have been made another way, the description says
-what the other way costs — measured on a real scene rather than estimated.
-Those figures are the actual argument; their sources are listed at the end.
+The rules here are stated on their own terms. Where a choice could plausibly
+have been made another way, what the other way costs has been measured on a real
+scene rather than estimated; those figures, and the implementations they come
+from, are in
+[Appendix C](#appendix-c-reference-implementations-and-measurements), which is
+not part of this description.
 
 #### Which CRS applies to a prim
 
@@ -796,10 +799,10 @@ implementation gets it wrong in a way that looks right at first. That
 implementation reprojects the anchor position and writes it into the translation
 of an otherwise identity matrix, which is correct exactly where the source and
 target axes happen to align. Everywhere else the subtree keeps world `+Z` when
-its local `+Z` should point along the ellipsoidal normal at the anchor — in New
-York, roughly 49° away from geocentric `+Z`. The result is not subtle: assets
-lie on their side, and a building 1000 m east and 500 m north of its anchor
-lands about **410 m** from where closed-form geodesy puts it.
+its local `+Z` should point along the ellipsoidal normal at the anchor — at
+mid-latitudes, tens of degrees away from geocentric `+Z`. The result is not
+subtle: assets lie on their side, and a building offset from its anchor lands
+well away from where closed-form geodesy puts it.
 
 Which frame the anchor establishes follows from the kind of CRS it is bound to —
 the *source* CRS, which the runtime already has in hand:
@@ -814,9 +817,9 @@ to the anchor's position *in grid coordinates* and transforming that grid point
 into the target CRS — not by lifting the offset through the anchor's topocentric
 basis. Grid axes are not topocentric axes; they differ by grid convergence and
 point scale. Lifting grid-authored offsets through a true east-north-up basis
-produces a systematic error, measured at **4.86 m** over a ~420 m
-anchor-to-corner lever in a UTM 17N-under-UTM 30N scene. Selecting the frame
-from the source CRS instead puts both paths on the same corner at **0.0 mm**.
+produces a systematic error that grows with the lever from the anchor to the
+geometry. Selecting the frame from the source CRS instead puts both paths on the
+same point.
 
 This is also the specific answer to the objection that composing a local
 transform onto an anchor position "is not correct in the general case for a
@@ -845,8 +848,9 @@ georeferenced positions in one chain are two absolute statements, not a base and
 an offset. That makes anchor-versus-child a real authoring distinction, and
 getting it wrong is the most common way to misplace a georeferenced scene.
 Authoring a building corner as an independent georeferenced leaf, where relative
-placement was intended, puts it **418.9 m** off; re-authoring it as an ordinary
-Cartesian child brings it to **0.000 mm**.
+placement was intended, misplaces it by the whole distance between the two
+georeferenced positions; re-authoring it as an ordinary Cartesian child places
+it exactly.
 
 #### Precision, axis order, units, and epoch
 
@@ -857,9 +861,10 @@ coordinates are not written into single-precision geometry attributes such as
 than merely desirable: the large magnitudes — about 6.4 × 10⁶ m for an
 Earth-surface geocentric position — stay inside the double-precision anchor
 frame, and vertices below the anchor stay small local offsets. Absolute float32
-geocentric positions lose **162 mm** at that magnitude; the same geometry as
-localized float32 offsets under a double-precision anchor holds **0.0003 mm**,
-a factor of roughly 4.8 × 10⁵. This is the two-tier scheme from
+geocentric positions lose accuracy at that magnitude by a margin that matters for
+survey work; the same geometry carried as localized float32 offsets under a
+double-precision anchor holds it, by orders of magnitude. This is the two-tier
+scheme from
 [Precision handling](#precision-handling), stated as the runtime's side of the
 bargain.
 
@@ -895,13 +900,13 @@ either omits the affected prims or declines the stage.
 
 The reason is worth the space. A coordinate-neutral scene opened by a consumer
 with no resolver draws its content at bare local offsets — near the centre of
-the planet, **6,369 km** from truth, with nothing raised. To that consumer it is
+the planet rather than on its surface, with nothing raised. To that consumer it is
 indistinguishable from a correct scene. Refusing is a loud and recoverable
 failure; ignoring the binding is a silent and unrecoverable one.
 
 For a consumer to refuse, it has to be able to tell. So a stage that needs CRS
 resolution in order to be placed correctly says so, in a way that is cheap to
-check before traversal — the prototype uses layer metadata,
+check before traversal. Layer metadata carries this today, as
 `customLayerData['crsResolutionRequired'] = true`. A consumer that sees the
 declaration and does not implement this behavior can then refuse, defer to a
 resolver, or surface the condition, rather than silently placing content.
@@ -928,7 +933,7 @@ instancing, physics, world-transform queries — are the same behavior as
 rendering, not a reduced version of it. "Does this work without a renderer" is
 the first question a GIS or AECO pipeline asks, and the answer here is
 structural rather than a promise: the description is stated over the composed
-stage, and the two prototypes below share no runtime code.
+stage, and nothing in it refers to a render path.
 
 What the transformation engine is asked to do is narrow, and deliberately so.
 The abstraction above it moves coordinates from one CRS to another. Deriving the
@@ -974,21 +979,10 @@ implementation state how closely it agrees, as a distance in target-CRS units at
 a stated coordinate magnitude. A count of matching digits is not comparable
 across CRS families.
 
-The measured result for the prototype pair: a C++ Hydra 2.0 scene index and an
-independent Python stage-level resolver, sharing no runtime code, resolve a
-3,526-vertex railway asset into the same target CRS at **median 0.40 mm, worst
-0.68 mm**. Across five CRS families and both hemispheres — UTM 18N, UTM 56S,
-NZTM2000, UTM 17S at the equator, UTM 33N at 78°N — the same single code path
-reproduces closed-form geodesy at **0.0 mm**, with the authored EPSG code the
-only difference between cases. Both run as continuous tests, on Linux and
-Windows.
-
 A **1 mm** threshold at Earth-surface magnitudes is proposed as the bar:
-comfortably below the accuracy of any survey control this data derives from, and
-met with about 1.5× headroom by the pair above. It is the one figure in this
-section chosen rather than measured, which makes it the right thing for the
-working group to argue about — the authoring-time checks and both continuous
-tests key off it.
+comfortably below the accuracy of any survey control this data derives from. It
+is chosen rather than measured, which is what makes it the right thing for the
+working group to argue about, and the authoring-time checks below key off it.
 
 #### What a checker can catch at authoring time
 
@@ -999,9 +993,9 @@ home.
 
 | Invariant | Cost of violating it |
 |---|---|
-| Anchor-versus-child is unambiguous: a prim carrying a position beneath another such prim is flagged unless it declares an overriding binding | 418.9 m misplacement |
-| Descendant offsets are authored in the frame the anchor's CRS implies | 4.86 m misplacement |
-| A stage carrying CRS bindings declares that resolution is required | 6,369 km silent misplacement |
+| Anchor-versus-child is unambiguous: a prim carrying a position beneath another such prim is flagged unless it declares an overriding binding | Misplacement by the whole anchor-to-leaf distance |
+| Descendant offsets are authored in the frame the anchor's CRS implies | Systematic misplacement, growing with the lever |
+| A stage carrying CRS bindings declares that resolution is required | Silent placement near the planet's centre |
 | A binding resolves to a prim that actually carries a valid CRS definition | Resolver failure at load |
 | A stage carrying CRS bindings has a CRS bound to its `defaultPrim`, so a target exists without one being supplied | No determinable target CRS |
 | A georeferenced prim does not also carry a conflicting authored transform | Ambiguous placement |
@@ -1014,14 +1008,12 @@ CRS intent is still present as data.
 Two schema-level choices are deliberately left open, because the behavior above
 does not depend on either:
 
-| Question | Option A (schema section above) | Option B (codeless prototype) |
+| Question | Option A (reference arc, position on the transform stack) | Option B (relationship, position on a dedicated attribute) |
 |---|---|---|
 | How is the binding edge discovered? | A USD `references` arc to the CRS prim, established by `Bind()` | A `crs:binding` relationship, resolved by traversal |
 | How is the anchor position carried? | `double3 xformOp:translate` with `!resetXformStack!` authored into the layer | A dedicated `double3 crs:position` attribute |
 
-Both were built and measured on the same multi-CRS scene — a building in
-NAD83 / UTM 17N under a WGS 84 / UTM 30N anchor — and they place the same corner
-at the same geocentric point to **0.0 mm**. So this is not a correctness
+Neither choice changes where anything ends up. So this is not a correctness
 question between the two. It is a question about composability,
 hand-editability, and what stays inspectable, with one substantive asymmetry:
 option A authors `resetXformStack` into the layer, so the scene is no longer
@@ -1032,26 +1024,6 @@ semantic on the computed representation only.
 That is a good question for the working group, and describing the runtime
 independently of it is what keeps the question live rather than settled by
 implication.
-
-#### Implementations and measurements
-
-Every figure above comes from a runnable test rather than an estimate.
-
-| Claim | Source |
-|---|---|
-| Baked and coordinate-neutral authoring agree to 0.0 mm | `testenv_equivalence.py` (multi-CRS scene) |
-| Position-only anchor resolution is ~410 m wrong | `test_anchor_injection.py` |
-| Projected offsets lifted through ENU are 4.86 m wrong | `test_coexist_vs_baked.py` |
-| Anchor-versus-child ambiguity is 418.9 m | `test_illformed_assets.py` (G1) |
-| Absolute float32 loses 162 mm; localized float32 holds 0.0003 mm | `test_float32_localization.py` |
-| No declaration means 6,369 km of silent misplacement | `test_illformed_assets.py` (G3) |
-| Two independent runtimes agree to 0.40 mm median / 0.68 mm worst | Two-runtime parity test |
-
-| Implementation | Form | Location |
-|----------------|------|----------|
-| Hydra 2.0 scene index filter | C++, auto-inserted, PROJ-backed | [asluk/OpenUSD `extras/usd/examples/usdGeospatialSceneIndex`](https://github.com/asluk/OpenUSD/tree/aluk/geospatial-crs-prototype/extras/usd/examples/usdGeospatialSceneIndex) |
-| Stage-level resolver | Python reference, PROJ-backed | [asluk/OpenUSD `extras/usd/examples/usdGeospatial`](https://github.com/asluk/OpenUSD/tree/aluk/geospatial-crs-prototype/extras/usd/examples/usdGeospatial) |
-| Typed C++ schema prototype | C++, PROJ integration | [mistafunk/USD `geospatial-prototype`](https://github.com/mistafunk/USD/tree/geospatial-prototype/pxr/usd/usdGeospatial) |
 
 ### Default Implementation using the "PROJ" library
 
@@ -1575,3 +1547,40 @@ the existing POC implementations, the usdGeospatial prototype README,
 OGC standards documentation, and the OpenUSD proposals format guidelines.
 All technical content was reviewed, verified,
 and refined by the human authors.
+
+## Appendix C: Reference implementations and measurements
+
+Not part of the proposal. [Runtime behavior](#runtime-behavior) is stated on its
+own terms; this appendix records the implementations it was written alongside
+and what they measure, so a reader who wants the evidence behind a choice can
+find it, and so an independent implementation has something to check itself
+against.
+
+The implementations themselves are listed in
+[Prototype implementations](#prototype-implementations); the figures here come
+from the Hydra 2.0 scene index filter and the stage-level resolver in that
+table.
+
+Every figure below comes from a runnable test rather than an estimate. The scene
+behind most of them is a building in NAD83 / UTM 17N under a WGS 84 / UTM 30N
+anchor, with roughly a 420 m lever from anchor to corner.
+
+| What was measured | Result | Source |
+|---|---|---|
+| Resolving an anchor as a position only, with no frame | 410 m misplacement | `test_anchor_injection.py` |
+| Projected offsets lifted through a topocentric basis instead of the anchor's grid | 4.86 m misplacement | `test_coexist_vs_baked.py` |
+| Selecting the composition frame from the source CRS instead | 0.0 mm | `test_coexist_vs_baked.py` |
+| A georeferenced leaf authored where a Cartesian child was intended | 418.9 m misplacement | `test_illformed_assets.py` (G1) |
+| Absolute float32 geocentric positions at Earth-surface magnitude | 162 mm lost | `test_float32_localization.py` |
+| The same geometry as localized float32 offsets under a double-precision anchor | 0.0003 mm | `test_float32_localization.py` |
+| A stage with no resolution-required declaration, opened without a resolver | 6,369 km silent misplacement | `test_illformed_assets.py` (G3) |
+| The two binding and position carriers, on the same scene | agree to 0.0 mm | `testenv_equivalence.py` |
+
+On agreement between independent runtimes: the C++ Hydra 2.0 scene index and the
+Python stage-level resolver share no runtime code, and resolve a 3,526-vertex
+railway asset into the same target CRS at median 0.40 mm, worst 0.68 mm — about
+1.5× headroom against the 1 mm bar proposed in the description. Across five CRS
+families and both hemispheres — UTM 18N, UTM 56S, NZTM2000, UTM 17S at the
+equator, UTM 33N at 78°N — the same single code path reproduces closed-form
+geodesy at 0.0 mm, with the authored EPSG code the only difference between
+cases. Both run as continuous tests, on Linux and Windows.
