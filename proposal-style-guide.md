@@ -464,3 +464,54 @@ standard is the same in both directions: the human is responsible
 for the judgment." This cuts both ways — the proposal author must
 exercise judgment over what the AI produced, and reviewers will
 exercise judgment over the result.
+
+---
+
+## 8. Scoping Open Questions
+
+Every proposal reaches questions it cannot answer yet. The temptation is to answer
+them anyway, so the document looks finished, or to leave them unmarked and hope
+nobody notices. Both make the proposal harder to adopt.
+
+Put each one through three tests.
+
+**1. Does answering it expand scope beyond what the basic capability needs?**
+
+A proposal earns adoption by doing one thing well. A question whose answer drags
+in a second capability is a question to defer, even when the answer looks within
+reach. Write down what you are not covering and why.
+
+**2. Can you give a clear diagnostic for what is not supported?**
+
+Refusing loudly is a legitimate answer. Silent wrong output is not. An
+implementation that rejects an unsupported case by name, with a message an author
+can act on, is more adoptable than one that quietly produces a plausible-looking
+result. This is usually the cheapest thing in the whole design, and it is the
+difference between a scoped first version and an unreliable one.
+
+**3. Can you iterate later without breaking content compatibility?**
+
+This is the test that decides. The hinge is whether the thing in question is
+authored data.
+
+- A runtime or caller choice can be deferred for free. Nothing on disk depends on
+  it, so a later answer breaks nothing.
+- Something authored into a scene cannot. Content written against the first answer
+  has to keep working, so a later change carries a migration cost that grows with
+  adoption.
+
+A question that fails only the first test gets deferred with a diagnostic. A
+question that fails the third has to be settled before the proposal ships,
+however inconvenient that is.
+
+### Two habits that go with it
+
+**Say what the later version looks like.** A decline that names the additive path —
+"this is not covered now; when it is, it will be an optional property with the
+current behavior as the default" — reads as a plan. A decline with nothing after it
+reads as an unresolved argument, and reviewers treat it that way.
+
+**Do not let avoiding one problem buy new surface.** It is easy to sidestep a
+mechanism you dislike by introducing a property that sidesteps it. That trades a
+design objection for a permanent addition to the schema, which is usually the worse
+deal. Look for the answer that does both: avoid the mechanism *and* add nothing.

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>Namespace & Prefix Isolation — TAC one-pager</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; max-width: 1000px; margin: 20px auto; padding: 0 24px; color: #1a1a1a; line-height: 1.38; }
+  h1 { border-bottom: 4px solid #76b900; padding-bottom: 6px; margin-bottom: 2px; font-size: 1.5em; }
+  .sub { color: #666; margin-top: 0; margin-bottom: 1em; font-size: 0.92em; }
+  h2 { color: #2a2a2a; font-size: 1.02em; margin: 1em 0 0.35em; border-left: 5px solid #76b900; padding-left: 8px; }
+  ul { margin: 0.25em 0 0.7em; padding-left: 1.25em; }
+  li { margin-bottom: 0.2em; }
+  .principle { background: #f4f9ec; border: 1px solid #cfe8a8; border-radius: 6px; padding: 9px 13px; margin: 0.35em 0 0.7em; font-size: 0.93em; }
+  .example { background: #f7f7f7; border: 1px solid #ddd; border-radius: 6px; padding: 8px 12px; margin: 0.35em 0 0.7em; font-family: Consolas, monospace; font-size: 0.86em; }
+  table { border-collapse: collapse; width: 100%; margin: 0.35em 0 0.7em; font-size: 0.85em; }
+  th, td { border: 1px solid #ccc; padding: 5px 7px; text-align: left; vertical-align: top; }
+  th { background: #76b900; color: white; }
+  tr:nth-child(even) { background: #f9f9f9; }
+  .two-col { display: flex; gap: 26px; }
+  .two-col > div { flex: 1; }
+  .note { font-size: 0.86em; color: #555; margin: 0.2em 0 0.6em; }
+  .footer { margin-top: 1em; font-size: 0.82em; color: #777; }
+  code { background: #eee; padding: 0 3px; border-radius: 2px; }
+</style>
+</head><body>
+
+<h1>Namespace &amp; Prefix Isolation for USD Extensions</h1>
+<p class="sub">AOUSD TAC discussion input — 2026-09-04 — Aaron Luk (NVIDIA)</p>
+<p style="background:#fff3cd; border:1px solid #ffe08a; border-radius:5px; padding:6px 10px; font-size:0.82em; color:#665200; margin:0 0 0.8em;"><b>Draft, under active review — not complete, not an AOUSD position, not citable.</b> Originally prepared for the 2026-09-04 TAC meeting, now being revised based on that discussion. Derived from the working README; content is still changing.</p>
+
+<h2>Problem</h2>
+<ul>
+  <li>USD's extension surface is an <b>open set</b> (properties, schema/type names, metadata keys, file formats, resolvers, and more not yet named) — don't scope requirements to today's list.</li>
+  <li>Concrete failure mode: two vendors independently name an extension identically with different semantics &rarr; <b>silent data corruption</b> when assets move between tools.</li>
+</ul>
+
+<h2>Terminology &amp; hierarchy composition</h2>
+<p class="note"><b>Prefix</b> = leading ownership token(s). <b>Namespace</b> = the space it scopes. An identifier carries two independent axes: <b>owner hierarchy</b> (who governs — a flat vendor token, or a multi-level hierarchy the owner defines for itself) and <b>domain hierarchy</b> (what functional area, how specific a feature).</p>
+<div class="example">
+AOUSD.GeomWG . brep &nbsp;→&nbsp; owner = alliance &gt; WG (AOUSD has no sub-WGs today, but the convention must support that depth if added later); domain = schema-level token shared by <code>BrepArray</code> + its API schemas (UsdSolid B-rep proposal, PR #109, Aaron Luk &amp; Joe Umhoefer)<br>
+yoyodyne.tierA . dimensional.contabulator &nbsp;→&nbsp; a <i>single vendor's own</i> internal sub-hierarchy — not necessarily "working groups"<br>
+yoyodyne . dimensional.contabulator &nbsp;→&nbsp; flat, no sub-hierarchy
+</div>
+
+<div class="two-col">
+<div>
+<h2>Functional Requirements</h2>
+<p class="note">Properties a solution must satisfy — not a syntax. Delimiter/casing/notation are solution-space choices, left open.</p>
+<ul>
+  <li><b>Namespace &amp; Prefix Isolation</b> (own requirement, split from Discoverability):
+    <ul>
+      <li>R1 Ownership legibility</li>
+      <li>R2 Hierarchical scoping (both axes)</li>
+      <li>R3 Owner sub-hierarchy independence — applies to a single vendor too, not just consortiums</li>
+      <li>R4 Syntax may vary by extension surface — no single notation mandated</li>
+      <li>R5 Collision-prevention guarantee</li>
+      <li>R6 Tiered/graduated lifecycle — <b>sequential</b>, but starting point can vary (needn't start at vendor level)</li>
+      <li>R7 Proportionate governance cost</li>
+    </ul>
+  </li>
+  <li><b>Discoverability</b> (separate): extension points &middot; unified extension model &middot; discovery/registration (per Gordon Bradley) — Profiles' <code>ProfileAPI</code> is a candidate vehicle, not mandated</li>
+</ul>
+</div>
+<div>
+<h2>Open Questions for TAC</h2>
+<ul>
+  <li>Which collision-prevention strength: registry, convention, or resolve-time detection? (R7 governance-cost tradeoff)</li>
+  <li>Does coverage extend beyond properties to schema/type names, file formats, resolvers?</li>
+  <li>Can namespace/prefix isolation ship independent of discoverability?</li>
+  <li>TAC front-line + SC escalation, or dedicated WG?</li>
+</ul>
+</div>
+</div>
+
+<h2>Survey of Approaches</h2>
+<table>
+<tr><th>Source</th><th>Collision prevention</th><th>Registry</th><th>Promotion path</th></tr>
+<tr><td><b>USD Profiles proposal</b> (merged PR #75, Nick Porcino)</td><td>Unique prefix + ancestral derivation from <code>usd</code> root</td><td>None</td><td>Yes — worked example: <code>epic.nanite</code> &rarr; <code>aousd.meshlet</code> &rarr; <code>usd.meshlet</code> (sequential, but can enter at the WG stage rather than vendor)</td></tr>
+<tr><td>Khronos glTF</td><td>Reserved prefix per vendor</td><td>Yes (lightweight, file-based)</td><td>Yes — 5-stage, vendor &rarr; <code>EXT_</code> &rarr; <code>KHR_</code> (can enter directly at <code>EXT_</code> via the same GitHub-issue request)</td></tr>
+<tr><td>IETF RFC 6838</td><td>Tree-based (<code>vnd.</code>/<code>prs.</code>/<code>x.</code>)</td><td>Yes (IANA, heavyweight)</td><td>None</td></tr>
+<tr><td>W3C Custom Elements</td><td>Structural (mandatory hyphen)</td><td>None</td><td>N/A</td></tr>
+<tr><td>Field evidence (SimReady + related production work, illustrative only)</td><td>Convention-only, reverse-domain, and package-scoped resolve-time detection — three different points in the design space</td><td>None in any</td><td>Mixed / still settling — SimReady itself is mid-transition toward WGs and multi-org tiers (cf. <a href="https://github.com/newton-physics">Newton</a>)</td></tr>
+</table>
+
+<h2>Design Considerations</h2>
+<div class="principle">
+  <b>Separability from OpenUSD's plugin system.</b> The namespace/prefix paradigm and its enforcement must be definable and usable independent of <code>pluginfo.json</code>, C++ namespace macros, <code>dlopen</code> loading, or any other runtime mechanism. Even inside <code>ProfileAPI</code>, the <b>query contract</b> (what explicit/introspective queries return) is implementation-agnostic — only the <b>registration mechanism</b> (<code>pluginfo.json</code>) is OpenUSD-plugin-specific. AOUSD should govern the former, not mandate the latter.
+</div>
+<p class="note"><b>Profiles as the cross-cutting declaration mechanism:</b> namespace/prefix isolation is the naming layer; it doesn't address how an asset declares which extensions it requires. <code>ProfileAPI</code>'s query contract is an existing, already-accepted mechanism for that — one candidate vehicle for Discoverability, not a mandated one. Governance of how vendor extensions fold into profiles is deferred to AOUSD, consistent with how Profiles itself defers canonical-capability governance to OpenUSD/AOUSD.</p>
+
+<h2>Ask of the room today</h2>
+<ul>
+  <li>Agree: namespace/prefix isolation is a <b>standalone requirement</b>, not folded into discoverability.</li>
+  <li>A rough steer on collision-prevention weight (registry vs. convention vs. resolve-time) — not a final decision.</li>
+</ul>
+
+<p class="footer">Full working draft: <code>proposals/namespace_prefix_isolation/README.md</code> (branch <code>aluk/namespace-prefix-isolation</code>, on top of upstream <code>main</code>). Not yet a formal proposal PR. This one-pager is derived from that README on demand — not independently maintained.</p>
+
+</body></html>

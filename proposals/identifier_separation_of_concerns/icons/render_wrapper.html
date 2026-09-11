@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head><style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  object {
+    width: 90vw;
+    height: 90vh;
+  }
+</style></head>
+<body>
+  <object id="icon" type="image/svg+xml"></object>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById('icon').data = params.get('src');
+  </script>
+</body>
+</html>
