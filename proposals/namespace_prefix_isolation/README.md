@@ -8,10 +8,11 @@
 2. [Problem Statement](#problem-statement)
 3. [Functional Requirements](#functional-requirements)
 4. [Survey of Approaches](#survey-of-approaches)
-5. [Design Considerations](#design-considerations)
-6. [Open Questions for Discussion](#open-questions-for-discussion)
-7. [Relationship to Other Proposals](#relationship-to-other-proposals)
-8. [Next Steps](#next-steps)
+5. [Case Study: `Prelim` in the UsdSolid B-Rep Proposal](#case-study-prelim-in-the-usdsolid-b-rep-proposal)
+6. [Design Considerations](#design-considerations)
+7. [Open Questions for Discussion](#open-questions-for-discussion)
+8. [Relationship to Other Proposals](#relationship-to-other-proposals)
+9. [Next Steps](#next-steps)
 
 ## Introduction
 
@@ -110,6 +111,104 @@ Field evidence from production use (illustrative, not proposed as a template):
 - A property-naming convention in production today (NVIDIA's SimReady Foundation) uses colon-delimited, camelCase tokens (matching USD's existing colon-delimited property idiom, e.g. `primvars:`), governed by tier ownership with no central registry and no graduation path today. It is not a static single-organization case, though: SimReady is moving toward its own working-group structure and toward tiers that are not NVIDIA-specific -- for example [Newton](https://github.com/newton-physics), an open physics engine developed jointly across multiple organizations. Read this way, it's a live example of a vendor-originated namespace mid-transition toward the multi-vendor tier this proposal's lifecycle (R6) describes, not just a cautionary single-vendor case -- and it is itself still working through the collisions that arise along that path.
 - A separate reverse-domain convention has been adopted for capability/rule/profile identifiers (a different namespace than property names), explicitly built on the Profiles proposal's naming approach. Its versioning syntax diverged from the Profiles proposal's own (dot-integer vs. underscore-integer) -- concrete evidence that a documented convention drifts without an enforcement mechanism.
 - A third, distinct collision-prevention mechanism observed in production: package-scoped resolution. Short identifiers are implicitly scoped to their owning package; cross-package references require full qualification; the same short identifier in two different packages causes no conflict unless an unqualified reference becomes ambiguous across packages actually installed together. Collision detection happens at resolve/consumption time rather than at authoring/registration time -- a middle point between a central registry and convention-only, worth naming as a third option distinct from that binary.
+
+## Case Study: `Prelim` in the UsdSolid B-Rep Proposal
+
+The B-Rep proposal is the first live instance of these requirements meeting a real
+schema, and it is worth reading closely because it exposes a question the
+requirements above state abstractly: **which extension surfaces does a marker attach
+to?**
+
+Its governance journey is the one R6 describes. The schema was worked in the AOUSD
+Geometry Working Group, socialized with other interest groups, and put up as
+OpenUSD-proposals PRs -- more than one organization behind it, and past the point
+where a single-vendor prefix would describe it accurately. `Prelim` is being
+considered as the marker for exactly that status: not one company's, and not yet
+ratified.
+
+### What the marker landed on
+
+[aousd/OpenUSD-proposals PR #2](https://github.com/aousd/OpenUSD-proposals/pull/2)
+adds the prefix to the typed prim, `BrepArray` becoming `PrelimBrepArray`. The
+library already carried it as `PrelimUsdSolid`. Left unprefixed: the applied API
+schemas (`BrepPointAPI`, `BrepCurve3dNurbAPI`, `BrepCurveUvNurbAPI`,
+`BrepSurfaceNurbAPI`), the property namespace prefix `brep`, and the authored
+examples in the proposal's own README, which still read `def BrepArray`.
+
+The rationale for leaving the applied APIs unprefixed is that they can only be
+applied to the prefixed type -- `apiSchemaCanOnlyApplyTo` constrains them to
+`PrelimBrepArray`, so the marker is carried structurally rather than in their names.
+
+That rationale has real merit. It minimizes renaming at graduation: one type name
+changes rather than six. And from authored data the status is legible, because the
+prim type is visible at the point of use.
+
+### Where it does not hold
+
+**Type names are globally registered; the application constraint is local.**
+`apiSchemaCanOnlyApplyTo` restricts where an API schema may be applied. It does not
+reserve the name. Another party defining a differently-shaped `BrepPointAPI`
+collides in the schema registry regardless of what either one can be applied to.
+That is R5, and structural association does not address it.
+
+**The argument generalizes further than intended.** If association through
+containment is sufficient, the typed prim needed no prefix either -- it already sits
+inside `PrelimUsdSolid`. The same reasoning excuses the change the PR makes.
+
+**And the surfaces that persist in content received nothing.** The marker is on the
+library and the type name, both of which exist only in the schema registry. Every
+surface that ends up in a customer's file is unmarked:
+
+```usda
+def BrepArray "Cube" (
+    prepend apiSchemas = ["BrepPointAPI:vertexPoint", "BrepCurve3dNurbAPI:edge3dNurb"]
+)
+{
+    uniform double[] brep:intersectTol3d = [0.00002]
+    uniform uint[] brep:regionCount = [2]
+    uniform point3d[] brep:edge3dNurb:curve3d:nurb:controlVertices = [...]
+}
+```
+
+Two sources of `brep:` appear here. The typed schema declares its own properties with
+the namespace built into their names, so they are authored on every instance. And
+the multiple-apply instancing composes API schema instance names into property paths
+-- `brep:edge3dNurb:...` -- so the applied schemas do leave a trace in authored data,
+through instance names rather than through type names.
+
+If a preliminary design changes at ratification, content authored in the interim
+carries `brep:` properties whose semantics differ from ratified `brep:` properties,
+with nothing in the file to distinguish them.
+
+### The question this poses
+
+Stating it as a requirement question rather than a naming preference:
+
+**Does a maturity or ownership marker belong on the surfaces that persist in authored
+data, or on the surfaces that exist in the schema registry?** The B-Rep PR currently
+answers "registry," and the asymmetry appears to be incidental rather than chosen.
+
+The answer has a cost either way, which is why it needs deciding rather than
+defaulting. Marking the property namespace -- `prelimBrep:intersectTol3d` -- makes
+status legible in the one place that outlives every tool, and makes graduation a
+content migration rather than a schema rename. Not marking it keeps graduation cheap
+and keeps property names readable, at the price of authored data that cannot be
+dated.
+
+This is R4 in practice. R4 permits different surfaces to use different concrete
+syntaxes, provided each satisfies R1--R3. It does not say a surface may carry no
+marker at all, and the B-Rep case shows that the distinction between "different
+syntax" and "absent" has not yet been drawn.
+
+### A secondary observation
+
+The rename also doubled the prefix in four places, producing
+`apiSchemaCanOnlyApplyTo = ["PrelimUsdSolidPrelimBrepArray"]` where the library
+prefix was already present, and left the proposal's own worked examples unchanged.
+Both are ordinary mistakes, and both are the kind a mechanical sweep produces when
+the scope of the change has not been settled first. That is an argument for deciding
+which surfaces carry a marker before applying one, rather than evidence about the
+convention itself.
 
 ## Design Considerations
 
