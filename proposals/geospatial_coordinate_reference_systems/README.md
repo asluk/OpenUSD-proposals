@@ -1108,10 +1108,12 @@ applies that does not arise in value resolution: two engines can differ by
 metres because they have different datum operations or different grids
 available, and neither is in error.
 
-What is asked for instead is that the figure be stated — the agreement achieved,
-in target-CRS units at a stated magnitude, and against what. An adopter deciding
-whether an implementation suits their work needs that number; they do not need
-it to be the same number as everyone else's.
+Implementations are encouraged to measure their deviation and to state it — the
+agreement achieved, in target-CRS units at a stated magnitude, and against what
+it was compared. An adopter deciding whether an implementation suits their work
+needs that number; they do not need it to be the same number as everyone else's,
+and nothing here makes a particular number the difference between an
+implementation of this schema and something else.
 
 For orientation, and not as a requirement: the survey control this data derives
 from is generally good to centimetres, so agreement at the millimetre scale sits
