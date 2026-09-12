@@ -753,10 +753,36 @@ There are several runtime situations where coordinates defined in different CRS 
 We propose to introduce an internal abstraction to compute coordinate transformations from one CRS to another:
 
 ```text
-transform(inout ArrayVector3d coordinates, in WKT crsIn, in WKT crsOut)
+Status transform(inout ArrayVector3d coordinates, in WKT crsIn, in WKT crsOut)
 ```
 
 The OpenUSD plugin system is employed to register implementations.
+
+**A conversion reports whether it succeeded, and a failed conversion yields no
+placement.** The abstraction stays as narrow as it is — it moves coordinates and
+nothing else — but a call that returns nothing cannot be told apart from a call
+that did nothing, and the runtime above it is required to report failure rather
+than place content it could not convert.
+
+**Converting an array is all or nothing.** A call that cannot convert every
+input fails, rather than returning some inputs converted and the rest untouched.
+An untouched coordinate is indistinguishable from a converted one: for a
+conversion that shifts by 1000 m, a two-point batch whose second point falls
+outside the operation's domain of validity and is left in place returns a
+perfectly plausible number 1000 m from the intended one, in an array the caller
+has been told succeeded.
+
+**`Status` carries which coordinate operation ran and what accuracy the engine
+attributes to it.** Success alone does not identify the operation, and two
+operations between the same pair of CRSs can differ legitimately — two datum
+operations put the same anchor 2 m apart in exact arithmetic, before any
+floating-point behaviour enters. Where a required resource is unavailable that
+is a failure, not a quiet substitution of a lower-accuracy operation that
+reports success.
+
+A per-element status interface, and recovering the elements that could be
+converted, are optimizations an implementation can add later without changing
+any of the above.
 
 ### Target CRS and runtime reprojection
 
@@ -1069,6 +1095,13 @@ which is what keeps the CRS intent inspectable — once placement has been baked
 into a matrix, the intent has collapsed and there is nothing left to check
 against.
 
+A resolved placement depends on more than the prim's transform stack: the
+binding relationship and the prim it targets, the WKT authored there, any
+coordinate epoch, the target CRS supplied by the caller, and the resources the
+engine used. That set is worth stating because an implementer cannot read it off
+the authored scene, and it is what a result is a function of. When to recompute
+is the caller's problem, as it already is for `UsdGeomXformCache`.
+
 That also settles what this costs a runtime that does not want it, which is
 nothing. No existing transform evaluation has to change and nothing has to be
 intercepted: the behavior is computed over the composed stage by something a
@@ -1118,6 +1151,14 @@ it was compared. An adopter deciding whether an implementation suits their work
 needs that number; they do not need it to be the same number as everyone else's,
 and nothing here makes a particular number the difference between an
 implementation of this schema and something else.
+
+A stated figure means nothing without the operation that produced it, which is
+why the abstraction reports which coordinate operation ran. Two implementations
+differing by 2 m because they selected different datum operations and two
+implementations differing by 2 m in floating-point accumulation are not the same
+result, and an adopter needs to know which one they are reading. Separating
+operation choice, the accuracy of the source survey, and numerical deviation is
+what makes the number comparable at all.
 
 For orientation, and not as a requirement: the survey control this data derives
 from is generally good to centimetres, so agreement at the millimetre scale sits
@@ -1491,9 +1532,10 @@ and informed the final design.
    A dynamic CRS carries its coordinate epoch in its own WKT
    (see [Appendix A](#appendix-a-wkt-examples)), so that needs no
    parameter of its own.
-   What is still open is how failure is reported: the signature returns
-   nothing, and a transform that cannot be computed should be surfaced
-   rather than quietly skipped.
+   Failure reporting is answered by
+   [The transformation abstraction](#the-transformation-abstraction):
+   the call returns a status, array conversion is all or nothing,
+   and the status names the coordinate operation that ran.
 
 4. **WKT validation.**
    Should OpenUSD validate WKT strings at authoring time?
