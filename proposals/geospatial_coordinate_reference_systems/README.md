@@ -171,6 +171,13 @@ The supported types are:
 | 3D Geocentric (ECEF) | `GEODCRS` | X, Y, Z | ITRF2020 |
 | 3D Engineering / Local | `DERIVEDPROJCRS` | Local X, Y, Z | Site calibration grid |
 
+3D means a complete vertical reference, not an assumed one. A definition that
+names only a horizontal coordinate system does not become 3D by being authored
+on a prim whose translate has three components: the third number would carry no
+datum and no unit, and two readers would be free to take it as ellipsoidal or
+orthometric height. A runtime handed a 2D definition reports failure rather than
+supplying the missing half.
+
 For dynamic datums (time-dependent reference frames),
 WKT 2 supports the `COORDINATEMETADATA` wrapper
 with `FRAMEEPOCH` and `EPOCH` clauses
@@ -448,41 +455,48 @@ It is a `token` (not `string`) to enable efficient caching and comparison.
 
 ```usda
 def CoordinateReferenceSystem "WGS84_UTM11N" (
-    doc = "WGS 84 / UTM zone 11N (EPSG:32611)"
+    doc = "WGS 84 / UTM zone 11N (EPSG:32611) + EGM2008 height (EPSG:3855)"
 )
 {
-    uniform token crs:wkt = """PROJCRS["WGS 84 / UTM zone 11N",
-        BASEGEOGCRS["WGS 84",
-            DATUM["World Geodetic System 1984",
-                ELLIPSOID["WGS 84",6378137,298.257223563,
-                    LENGTHUNIT["metre",1.0]]],
-            PRIMEMERIDIAN["Greenwich",0,
-                ANGLEUNIT["degree",0.0174532925199433]],
-            ID["EPSG",4326]],
-        CONVERSION["UTM zone 11N",
-            METHOD["Transverse Mercator",
-                ID["EPSG",9807]],
-            PARAMETER["Latitude of natural origin",0,
-                ANGLEUNIT["degree",0.0174532925199433],
-                ID["EPSG",8801]],
-            PARAMETER["Longitude of natural origin",-117,
-                ANGLEUNIT["degree",0.0174532925199433],
-                ID["EPSG",8802]],
-            PARAMETER["Scale factor at natural origin",0.9996,
-                SCALEUNIT["unity",1.0],
-                ID["EPSG",8805]],
-            PARAMETER["False easting",500000,
-                LENGTHUNIT["metre",1.0],
-                ID["EPSG",8806]],
-            PARAMETER["False northing",0,
-                LENGTHUNIT["metre",1.0],
-                ID["EPSG",8807]]],
-        CS[Cartesian,2],
-            AXIS["(E)",east,ORDER[1],
-                LENGTHUNIT["metre",1.0]],
-            AXIS["(N)",north,ORDER[2],
-                LENGTHUNIT["metre",1.0]],
-        ID["EPSG",32611]]"""
+    uniform token crs:wkt = """COMPOUNDCRS["WGS 84 / UTM zone 11N + EGM2008 height",
+        PROJCRS["WGS 84 / UTM zone 11N",
+            BASEGEOGCRS["WGS 84",
+                DATUM["World Geodetic System 1984",
+                    ELLIPSOID["WGS 84",6378137,298.257223563,
+                        LENGTHUNIT["metre",1.0]]],
+                PRIMEMERIDIAN["Greenwich",0,
+                    ANGLEUNIT["degree",0.0174532925199433]],
+                ID["EPSG",4326]],
+            CONVERSION["UTM zone 11N",
+                METHOD["Transverse Mercator",
+                    ID["EPSG",9807]],
+                PARAMETER["Latitude of natural origin",0,
+                    ANGLEUNIT["degree",0.0174532925199433],
+                    ID["EPSG",8801]],
+                PARAMETER["Longitude of natural origin",-117,
+                    ANGLEUNIT["degree",0.0174532925199433],
+                    ID["EPSG",8802]],
+                PARAMETER["Scale factor at natural origin",0.9996,
+                    SCALEUNIT["unity",1.0],
+                    ID["EPSG",8805]],
+                PARAMETER["False easting",500000,
+                    LENGTHUNIT["metre",1.0],
+                    ID["EPSG",8806]],
+                PARAMETER["False northing",0,
+                    LENGTHUNIT["metre",1.0],
+                    ID["EPSG",8807]]],
+            CS[Cartesian,2],
+                AXIS["(E)",east,ORDER[1],
+                    LENGTHUNIT["metre",1.0]],
+                AXIS["(N)",north,ORDER[2],
+                    LENGTHUNIT["metre",1.0]],
+            ID["EPSG",32611]],
+        VERTCRS["EGM2008 height",
+            VDATUM["EGM2008 geoid"],
+            CS[vertical,1],
+                AXIS["gravity-related height (H)",up,
+                    LENGTHUNIT["metre",1.0]],
+            ID["EPSG",3855]]]"""
 }
 ```
 
@@ -502,8 +516,14 @@ public:
         VtValue const &defaultValue = VtValue(),
         bool writeSparsely = false) const;
 
-    /// Walk up the prim hierarchy from `prim` and return the WKT token
-    /// of the first ancestor (or self) with a valid crs:wkt attribute.
+    /// Return the WKT token of the CRS in effect on `prim`: walk the composed
+    /// prim and its ancestors to the nearest authored crs:binding
+    /// relationship, validate its composed target list, and read crs:wkt from
+    /// the single CoordinateReferenceSystem prim it targets. Geometry
+    /// ancestors are not searched for crs:wkt, and an invalid nearest binding
+    /// is an error rather than a reason to continue to a farther one. Binding
+    /// is read from composed prims, including opinions introduced by
+    /// references and inherits.
     static TfToken ComputeCoordinateReferenceSystem(UsdPrim const &prim);
 };
 ```
@@ -524,11 +544,16 @@ A single-apply API schema that binds a CRS to a `UsdGeomXformable` prim.
 A relationship rather than a reference. A reference would compose the CRS prim's
 contents into the bound prim, putting `crs:wkt` on geometry and copying the
 definition to every site that uses it; a relationship names the definition and
-leaves it in one place. It also composes as a single opinion, so a binding
-authored in a stronger layer replaces a weaker one instead of leaving residue.
+leaves it in one place.
 
-Exactly one target is expected. An empty target list and multiple targets are
-both authoring errors rather than an unbinding mechanism.
+Relationship targets compose as a list, not as a scalar. `Bind()` authors an
+explicit one-target list, and an explicit list in a stronger layer does replace
+what weaker layers contributed. An ordinary target addition does not: it
+composes with them, so a prim can end up carrying two targets without any single
+layer having authored two. Exactly one composed target is expected. An empty
+target list and multiple targets are both authoring errors rather than an
+unbinding mechanism, which is what keeps a choice between two CRS definitions
+from being settled by the order they happen to compose in.
 
 **Binding does not modify the prim's transform stack.** `Bind()` authors the
 relationship and nothing else. That a bound prim's `xformOp:translate` reads as
@@ -548,7 +573,8 @@ public:
     UsdRelationship CreateCRSBindingRel() const;
     UsdRelationship GetCRSBindingRel() const;
 
-    /// Author crs:binding to a CRS prim in the composed stage.
+    /// Author crs:binding as an explicit one-target relationship list
+    /// naming a CRS prim in the composed stage.
     bool Bind(UsdGeospatialCoordinateReferenceSystem const &crs) const;
 };
 ```
@@ -557,7 +583,8 @@ public:
 
 The following example places a simplified building
 at the Esri headquarters in Redlands, California (34.0561°N, 117.1956°W),
-using WGS 84 / UTM zone 11N (EPSG:32611).
+using WGS 84 / UTM zone 11N (EPSG:32611) compounded with EGM2008 height
+(EPSG:3855), so the translate's third component carries a datum and a unit.
 
 ```usda
 #usda 1.0
@@ -636,18 +663,16 @@ Key observations:
 def "CRS" {
     def CoordinateReferenceSystem "WGS84_UTM11N"
     {
-        uniform token crs:wkt = """PROJCRS["WGS 84 / UTM zone 11N",
-            BASEGEOGCRS["WGS 84", ...],
-            CONVERSION["UTM zone 11N", ...],
-            ID["EPSG",32611]]"""
+        uniform token crs:wkt = """COMPOUNDCRS["WGS 84 / UTM zone 11N + EGM2008 height",
+            PROJCRS["WGS 84 / UTM zone 11N", ..., ID["EPSG",32611]],
+            VERTCRS["EGM2008 height", ..., ID["EPSG",3855]]]"""
     }
 
     def CoordinateReferenceSystem "WGS84_UTM18N"
     {
-        uniform token crs:wkt = """PROJCRS["WGS 84 / UTM zone 18N",
-            BASEGEOGCRS["WGS 84", ...],
-            CONVERSION["UTM zone 18N", ...],
-            ID["EPSG",32618]]"""
+        uniform token crs:wkt = """COMPOUNDCRS["WGS 84 / UTM zone 18N + EGM2008 height",
+            PROJCRS["WGS 84 / UTM zone 18N", ..., ID["EPSG",32618]],
+            VERTCRS["EGM2008 height", ..., ID["EPSG",3855]]]"""
     }
 
     def CoordinateReferenceSystem "NAD83_CA_Zone5_ftUS"
@@ -1130,41 +1155,52 @@ Working prototype implementations exist:
 These are reference encodings of common CRS types. The two examples worked
 against the case study are in [WKT examples](#wkt-examples) above.
 
-### WGS 84 / UTM zone 11N (EPSG:32611)
+### WGS 84 / UTM zone 11N (EPSG:32611) + EGM2008 height (EPSG:3855)
+
+A projected CRS is two-dimensional on its own. The 3D requirement is met by
+compounding it with a vertical CRS, which is what gives the third coordinate a
+datum and a unit.
 
 ```lisp
-PROJCRS["WGS 84 / UTM zone 11N",
-    BASEGEOGCRS["WGS 84",
-        DATUM["World Geodetic System 1984",
-            ELLIPSOID["WGS 84",6378137,298.257223563,
-                LENGTHUNIT["metre",1.0]]],
-        PRIMEMERIDIAN["Greenwich",0,
-            ANGLEUNIT["degree",0.0174532925199433]],
-        ID["EPSG",4326]],
-    CONVERSION["UTM zone 11N",
-        METHOD["Transverse Mercator",
-            ID["EPSG",9807]],
-        PARAMETER["Latitude of natural origin",0,
-            ANGLEUNIT["degree",0.0174532925199433],
-            ID["EPSG",8801]],
-        PARAMETER["Longitude of natural origin",-117,
-            ANGLEUNIT["degree",0.0174532925199433],
-            ID["EPSG",8802]],
-        PARAMETER["Scale factor at natural origin",0.9996,
-            SCALEUNIT["unity",1.0],
-            ID["EPSG",8805]],
-        PARAMETER["False easting",500000,
-            LENGTHUNIT["metre",1.0],
-            ID["EPSG",8806]],
-        PARAMETER["False northing",0,
-            LENGTHUNIT["metre",1.0],
-            ID["EPSG",8807]]],
-    CS[Cartesian,2],
-        AXIS["(E)",east,ORDER[1],
-            LENGTHUNIT["metre",1.0]],
-        AXIS["(N)",north,ORDER[2],
-            LENGTHUNIT["metre",1.0]],
-    ID["EPSG",32611]]
+COMPOUNDCRS["WGS 84 / UTM zone 11N + EGM2008 height",
+    PROJCRS["WGS 84 / UTM zone 11N",
+        BASEGEOGCRS["WGS 84",
+            DATUM["World Geodetic System 1984",
+                ELLIPSOID["WGS 84",6378137,298.257223563,
+                    LENGTHUNIT["metre",1.0]]],
+            PRIMEMERIDIAN["Greenwich",0,
+                ANGLEUNIT["degree",0.0174532925199433]],
+            ID["EPSG",4326]],
+        CONVERSION["UTM zone 11N",
+            METHOD["Transverse Mercator",
+                ID["EPSG",9807]],
+            PARAMETER["Latitude of natural origin",0,
+                ANGLEUNIT["degree",0.0174532925199433],
+                ID["EPSG",8801]],
+            PARAMETER["Longitude of natural origin",-117,
+                ANGLEUNIT["degree",0.0174532925199433],
+                ID["EPSG",8802]],
+            PARAMETER["Scale factor at natural origin",0.9996,
+                SCALEUNIT["unity",1.0],
+                ID["EPSG",8805]],
+            PARAMETER["False easting",500000,
+                LENGTHUNIT["metre",1.0],
+                ID["EPSG",8806]],
+            PARAMETER["False northing",0,
+                LENGTHUNIT["metre",1.0],
+                ID["EPSG",8807]]],
+        CS[Cartesian,2],
+            AXIS["(E)",east,ORDER[1],
+                LENGTHUNIT["metre",1.0]],
+            AXIS["(N)",north,ORDER[2],
+                LENGTHUNIT["metre",1.0]],
+        ID["EPSG",32611]],
+    VERTCRS["EGM2008 height",
+        VDATUM["EGM2008 geoid"],
+        CS[vertical,1],
+            AXIS["gravity-related height (H)",up,
+                LENGTHUNIT["metre",1.0]],
+        ID["EPSG",3855]]]
 ```
 
 ### Compound CRS: NAD83 / California zone 5 (ftUS) + NAVD88 height
