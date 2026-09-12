@@ -844,9 +844,13 @@ on. Picking one silently would place the whole scene somewhere nobody asked for,
 so this is handled the same way as any other transform that cannot be computed,
 and it is an authoring-time error a checker catches.
 
-A prim whose CRS already *is* the target is left alone rather than sent on an
-identity round trip through the transformation engine, which would only
-introduce noise into content that needed no work.
+A prim whose CRS already *is* the target skips the CRS-to-CRS point conversion
+rather than being sent on an identity round trip through the transformation
+engine, which would only introduce noise into content that needed no work. It
+skips nothing else: anchor detection, absolute placement, the anchor frame, unit
+conversion and the factoring of the output transform all still apply. Same CRS
+does not mean no work — the explicit-anchor rule holds whether or not a
+conversion runs.
 
 #### What an anchor establishes
 
@@ -1016,6 +1020,70 @@ not do is substitute an unrelated orthonormal basis and report success. A source
 map that is not defined and differentiable over the extent in use does not yield
 a frame, and that is a reported failure like any other.
 
+**Bounds come from the same representation.** Resolved bounds are computed from
+the resolved matrices, at the same evaluation time and in the same output frame
+as the transforms they accompany. An extent authored in a prim's own frame stays
+valid, because resolution does not move geometry within that frame — a unit
+box's local `[−0.5, +0.5]` is as useful afterwards as before. An extent computed
+over source-space world positions does not survive: that same box under an
+anchor at 100 and an independently anchored parent at 20 has a source world
+interval of `[119.5, 120.5]` and a resolved one of `[19.5, 20.5]`, so a
+source-space aggregate hint reused as though it were resolved is 100 m out.
+
+Local extents stay local and in float and global placement stays in the
+double-precision matrices, for the same reason the geometry does. At
+`6378137.1` m a float32 rounds away about 0.1 m, where a float32 offset of `0.1`
+under a double translation of that magnitude holds to around 2 × 10⁻⁹ m.
+Rebuilding a world-space `float3[] extent` would hand back exactly the precision
+the two-tier scheme exists to keep.
+
+#### Inverse and relative queries
+
+A world-to-local query in the resolved view inverts that prim's resolved world
+matrix. A relative query between two independently anchored prims uses their
+resolved matrices, in the same target frame and at the same evaluation time —
+`W(P) * inverse(W(Q))` with row vectors — rather than walking the source
+hierarchy across the anchor boundary between them. An inverse world matrix is
+the inverse of the affine map; it is not the inverse of exact point conversion.
+
+The gap is the same one as everywhere else in this section. With `/A` at 100 and
+an independently anchored `/A/B` at 20, the source local-to-world is `T(120)`,
+and its inverse sends the resolved world point 20 to local −100 where the
+resolved matrix sends it to local zero. A picking tool cannot invert the source
+cache to undo what the resolved view drew.
+
+Where the inverse does not exist the query reports failure rather than returning
+something. A child scale of `(0, 1, 1)` sends both `(8, 2, 0)` and `(0, 2, 0)`
+to the same point and no inverse recovers which was meant;
+`GfMatrix4d::GetInverse()` returns a sentinel for a singular matrix rather than
+a geometric answer, and passing that on as a placement is worse than failing.
+Forward evaluation of the same transform is unaffected and stays a separate
+operation.
+
+#### Instancing
+
+Point-instance positions and prototype transforms are ordinary local data,
+evaluated before the instancer's resolved world transform. A prototype's storage
+location does not georeference its instances. `/A` translating 100, with an
+instancer holding one position `(3, 0, 0)` referencing `/Library/Tree` whose
+local translation is 7, puts that instance at 110, and `/Library`'s own
+translation of 1000 does not participate — that is ordinary OpenUSD. A resolver
+that georeferences the stored prototype first, because `/Library` happens to
+carry an anchor, puts it at 1110 instead.
+
+So in this version a point-instancer prototype subgraph carries no active CRS
+anchor. Independently geolocated instances are authored as separately anchored
+placements. Native instances share local data and geometry as they always have,
+while resolved placement is computed in each instance's composed namespace
+context: a shared prototype under anchors at 100 and 200 cannot share a cached
+*world* matrix, because a local tip at 1 belongs at 101 in one and 201 in the
+other. Local matrices and geometry remain shareable, which is the part that
+matters for memory.
+
+A geographic distribution too large for one anchor frame is partitioned into
+separately anchored regions — the same locality budget as everywhere else, not a
+per-instance CRS attribute.
+
 #### Everything that is not an anchor
 
 A georeferenced scene is a place, and most of what is in it does not carry a
@@ -1151,6 +1219,28 @@ the first question a GIS or AECO pipeline asks, and the answer here is
 structural rather than a promise: the description is stated over the composed
 stage, and nothing in it refers to a render path.
 
+**There are two answers for the same prim, and this names both.** An ordinary
+query on the authored stage returns the ordinary answer. `/A` translating 100
+with `/A/B` translating 20, both bound and both anchors, puts `/A/B` at 120,
+because that is what the authored stack says and `UsdGeomXformable` and
+`UsdGeomXformCache` go on saying it. A CRS-resolved query returns 20, because
+under the explicit-anchor rule `/A/B` states an absolute position. The two are
+100 m apart with no reprojection anywhere in the problem — both prims are bound
+to the target.
+
+Neither is wrong; they answer different questions over different things.
+Resolution is an explicit conversion from the authored stage into a Cartesian
+view in a stated target frame. Queries on the authored stage keep their existing
+results unchanged. Queries in the resolved view, or queries that ask for
+resolution, get resolved ones, in which every anchor contributes an absolute
+matrix and its parent's transform is not applied again.
+
+What cannot be promised is that a consumer reading the authored stage without
+knowing about CRS gets georeferenced placement. That is the whole reason a stage
+declares the dependency. What is promised is that every reader of the converted
+view agrees, and one shared conversion serving render, query, physics and export
+is what delivers it.
+
 What the transformation engine is asked to do is narrow, and deliberately so.
 The abstraction above it moves coordinates from one CRS to another. Deriving the
 anchor's orientation basis, selecting the frame from the kind of source CRS,
@@ -1186,14 +1276,35 @@ because the two can read as contradictory and are not — *not re-composing unde
 the parents* is required; *recording that in an authored layer* is what the
 previous paragraph rules out.
 
-Flattening into a target CRS is this same evaluation with the results written
-out, and produces the same world transforms as a resolve pass over the same
-stage with the same target. A stage flattened this way records the target CRS it
-was flattened into, drops the resolution-required declaration since resolution
-is no longer needed, and keeps the CRS definitions and original bindings where
-it can — discarding them makes the flattening irreversible and throws away what
-a checker or a later re-resolve would need. Resolving an already-resolved stage
-changes nothing: the transformation is not applied a second time.
+Baking into a target CRS is this same evaluation with the results written out,
+and produces the same world transforms as a resolve pass over the same stage
+with the same target. It is not `UsdStage::Flatten()`, which merges composition
+and evaluates nothing geospatial — flattening an anchor at 100 with an
+independently anchored child at 20 still gives 120 where a bake gives 20.
+
+A baked stage reproduces the resolved view with ordinary transforms, consistent
+units and valid bounds, and it carries no active CRS binding that a resolver
+could read as a fresh source anchor. That is the failure worth designing
+against: under a source conversion that shifts by 1000 m, an anchor authored at
+100 bakes correctly to 1100, and a resolver that finds the original binding
+still live reads 1100 as another source coordinate and produces 2100. Comparing
+the source and target WKT does not catch it, because they differ by
+construction.
+
+So the target it was baked into is recorded as ordinary provenance — the target
+WKT and the output metric — rather than as a live binding with a second
+"ignore this one" state layered over it. The original bindings and definitions
+are kept as inert provenance, or kept in the source asset, which is the
+authoritative reversible representation; the bake is the interoperable
+deliverable. Capability claims are recomputed from what was delivered, so the
+resolution-required declaration goes with the bindings that implied it. Changing
+target later goes back to the source rather than reinterpreting provenance as a
+binding.
+
+Resolving a baked stage therefore changes nothing, and that is a property of the
+representation rather than a promise. Reversibility is not: a bake that sampled
+an animation, or that baked a nonlinear conversion into geometry, is not
+recovered from its output, and the source asset is what covers that.
 
 #### How closely independent runtimes agree
 
@@ -1261,7 +1372,9 @@ meaning with latitude. This description does not cover it, and a runtime asked
 for one reports that rather than producing a plausible-looking result.
 Geographic CRSs remain fully supported as sources, and as an output encoding for
 a point query. The Target CRS is a caller or runtime choice and is never
-authored into a scene, so covering this later breaks no content.
+authored into an unresolved source scene — a baked deliverable records the
+target it was baked into, as provenance — so covering this later breaks no
+content.
 
 **External grid files.** WKT2 names transformation grids — geoid grids for
 vertical datums, NADCON, proprietary grids — without embedding them, so a
@@ -1337,9 +1450,11 @@ The alternative reaches the same placement and costs more than it looks.
 `Bind()` calling `SetResetXformStack()` **writes `!resetXformStack!` into the
 prim's `xformOpOrder` in the layer**, which puts a runtime decision into the
 scene description: every consumer of that layer inherits it, changing it later
-means rewriting content, and the authoring-time checks lose the data they check
-against, because a scene that has already had placement folded into it no longer
-carries the CRS intent to check.
+means rewriting content, and a policy that belongs in one implementation now
+sits in every file ever authored against it. The cost is where the decision is
+recorded, not what recording it destroys — an authored reset changes ancestor
+inheritance and nothing else, and the binding and the CRS definition survive it
+intact.
 
 ### Declaring the dependency
 
