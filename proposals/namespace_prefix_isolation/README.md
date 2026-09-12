@@ -200,16 +200,6 @@ syntaxes, provided each satisfies R1--R3. It does not say a surface may carry no
 marker at all, and the B-Rep case shows that the distinction between "different
 syntax" and "absent" has not yet been drawn.
 
-### A secondary observation
-
-The rename also doubled the prefix in four places, producing
-`apiSchemaCanOnlyApplyTo = ["PrelimUsdSolidPrelimBrepArray"]` where the library
-prefix was already present, and left the proposal's own worked examples unchanged.
-Both are ordinary mistakes, and both are the kind a mechanical sweep produces when
-the scope of the change has not been settled first. That is an argument for deciding
-which surfaces carry a marker before applying one, rather than evidence about the
-convention itself.
-
 ## Design Considerations
 
 ### Separability from OpenUSD's plugin system
