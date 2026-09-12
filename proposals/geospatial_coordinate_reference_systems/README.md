@@ -261,6 +261,12 @@ GEODCRS["Y-Up Local Tangent Plane at Eiffel Tower",
     LENGTHUNIT["metre", 1]]
 ```
 
+These two examples show what WKT can express. Their Y-up and south-pointing
+axes sit outside the authoring convention in
+[What a resolved world transform is](#what-a-resolved-world-transform-is), which
+is canonical east-north-up with `upAxis = "Z"`; supporting them would mean
+specifying their complete axis mapping first.
+
 #### Derived CRS with affine site calibration
 
 For projects requiring high accuracy, we can compute the transformation between the National CRS (e.g., Lambert-93 + IGN69) and the USD local CRS using least squares. This transformation—which can include affine transformations (EPSG 9624) and vertical adjustment planes to account for localized vertical deviations—can be encoded directly into the WKT string.
@@ -876,35 +882,16 @@ the *source* CRS, which the runtime already has in hand:
 | Geographic or geocentric | The topocentric (east-north-up) basis at the anchor position, originating at that position expressed in the target CRS | Local metric offsets in that topocentric frame |
 | Projected (UTM, State Plane, site-calibrated, …) | The anchor's grid plane | Offsets in the anchor's grid coordinates and units |
 
-For a projected anchor, a descendant's origin is computed by adding its offset
-to the anchor's position *in grid coordinates* and transforming that grid point
-into the target CRS — not by lifting the offset through the anchor's topocentric
-basis. Grid axes are not topocentric axes; they differ by grid convergence and
-point scale. Lifting grid-authored offsets through a true east-north-up basis
-produces a systematic error that grows with the lever from the anchor to the
-geometry. Selecting the frame from the source CRS instead puts both paths on the
-same point.
+Grid axes are not topocentric axes — they differ by grid convergence and by
+point scale — so lifting a grid-authored offset through a true east-north-up
+basis produces a systematic error that grows with the lever from the anchor to
+the geometry. Selecting the frame from the *source* CRS is what removes it.
 
-This is also the specific answer to the objection that composing a local
+This is also most of the answer to the objection that composing a local
 transform onto an anchor position "is not correct in the general case for a
-spherical target CRS." It is not correct in general — choosing the composition
-frame from the source CRS is what makes it correct.
-
-One qualification worth stating plainly: an orientation basis is only meaningful
-when the target CRS is geocentric. For a planar target the orientation is
-implicit in the target's own grid, and the anchor contributes position only.
-
-Below the anchor, everything is plain USD. For a prim `D` under an anchor `A`:
-
-```text
-world(D) = localToAnchor(D) ∘ anchorFrame(A)
-```
-
-where `localToAnchor(D)` is `D`'s ordinary authored transform expressed relative
-to `A`, computed from the standard `UsdGeomXformable` stack with no geospatial
-interpretation applied to it at all. In the projected case the translation is
-computed in-plane as described above, while rotation and scale come from
-`localToAnchor(D)` unchanged.
+spherical target CRS." Choosing the composition frame from the source CRS
+removes the part of that error that was a choice. What is left is the
+approximation stated below, which is bounded and measured rather than open.
 
 A prim carrying its *own* position and binding is an anchor in its own right,
 and its ancestors' georeferencing does not additionally accumulate onto it: two
@@ -915,6 +902,119 @@ Authoring a building corner as an independent georeferenced leaf, where relative
 placement was intended, misplaces it by the whole distance between the two
 georeferenced positions; re-authoring it as an ordinary Cartesian child places
 it exactly.
+
+#### What a resolved world transform is
+
+**A resolved world matrix is an affine approximation about its anchor.** At each
+evaluation time the runtime computes one affine map from the anchor's source
+coordinate domain into the output Cartesian frame, and every ordinary descendant
+composes its unchanged local-to-anchor matrix onto that same map. Descendant
+origins are not converted one at a time.
+
+Write `g_A(d)` for the conversion of a displacement `d`, expressed in the
+anchor's source frame as the table above defines it, into output Cartesian
+coordinates, units and axes included. For a projected anchor that is the CRS
+conversion of `a + d`; for a geographic or geocentric anchor it is the
+conversion of the point reached by lifting `d` through the anchor's
+east-north-up basis in the source geocentric space. Then, with row vectors:
+
+```text
+b_A = g_A(0)        the anchor's position in the output frame
+J_A = Dg_A(0)       the derivative of the conversion there
+F_A = the affine map with linear part J_A and translation b_A
+
+world(D, t) = localToAnchor(D, t) * F_A(t)
+```
+
+`localToAnchor(D)` is `D`'s ordinary authored transform relative to `A`, from the
+standard `UsdGeomXformable` stack, with no geospatial interpretation applied to
+it at all. Below the anchor, everything is plain USD — and one map per anchor is
+what makes that true rather than nearly true.
+
+**The cost, stated and measured.** The map is exact at the anchor and its error
+is second order in the distance from it. Source UTM 31N promoted to 3D, target
+WGS 84 geocentric, anchor at `(500000, 0, 0)`: a point 1 km along the grid east
+axis converts exactly to `(6369343.549664, 334804.923976, 0)` m and resolves
+through the anchor frame to `(6369343.628009, 334804.928089, 0)` m — 7.85 cm
+apart. That is the difference between a curved map and its tangent. No amount of
+precision reduces it, and it is reported separately from transformation-engine
+error because the two have different causes and different remedies.
+
+Second order in distance makes this a locality budget rather than a correctness
+problem. A stated maximum displacement error implies a maximum anchored extent,
+and content larger than that is authored as several anchored regions — which is
+tiling, and is what georeferenced data already does for reasons that have
+nothing to do with this. Adjacent anchors approximate a shared edge from
+opposite directions and need not close there. This description sets no number:
+an implementation states the extent over which its frames hold to a stated
+error, and a deliverable states the budget it was authored to.
+
+**Why one map and not a conversion per descendant.** Two encodings of the same
+marker — a geometry point at `(1000, 0, 0)` on an identity child, and the same
+point at the origin of a child translated `(1000, 0, 0)` — are the same
+placement in ordinary USD, and moving a displacement between an op and a vertex
+is an ordinary asset refactor. A rule that converts descendant origins while
+leaving vertices as local offsets puts those two encodings in different places,
+so reparenting a light or collapsing an op moves the building. One map per
+anchor is what keeps them equal, and with them rigid assets, cameras, instancing,
+inverse and relative queries, and ordinary bounds.
+
+**The linear part is not optional and is not an orthonormal basis.** `J_A`
+carries the rotation between the source and target grids and the unit scale
+between them, and both change where a descendant lands.
+
+Units first. A projected anchor on a foot grid in a metre stage translates
+`1000` grid units; a child marker sits `10` further along. The physical position
+is `1010 × 1200/3937 = 307.848616` m. Converting the anchor alone and adding the
+raw offset gives `304.800610 + 10 = 314.800610` m — 6.95 m out, at ten feet from
+the anchor. The offset passes through `J_A` like everything else. Mixed
+horizontal and vertical units convert component-wise rather than by one scalar,
+and a combination that cannot be expressed that way is a failure rather than an
+approximation.
+
+Rotation second, and this is where a planar target is not the easy case it
+looks. Take a site conversion that turns the grid a quarter turn:
+`F(x, y, z) = (−y, x, z)`. An anchor at `(100, 200, 0)` with a child tip `10`
+along source `+x` has ordinary source world point `(110, 200, 0)`, which converts
+to `(−200, 110, 0)`. A frame carrying position only puts it at `(−190, 100, 0)`
+— 14.14 m away, with no curvature and no geocentric target anywhere in the
+problem. An anchor's orientation is implicit in the target's grid only when the
+source and target grids are the same grid. Scale and shear in a site conversion
+survive in `J_A` for the same reason. Authored child rotations and scales are
+unchanged as factors; their resolved world effect is not independent of the map.
+
+**Axes.** Geographic anchor tuples are longitude, latitude, height; conventional
+projected tuples are easting, northing, height; geocentric tuples are geocentric
+X, Y, Z. The engine adapter normalizes once, at the boundary. For a geocentric
+anchor the local axes are the east-north-up basis the table above gives and not
+geocentric X, Y, Z: a child offset `(10, 0, 0)` under an anchor at
+`(6378137, 0, 0)` points east, along geocentric `+Y`, and reading it along `+X`
+is 14.14 m away even when source and target CRS are the same one.
+
+This version's authoring convention is canonical east-north-up local anchor axes
+with `upAxis = "Z"`. A WKT axis assignment that does not map onto it needs an
+explicit supported mapping or a diagnostic, and an imported Y-up asset is
+corrected by an ordinary rotation beneath the anchor — stage up-axis metadata
+does not apply that rotation itself, and a Y-up tip at `(0, 10, 0)` is 14.14 m
+from the Z-up `(0, 0, 10)` it was meant to be.
+
+**Exact point conversion is a separate operation.** A world matrix is affine and
+a CRS conversion is not, so a matrix cannot carry the conversion. The choice was
+never between exact transforms and approximate ones; it was between an
+approximate transform and no transform, and with no transform there are no
+bounds, no physics, no instancing and no round trip through a DCC. Exactness is
+relocated rather than given up: converting a point exactly stays available as
+its own operation, returning coordinates in the requested CRS, and that is where
+a survey question is answered. Where the geometry itself has to be exact across
+a long extent, the answer is a reprojected representation baked with its error
+budget stated, or smaller anchored regions — not a world matrix promising
+something it cannot represent.
+
+An implementation may compute `J_A` analytically or by controlled numerical
+differentiation, and states the accuracy of the frame it produced. What it does
+not do is substitute an unrelated orthonormal basis and report success. A source
+map that is not defined and differentiable over the extent in use does not yield
+a frame, and that is a reported failure like any other.
 
 #### Everything that is not an anchor
 
@@ -1782,11 +1882,18 @@ Every figure below comes from a runnable test rather than an estimate. The scene
 behind most of them is a building in NAD83 / UTM 17N under a WGS 84 / UTM 30N
 anchor, with roughly a 420 m lever from anchor to corner.
 
+The implementations these come from convert each descendant's grid position
+directly, so the figures measure frame selection and carrier equivalence and do
+not include the affine approximation the world-transform contract states. Those
+are separate quantities on purpose, and the one row below that is not from a
+test says so.
+
 | What was measured | Result | Source |
 |---|---|---|
 | Resolving an anchor as a position only, with no frame | 410 m misplacement | `test_anchor_injection.py` |
 | Projected offsets lifted through a topocentric basis instead of the anchor's grid | 4.86 m misplacement | `test_coexist_vs_baked.py` |
 | Selecting the composition frame from the source CRS instead | 0.0 mm | `test_coexist_vs_baked.py` |
+| The affine anchor frame against exact conversion, 1 km from the anchor | 7.85 cm | worked case in [What a resolved world transform is](#what-a-resolved-world-transform-is) |
 | A georeferenced leaf authored where a Cartesian child was intended | 418.9 m misplacement | `test_illformed_assets.py` (G1) |
 | Absolute float32 geocentric positions at Earth-surface magnitude | 162 mm lost | `test_float32_localization.py` |
 | The same geometry as localized float32 offsets under a double-precision anchor | 0.0003 mm | `test_float32_localization.py` |
