@@ -135,8 +135,8 @@ schemas (`BrepPointAPI`, `BrepCurve3dNurbAPI`, `BrepCurveUvNurbAPI`,
 `BrepSurfaceNurbAPI`), the property namespace prefix `brep`, and the authored
 examples in the proposal's own README, which still read `def BrepArray`.
 
-The rationale for leaving the applied APIs unprefixed is that they can only be
-applied to the prefixed type -- `apiSchemaCanOnlyApplyTo` constrains them to
+Joe Umhoefer's rationale for leaving the applied APIs unprefixed is that they can
+only be applied to the prefixed type -- `apiSchemaCanOnlyApplyTo` constrains them to
 `PrelimBrepArray`, so the marker is carried structurally rather than in their names.
 
 That rationale has real merit. It minimizes renaming at graduation: one type name
