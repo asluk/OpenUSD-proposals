@@ -1100,10 +1100,22 @@ implementation state how closely it agrees, as a distance in target-CRS units at
 a stated coordinate magnitude. A count of matching digits is not comparable
 across CRS families.
 
-A **1 mm** threshold at Earth-surface magnitudes is proposed as the bar:
-comfortably below the accuracy of any survey control this data derives from. It
-is chosen rather than measured, which is what makes it the right thing for the
-working group to argue about, and the authoring-time checks below key off it.
+No threshold is set here. The AOUSD core specification declines to prescribe a
+numerical tolerance for value resolution, on the grounds that acceptable
+deviation depends on hardware, floating-point behaviour, compiler behaviour and
+implementation choices. The same reasoning holds here, and one further source
+applies that does not arise in value resolution: two engines can differ by
+metres because they have different datum operations or different grids
+available, and neither is in error.
+
+What is asked for instead is that the figure be stated — the agreement achieved,
+in target-CRS units at a stated magnitude, and against what. An adopter deciding
+whether an implementation suits their work needs that number; they do not need
+it to be the same number as everyone else's.
+
+For orientation, and not as a requirement: the survey control this data derives
+from is generally good to centimetres, so agreement at the millimetre scale sits
+comfortably below the accuracy of the source.
 
 #### What a checker can catch at authoring time
 
@@ -1777,8 +1789,8 @@ anchor, with roughly a 420 m lever from anchor to corner.
 
 On agreement between independent runtimes: the C++ Hydra 2.0 scene index and the
 Python stage-level resolver share no runtime code, and resolve a 3,526-vertex
-railway asset into the same target CRS at median 0.40 mm, worst 0.68 mm — about
-1.5× headroom against the 1 mm bar proposed in the description. Across five CRS
+railway asset into the same target CRS at median 0.40 mm, worst 0.68 mm, well
+inside the accuracy of the survey control behind it. Across five CRS
 families and both hemispheres — UTM 18N, UTM 56S, NZTM2000, UTM 17S at the
 equator, UTM 33N at 78°N — the same single code path reproduces closed-form
 geodesy at 0.0 mm, with the authored EPSG code the only difference between
