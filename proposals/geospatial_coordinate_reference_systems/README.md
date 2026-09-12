@@ -1183,7 +1183,7 @@ in a tool without that widget, the object still moves — it moves in the frame 
 than along the surface, and nothing marks the difference. That is the same division
 this description keeps everywhere: the scene carries state, not behavior.
 
-#### Precision, axis order, units, and epoch
+#### Precision, axis order, units, time and epoch
 
 **Precision.** CRS coordinates, anchor positions, anchor frames and resolved
 world transforms are carried in double precision, and resolved absolute
@@ -1213,9 +1213,52 @@ still a perfectly valid coordinate.
 `metersPerUnit`. Where the two differ, the runtime converts when producing world
 transforms rather than assuming metres.
 
+**Time.** Anchor positions and ordinary local transforms are resolved at the
+caller's `UsdTimeCode`, through the composed stage's own value resolution and
+interpolation, and the conversion runs on the values that come back. Not the
+other way round.
+
+Converting at the neighbouring samples and interpolating the results is a
+different operation, and the difference is not small. A geographic anchor on the
+equator swinging from longitude −1° at time code 0 to +1° at time code 2 has the
+value `(0°, 0°, 0)` at time code 1, which is `(6378137, 0, 0)` m in WGS 84
+geocentric coordinates. Converting the two endpoints and interpolating their
+translations gives `(6377165.578842, 0, 0)` m — 971.42 m inward, the midpoint of
+a chord rather than a point on the ellipsoid. That is a sampling-order error
+rather than engine precision, and no amount of extra precision reduces it.
+
+A uniform CRS definition does not make the frame time-independent. `crs:wkt` is
+`uniform` because a CRS does not vary over a mesh or over time; the anchor's
+translate does vary, so the frame derived from it is recomputed at each
+requested time.
+
+Where a runtime bakes an animation down to matrices it states the interval it
+sampled and the approximation that introduces, because interpolating baked
+matrices is not the operation the paragraph above describes and nothing
+downstream can tell the two apart from the matrices alone.
+
 **Epoch.** Where a CRS carries a coordinate epoch — dynamic datums — the runtime
 passes it to the transformation engine as the time coordinate of a 4D transform.
 Where none is authored, it does not invent one.
+
+Coordinate epoch is a property of the coordinates and it comes from the CRS's
+coordinate metadata. It is not `UsdTimeCode`, it is not derived from
+`timeCodesPerSecond`, and it is not the datum's frame reference epoch. Those are
+three different quantities, and substituting one for another is silent. Take a
+dynamic operation that moves a point by 0.1 m per year: a point at `x = 100` m
+with coordinate epoch 2026 resolves to 100.6 m at every animation time where `x`
+is fixed. Reading the epoch off time code 24 instead gives −99.6 m, 200.2 m
+away. Reading it off the frame epoch of 2020 gives 100 m, 0.6 m away — the
+second mistake is the one that reaches production, because nothing about the
+result looks wrong.
+
+Both source and target coordinate metadata are carried through to the
+transformation engine, which needs them to select an operation at all. An
+operation that requires an epoch it was not given reports failure rather than
+assuming one. An object with animated coordinates inside a fixed coordinate
+epoch is ordinary and is supported; observations at genuinely changing epochs
+need an explicit representation later, rather than an interpretation of USD
+frames that nobody authored.
 
 #### When the transform cannot be computed
 
