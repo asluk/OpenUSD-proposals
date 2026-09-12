@@ -783,12 +783,11 @@ not part of this description.
 
 #### Which CRS applies to a prim
 
-The binding is a relationship — `rel crs:binding` on the prim, pointing at a
-`GeospatialCRS` prim in the composed stage — in parallel to how `UsdShade` binds
-a material. Composition and binding stay orthogonal and both use mechanisms USD
-already has: the relationship is the binding edge, and the CRS prim it points at
-may itself have arrived by a `references` or `payload` arc from a shared library
-layer. Nothing bespoke, and no asset-path attribute in the binding path.
+The binding is the `crs:binding` relationship declared by `CRSBindingAPI`.
+Composition and binding stay orthogonal and both use mechanisms USD already has:
+the relationship is the binding edge, and the CRS prim it points at may itself
+have arrived by a `references` or `payload` arc from a shared library layer.
+Nothing bespoke, and no asset-path attribute in the binding path.
 
 A prim's CRS is found by walking from the prim toward the root of the composed
 stage and taking the nearest authored binding. A georeferenced scene binds at its
@@ -796,22 +795,27 @@ root, so every prim in it inherits one — a prim with nothing bound at or above
 is a scene with content outside its own frame, which is an authoring defect rather
 than a mode this description supports.
 
-Where several ancestors carry bindings, the nearest one wins — unless an
-ancestor's binding declares itself stronger than its descendants, in which case
-that ancestor wins, and if several do, the outermost. Purpose-restricted and
-collection-based bindings resolve with the same precedence ladder as
-`UsdShadeMaterialBindingAPI`:
+Where several ancestors carry bindings, the nearest one wins. There is no
+further ladder: no purpose-restricted bindings, no collection-based bindings, no
+binding strength by which an ancestor overrides its descendants, and no analogue
+of `GeomSubsets`.
 
-> purpose-specific collection **>** purpose-specific direct **>**
-> all-purpose collection **>** all-purpose direct
+Those mechanisms exist so that several bindings can compete for one prim, and
+that is the wrong shape here. A material binding assigns an appearance, which is
+arbitrary and legitimately multi-valued — the same mesh can have a preview look
+and a final look, which is what purposes are for. A CRS binding records what a
+prim's coordinates already mean, and there is one answer. A preview CRS is not a
+thing; the variability that would reach for one is a choice of **target**, which
+is a caller's parameter and is described below. Collection bindings would also
+cost the property that makes resolution cheap to reason about: the answer for a
+prim is found by walking its ancestors and stopping, where a collection anywhere
+on the stage could otherwise claim it. And two different bindings competing for
+one prim does not mean a precedence question, it means somebody is wrong about
+what the coordinates mean — which a checker should catch rather than a ladder
+silently settle.
 
-with the lexicographically smallest binding name breaking ties among competing
-collection bindings at one prim. `GeomSubsets` have no analogue here and are not
-part of the ladder.
-
-This is deliberate reuse rather than convergent design: someone who already
-understands material binding should not have to learn a second, subtly different
-resolution model in order to place a building.
+What is reused is the part worth reusing: someone who understands material
+binding already understands this one. Nearest authored binding wins.
 
 It also means inheriting the cost shape. Resolving a prim's CRS is an ancestor
 walk, a relationship hop to a prim that may be anywhere in the composed stage, and
@@ -1162,7 +1166,7 @@ authored into a scene, so covering this later breaks no content.
 **External grid files.** WKT2 names transformation grids — geoid grids for
 vertical datums, NADCON, proprietary grids — without embedding them, so a
 transform that needs one needs the file. Resolving those is not covered here. An
-asset-path property on the `GeospatialCRS` prim is the natural way to carry them
+asset-path property on the `CoordinateReferenceSystem` prim is the natural way to carry them
 and is additive: a CRS without one behaves exactly as described above.
 
 **Units and axes that vary within a stage.** `metersPerUnit` and `upAxis` are
