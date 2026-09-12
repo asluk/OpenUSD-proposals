@@ -845,9 +845,42 @@ introduce noise into content that needed no work.
 #### What an anchor establishes
 
 The nearest prim at or above a given prim that carries **its own** binding and an
-authored transform is that prim's **anchor**. What the anchor contributes to the
-prim's world transform is a *frame* — orientation and translation — not just a
-position.
+authored anchor translate is that prim's **anchor**. What the anchor contributes
+to the prim's world transform is a *frame* — orientation and translation — not
+just a position.
+
+An anchor's `xformOpOrder` holds exactly one operation, an active authored
+`double3 xformOp:translate`, optionally preceded by `!resetXformStack!`.
+Rotation, scale, pivots, further translations and general matrix operations
+belong on ordinary children.
+
+The restriction is there because "the authored transform" and "the translate"
+are not the same number, and reading one where the other was meant is silent. An
+anchor authored `[rotateZ 90°, translate (100,0,0)]` has an ordinary local origin
+at `(0,100,0)`; taking the raw translate as the absolute position puts it at
+`(100,0,0)`, 141.42 m away, and both readings can be argued from a rule that
+says only "an authored transform". The reverse order `[translate, rotateZ]` does
+put the origin at `(100,0,0)`, but dropping the rotation still swings a
+ten-metre child by 14.14 m. A pivot pair — pivot `(10,0,0)`, `rotateZ 90°`,
+inverse pivot — puts the origin at `(10,-10,0)`, which no single op in the stack
+resembles. And a translate attribute that is not listed in `xformOpOrder`
+contributes nothing at all, so a resolver that scans for translate-like
+properties reads a position the stage does not have.
+
+None of those stacks are exotic; they are what a DCC writes. The alternative to
+the restriction is a rule for factoring an arbitrary stack into a geospatial
+position and a remainder, which has no good answer once the coordinates are
+partly angular — whether the position is the evaluated origin, one distinguished
+op, or a factor of the composed matrix, and what the rest of the affine part
+then means. Keeping the anchor a translation-only `Xform` puts the arbitrary
+stack on the child, where it is ordinary USD and nothing has to interpret it.
+
+A stack that does not meet this is diagnosed rather than partially interpreted,
+and so is a binding with no anchor translate. A translate of `(0,0,0)` is a
+valid anchor wherever zero is a valid coordinate in that CRS; it is a position,
+not missing data. An opinion that arrived by reference, sublayer or inherit is
+authored on the composed prim like any other, and where it came from does not
+disqualify it.
 
 A binding therefore does two things, and they are worth separating because the
 material-binding parallel suggests the wrong answer on the second. An **inherited**
@@ -936,9 +969,36 @@ nothing about how it is authored, parented, or moved.
 resolution is a computed view and nothing resolved was written into the scene, no
 stored placement goes stale and no other prim needs revisiting.
 
-**Moving an anchor moves everything beneath it; moving a child does not move its
-anchor.** Those are different edits with different reach, and which one is being
-made is determined by whether the prim carries its own binding.
+**Moving an anchor moves everything whose transform dependency reaches it;
+moving a child does not move its anchor.** Those are different edits with
+different reach, and which one is being made is determined by whether the prim
+carries its own binding. A descendant that is an anchor in its own right does
+not move — the same statement as two georeferenced positions in one chain not
+accumulating.
+
+**Binding lookup and transform accumulation are two walks, and only one of them
+stops at a reset.** A binding lookup may pass a prim that resets its transform
+stack; transform accumulation may not. Where an unbound descendant resets its
+stack somewhere between itself and its anchor, its ordinary world position no
+longer depends on the anchor, and there is nothing anchor-relative left to
+compose. This version reports that as an unsupported configuration: author an
+independent anchor there, or remove the reset where relative placement was what
+was meant.
+
+The failure it prevents is concrete. `/A` translates 100 and `/A/D` translates
+20 and resets its stack; `D`'s ordinary world position is 20.
+`ComputeRelativeTransform(D, A)` returns the matrix **and** a reset flag, and
+taking the matrix while discarding the flag composes 20 onto a resolved 100 and
+places `D` at 120 — 100 m from where the composed stage puts it. OpenUSD already
+evaluates `[translate:old=100, !resetXformStack!, translate:new=3]` to 3 rather
+than 103. Descendant stack evaluation is OpenUSD's, and the error comes from
+re-implementing it simply enough to lose the reset.
+
+Reinterpreting a reset as "reset to the nearest anchor" would be worse than
+diagnosing it: it changes what an existing authored scene means, and the content
+that carries those resets was authored against the ordinary rule. Namespace
+containers that are not `Xformable` are not reset boundaries and stop neither
+walk; they contribute no local matrix and that is all.
 
 **A prim's frame is determinable from the composed stage without resolving it.** A
 tool that needs to know what one metre east means at a particular prim can ask
@@ -1132,16 +1192,26 @@ home.
 
 | Invariant | Cost of violating it |
 |---|---|
-| Anchor-versus-child is unambiguous: a prim carrying a position beneath another such prim is flagged unless it declares an overriding binding | Misplacement by the whole anchor-to-leaf distance |
+| An anchor's `xformOpOrder` is one active authored `xformOp:translate`, optionally preceded by `!resetXformStack!` | The anchor is read off a stack that does not mean what it says — 141 m for a rotation before the translate |
+| A prim with a binding of its own carries that anchor translate | A binding with no position to place |
+| A `crs:binding` composes to exactly one target, on a prim that carries a valid CRS definition | Resolver failure at load, or a silent choice between two CRSs made by target order |
+| An unbound descendant does not reset its transform stack between itself and its anchor | 100 m, composed onto an anchor the prim does not depend on |
 | Descendant offsets are authored in the frame the anchor's CRS implies | Systematic misplacement, growing with the lever |
 | A stage carrying CRS bindings declares that resolution is required | Silent placement near the planet's centre |
-| A binding resolves to a prim that actually carries a valid CRS definition | Resolver failure at load |
 | A stage carrying CRS bindings binds one at its `defaultPrim`, so no prim is outside the scene's frame | Content placed outside any frame |
 | A stage that expects to resolve without a caller-supplied target binds a geocentric or projected CRS at its `defaultPrim` | No usable target: geographic is not a resolve target |
-| A georeferenced prim does not also carry a conflicting authored transform | Ambiguous placement |
 
 A coordinate-neutral authored scene is what makes these checkable at all: the
 CRS intent is still present as data.
+
+What a checker cannot key on is intent. Whether an ordinary child translation
+was meant as an absolute coordinate is not in the file — `/A/D` translating 20
+beneath an anchor at 100 is exactly what a correctly authored child looks like,
+and flagging it, or encouraging an overriding binding to silence the flag, moves
+it from 120 to 20. Magnitude does not separate the two cases either, since a
+site-local CRS has small coordinates and a long asset has large offsets.
+Suspicion of that kind is a warning that changes nothing by itself; every row
+above is something the composed stage answers.
 
 #### What this description does not settle
 
