@@ -1136,7 +1136,7 @@ home.
 | Descendant offsets are authored in the frame the anchor's CRS implies | Systematic misplacement, growing with the lever |
 | A stage carrying CRS bindings declares that resolution is required | Silent placement near the planet's centre |
 | A binding resolves to a prim that actually carries a valid CRS definition | Resolver failure at load |
-| A stage carrying CRS bindings binds one at its `defaultPrim`, so no prim is outside the scene's frame | Content placed outside any frame |
+| A stage carrying CRS bindings roots its placed content at its `defaultPrim` and binds a CRS there | Content in a sibling subtree placed outside any frame, and missing from the dependency declaration that would have warned about it |
 | A stage that expects to resolve without a caller-supplied target binds a geocentric or projected CRS at its `defaultPrim` | No usable target: geographic is not a resolve target |
 | A georeferenced prim does not also carry a conflicting authored transform | Ambiguous placement |
 
@@ -1272,8 +1272,39 @@ Three properties of the mechanism make it a good fit:
   merged result. A pipeline step or save hook can produce the declaration; nobody
   hand-authors it.
 
-The declaration lands in `customData` on a prim under the key `profilesInfo`, so a
-consumer reads it from the stage root without traversing.
+The declaration lands in `customData` under the key `profilesInfo` on the
+composed `defaultPrim`, so a consumer reads it from one known place without
+traversing.
+
+That is only a usable discovery point if what it summarizes sits beneath it, and
+`PopulateCapabilityUsages()` walks descendants. A `defaultPrim` is not the
+transform parent of its siblings. `/World` bound and translating 100, with a
+sibling `/Other` translating 20, leaves `/Other` at 20 in ordinary USD — outside
+any frame, and absent from a summary written at `/World`. An unaware consumer
+reads a declaration that says nothing about the content it is about to place
+wrong, and draws `/Other` at its raw numbers rather than the thousand-metre-away
+position a resolve would have produced.
+
+This version closes that by fixing the convention rather than building an
+aggregation facility: **a stage's placed content is one subtree, rooted at the
+composed `defaultPrim`, and that prim carries a binding.** A stage with no
+`defaultPrim` designates one before the declaration means anything, and placed
+content in sibling subtrees is not supported in this version.
+
+CRS definition libraries are not placed content and sit outside that subtree.
+The `/CRS` library pattern above is exactly that shape, and a rule requiring
+every prim on the stage to inherit a placement binding would reject a library of
+definitions for no reason. So a checker keeps two questions apart: whether the
+summary covers the deliverable, and whether every placed object has an anchor
+above it. They fail differently, and the first is the one an unaware consumer
+depends on.
+
+Several placed root subtrees would mean aggregating their claims at the
+discovery point and validating each subtree's own anchor — a larger mechanism
+than anything else here, against a convention that costs an author one reparent.
+A caller-supplied target CRS is unaffected either way: the root binding says what
+the source coordinates mean, which is a different question from which target a
+resolve pass runs into.
 
 #### The capability identifier
 
