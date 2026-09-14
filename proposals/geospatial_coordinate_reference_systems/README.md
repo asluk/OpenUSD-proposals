@@ -845,38 +845,50 @@ introduce noise into content that needed no work.
 #### What an anchor establishes
 
 The nearest prim at or above a given prim that carries **its own** binding and an
-authored anchor translate is that prim's **anchor**. What the anchor contributes
-to the prim's world transform is a *frame* — orientation and translation — not
-just a position.
+authored transform is that prim's **anchor**. What the anchor contributes to the
+prim's world transform is a *frame* — orientation and translation — not just a
+position.
 
-An anchor's `xformOpOrder` holds exactly one operation, an active authored
-`double3 xformOp:translate`, optionally preceded by `!resetXformStack!`.
-Rotation, scale, pivots, further translations and general matrix operations
-belong on ordinary children.
+An anchor's `xformOpOrder` is ordinary. Any operations are valid there, in any
+order, with or without a leading `!resetXformStack!`, and a resolver evaluates
+the stack rather than reading individual operations out of it.
 
-The restriction is there because "the authored transform" and "the translate"
-are not the same number, and reading one where the other was meant is silent. An
-anchor authored `[rotateZ 90°, translate (100,0,0)]` has an ordinary local origin
-at `(0,100,0)`; taking the raw translate as the absolute position puts it at
-`(100,0,0)`, 141.42 m away, and both readings can be argued from a rule that
-says only "an authored transform". The reverse order `[translate, rotateZ]` does
-put the origin at `(100,0,0)`, but dropping the rotation still swings a
-ten-metre child by 14.14 m. A pivot pair — pivot `(10,0,0)`, `rotateZ 90°`,
-inverse pivot — puts the origin at `(10,-10,0)`, which no single op in the stack
-resembles. And a translate attribute that is not listed in `xformOpOrder`
-contributes nothing at all, so a resolver that scans for translate-like
-properties reads a position the stage does not have.
+**The anchor's position is the translation component of its composed local
+transform**, with the reset semantic applied. That is one number, it is what
+`UsdGeomXformable` already computes, and no stack makes it ambiguous. An anchor
+authored `[rotateZ 90°, translate (100, 0, 0)]` has its origin at `(0, 100, 0)`;
+the reverse order `[translate, rotateZ]` puts it at `(100, 0, 0)`; a pivot pair —
+pivot `(10, 0, 0)`, `rotateZ 90°`, inverse pivot — puts it at `(10, -10, 0)`,
+which no single operation in that stack resembles. All three are what a DCC
+writes, all three differ by up to 141.42 m from the raw `translate` value, and
+all three are answered by evaluating the stack. A resolver that scans for
+translate-like properties instead reads a position the stage does not have —
+including from a `translate` attribute absent from `xformOpOrder`, which
+contributes nothing.
 
-None of those stacks are exotic; they are what a DCC writes. The alternative to
-the restriction is a rule for factoring an arbitrary stack into a geospatial
-position and a remainder, which has no good answer once the coordinates are
-partly angular — whether the position is the evaluated origin, one distinguished
-op, or a factor of the composed matrix, and what the rest of the affine part
-then means. Keeping the anchor a translation-only `Xform` puts the arbitrary
-stack on the child, where it is ordinary USD and nothing has to interpret it.
+**The linear part of that same transform is the anchor's own rotation and
+scale, expressed in the source CRS's axes**, and it pre-multiplies the anchor
+frame. Writing `M_A` for the composed local transform, `a` for its translation
+component and `L_A` for its linear part, `a` is the position the frame is built
+at and `L_A` carries whatever orientation and scale the anchor itself authored:
 
-A stack that does not meet this is diagnosed rather than partially interpreted,
-and so is a binding with no anchor translate. A translate of `(0,0,0)` is a
+```text
+world(D, t) = localToAnchor(D, t) * L_A(t) * F_A(t)
+```
+
+`F_A` is unchanged — the affine map built at `a` as
+[What a resolved world transform is](#what-a-resolved-world-transform-is)
+defines it. `L_A` sits between because a rotation authored on the anchor turns
+the content within the source grid, before the grid is mapped anywhere. Reading
+it in target axes instead would rotate the content and its georeferencing
+together, which is not what the author wrote.
+
+The two are independent: `a` is consumed by the conversion and `L_A` is not, so
+nothing is counted twice. An anchor with an identity linear part is the common
+case and the equation reduces to the one above it.
+
+A binding with no authored transform on any prim at or above it is diagnosed,
+rather than resolved against an assumed origin. A translate of `(0, 0, 0)` is a
 valid anchor wherever zero is a valid coordinate in that CRS; it is a position,
 not missing data. An opinion that arrived by reference, sublayer or inherit is
 authored on the composed prim like any other, and where it came from does not
@@ -1192,8 +1204,7 @@ home.
 
 | Invariant | Cost of violating it |
 |---|---|
-| An anchor's `xformOpOrder` is one active authored `xformOp:translate`, optionally preceded by `!resetXformStack!` | The anchor is read off a stack that does not mean what it says — 141 m for a rotation before the translate |
-| A prim with a binding of its own carries that anchor translate | A binding with no position to place |
+| A prim with a binding of its own carries an authored transform | A binding with no position to place |
 | A `crs:binding` composes to exactly one target, on a prim that carries a valid CRS definition | Resolver failure at load, or a silent choice between two CRSs made by target order |
 | An unbound descendant does not reset its transform stack between itself and its anchor | 100 m, composed onto an anchor the prim does not depend on |
 | Descendant offsets are authored in the frame the anchor's CRS implies | Systematic misplacement, growing with the lever |
