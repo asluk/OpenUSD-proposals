@@ -849,14 +849,20 @@ authored transform is that prim's **anchor**. What the anchor contributes to the
 prim's world transform is a *frame* — orientation and translation — not just a
 position.
 
-An anchor's `xformOpOrder` is ordinary. Any operations are valid there, in any
-order, with or without a leading `!resetXformStack!`, and a resolver evaluates
-the stack rather than reading individual operations out of it.
+Within the anchor prim the stack is ordinary: any operations are valid, in any
+order, and a resolver composes them by the standard `UsdGeomXformable` rules
+rather than reading individual operations out of the stack. Above the anchor it
+is not ordinary. The resolved value is read as an **absolute position in the
+bound CRS**, so the transforms of the anchor's ancestors do not compose onto it,
+as [Transform stack and resetXformStack](#transform-stack-and-resetxformstack)
+requires. That reset is a semantic the runtime applies when the binding
+resolves. The proposal does not ask for `!resetXformStack!` to be authored, and
+authoring one on an anchor changes nothing.
 
-**The anchor's position is the translation component of its composed local
-transform**, with the reset semantic applied. That is one number, it is what
-`UsdGeomXformable` already computes, and no stack makes it ambiguous. An anchor
-authored `[rotateZ 90°, translate (100, 0, 0)]` has its origin at `(0, 100, 0)`;
+**The anchor's position is the translation component of its local transform** —
+the anchor's own operations composed, which is what `UsdGeomXformable` computes
+and what the reset leaves standing. That is one number, and no stack makes it
+ambiguous. An anchor authored `[rotateZ 90°, translate (100, 0, 0)]` has its origin at `(0, 100, 0)`;
 the reverse order `[translate, rotateZ]` puts it at `(100, 0, 0)`; a pivot pair —
 pivot `(10, 0, 0)`, `rotateZ 90°`, inverse pivot — puts it at `(10, -10, 0)`,
 which no single operation in that stack resembles. All three are what a DCC
