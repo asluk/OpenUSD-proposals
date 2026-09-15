@@ -886,14 +886,16 @@ prim's world transform is a *frame* — orientation and translation — not just
 position.
 
 Within the anchor prim the stack is ordinary: any operations are valid, in any
-order, and a resolver composes them by the standard `UsdGeomXformable` rules
-rather than reading individual operations out of the stack. Above the anchor it
-is not ordinary. The resolved value is read as an **absolute position in the
-bound CRS**, so the transforms of the anchor's ancestors do not compose onto it,
-as [Transform stack and resetXformStack](#transform-stack-and-resetxformstack)
-requires. That reset is a semantic the runtime applies when the binding
-resolves. The proposal does not ask for `!resetXformStack!` to be authored, and
-authoring one on an anchor changes nothing.
+order, and a resolver evaluates the stack by the standard `UsdGeomXformable`
+rules rather than reading individual operations out of it.
+
+What is not ordinary is the anchor's relationship to its ancestors. Its translate
+is **a coordinate in the bound CRS, not an offset from its parent**, so a
+transform authored on an ancestor prim does not move the anchor, as
+[Transform stack and resetXformStack](#transform-stack-and-resetxformstack)
+requires. That is a semantic the runtime applies when the binding resolves. The
+proposal does not ask for `!resetXformStack!` to be authored, and authoring one
+on an anchor changes nothing.
 
 **The anchor's position is the translation component of its local transform** —
 the anchor's own operations composed, which is what `UsdGeomXformable` computes
