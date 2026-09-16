@@ -13,12 +13,12 @@
 - [Problem statement](#problem-statement)
   - [Placing 3D content on the Earth](#placing-3d-content-on-the-earth)
   - [Why this matters now](#why-this-matters-now)
-- [Functional requirements](#functional-requirements)
 - [Background: Coordinate Reference Systems](#background-coordinate-reference-systems)
   - [Geographic vs. Projected CRS](#geographic-vs-projected-crs)
   - [CRS encodings: OGC WKT, EPSG, and WKID](#crs-encodings-ogc-wkt-epsg-and-wkid)
   - [3D CRS types](#3d-crs-types)
 - [Terms](#terms)
+- [Functional requirements](#functional-requirements)
 - [Design overview](#design-overview)
   - [Principles](#principles)
   - [Schema design](#schema-design)
@@ -178,105 +178,6 @@ rendering pipeline, and standard tooling.
    cannot fully adopt USD without a standard way to express CRS,
    because it is a foundational requirement for their workflows.
 
-## Functional requirements
-
-What a solution has to do, stated without reference to any mechanism.
-These are what an implementation is checked against,
-and the terms on which a design change is argued:
-it either serves one of these or it does not.
-
-Each requirement is one sentence.
-The italic text that follows it is rationale or a case from practice,
-and carries no additional requirement.
-
-1. **Coordinate interpretation.**
-   Data carries the CRS its coordinates are expressed in,
-   so that a consumer can interpret them without out-of-band information.
-
-   *A file of coordinates is meaningless on its own.
-   There may be millions of them, and each is a complete position
-   in whatever system it was measured in.*
-
-2. **Recorded locations.**
-   A position in a named CRS can be recorded
-   as the reference that other content is placed relative to.
-
-   *Content in a scene is modelled in local distances —
-   a door three metres from a building's origin,
-   a camera turning about the point it stands on.
-   A recorded location is where those distances meet the Earth:
-   one position, stated in a CRS,
-   that everything else in the assembly is measured from.
-   Because distances are added to it,
-   it has to be stated in a system whose units are distances.*
-
-3. **Use without conversion.**
-   Data authored in one CRS can be used by a project working in another,
-   without being converted on the way in.
-
-   *A regional project draws on imagery, terrain and vector data
-   published in WGS 84.
-   Converting all of it is prohibitive in compute and storage,
-   and the converted copies no longer interoperate
-   with the tools that produced them.*
-
-4. **Several CRSs in one scene.**
-   Data in different CRSs occupies a single scene and aligns correctly.
-
-   *A pipeline crosses UTM zones 11 and 12.
-   Neither zone is wrong, and neither dataset should have to move.*
-
-5. **Site and planet.**
-   A single site and a planetary project are both served,
-   neither at the other's expense.
-
-   *A construction project grid reads (1000, 1000) at its origin
-   so that no coordinate on site is negative,
-   and runs its axes along the construction drawings.
-   It is exact across the site because it models no curvature at all.
-   A topocentric CRS is exact at its origin and degrades with distance,
-   so it cannot carry a continental or global project.*
-
-6. **Magnitude and detail together.**
-   Coordinates in the hundreds of thousands of metres
-   coexist with millimetre detail,
-   and neither is degraded by the storage of the other.
-
-7. **Unambiguous coordinates.**
-   A recorded coordinate is unambiguous
-   in its units and in its axis order.
-
-   *A latitude of 48.8584 read as 48 metres is a defect
-   inspection cannot catch, and neither is a transposed
-   easting and northing: the wrong reading is still a valid coordinate.
-   EPSG:3006 declares northing before easting,
-   as do several other national grids.*
-
-8. **Placement separate from conformance.**
-   Where an instance sits is independent
-   of the conventions its source asset was authored in.
-
-   *Placing the same tower fifty times across a site
-   is fifty survey records and one unchanging correction
-   for the asset's up axis.
-   Collapsing them makes the correction look like survey data.*
-
-9. **One declaration per CRS.**
-   A CRS used across a project is defined in one place
-   and referred to, not restated at each use.
-
-10. **Positions that move.**
-    A position that changes over time is correct
-    at any moment it is asked for,
-    not only at the moments it was recorded.
-
-    *A satellite reports latitude, longitude and altitude at intervals.
-    A consumer that converts each report into a Cartesian CRS
-    and then interpolates has drawn a straight line through the planet
-    rather than a path over it.
-    One degree of arc either side of the equator
-    puts the midpoint 971 m below the surface.*
-
 ## Background: Coordinate Reference Systems
 
 This section provides context for readers unfamiliar with geospatial concepts.
@@ -421,6 +322,130 @@ as in *International Terrestrial Reference Frame*.
 **Extent** is reserved.
 It is the `UsdGeomBoundable` attribute holding a prim's local bounding box.
 Where geographic size is meant, this proposal says so directly.
+
+## Functional requirements
+
+What a solution has to do, stated without reference to any mechanism.
+These are what an implementation is checked against,
+and the terms on which a design change is argued:
+it either serves one of these or it does not.
+
+Each requirement is one sentence.
+The italic text that follows it is rationale or a case from practice,
+and carries no requirement of its own.
+
+1. **Coordinate interpretation.**
+   Every coordinate in a scene can be traced
+   to a declaration of the CRS it is expressed in.
+
+   *An easting of 481,948 and a northing of 3,767,521
+   are a valid pair in every one of the sixty UTM zones,
+   and name a different place on the Earth in each.
+   Coordinates without a CRS are not approximately located.
+   They are not located at all.*
+
+2. **Recorded locations.**
+   A location can be recorded in a named CRS,
+   and other content positioned relative to it.
+
+   *Content in a scene is modelled in local distances —
+   a door three metres from a building's origin,
+   a camera turning about the point it stands on.
+   A recorded location is where those distances meet the Earth:
+   one position, stated in a CRS,
+   that the rest of the assembly is measured from.
+   Because distances are added to it,
+   it has to be stated in a system whose units are distances.*
+
+3. **No conversion at authoring time.**
+   Data authored in one CRS can be used by a project working in another
+   without its stored coordinates being rewritten.
+
+   *The conversion still happens; it happens when the data is read.
+   What this rules out is the other approach:
+   reprojecting every dataset into the project's CRS on the way in
+   and storing the result.
+   A regional project draws on imagery, terrain and vector data
+   published in WGS 84, and at that size
+   the reprojected copies cost more to hold than the originals
+   and no longer interoperate with the tools that produced them.*
+
+4. **Several CRSs in one scene.**
+   Data expressed in different CRSs can occupy one scene
+   and still align correctly.
+
+   *A pipeline crosses UTM zones 11 and 12.
+   Neither zone is wrong for the half of the route it covers,
+   so neither half should have to move into the other's zone
+   to be seen alongside it.*
+
+5. **Accuracy independent of distance.**
+   Accuracy does not degrade with distance
+   from whatever origin a scene has chosen.
+
+   *This is the requirement a local tangent plane fails.
+   A topocentric CRS is exact at its origin and drifts as you leave it,
+   which is invisible on a building site and disqualifying across a country.
+   A construction project grid does not have this problem:
+   it reads (1000, 1000) at its origin,
+   runs its axes along the construction drawings,
+   and is exact across the whole site because it models no curvature at all.
+   Both have to work.*
+
+6. **Magnitude and detail together.**
+   A scene carries coordinates of geospatial magnitude
+   and detail at millimetre scale at the same time,
+   with neither degrading the other.
+
+   *A UTM easting needs about seven significant digits before the decimal point.
+   Single-precision floating point has roughly seven digits in total,
+   so storing that easting directly leaves nothing for the millimetres,
+   and the geometry visibly jitters.
+   The two cannot share one storage format,
+   and the scheme has to say how they are kept apart.*
+
+7. **Unambiguous coordinates.**
+   A recorded coordinate is unambiguous
+   in its units and in its axis order.
+
+   *Both failures are silent.
+   A latitude of 48.8584 read as 48 metres is a plausible number,
+   and so is an easting and northing read in the wrong order —
+   EPSG:3006 declares northing first, as do several other national grids.
+   Nothing about the resulting scene looks wrong enough to investigate.*
+
+8. **Placement separate from conformance.**
+   Where an instance sits is recorded separately
+   from the corrections its source asset needs
+   to be usable at all.
+
+   *Place the same tower fifty times across a site
+   and there are fifty survey records, all different,
+   and one rotation correcting the asset's up axis, the same every time.
+   Recording them together means the up-axis correction
+   is copied into fifty survey records,
+   where it looks like something a surveyor measured.*
+
+9. **One definition per CRS.**
+   A CRS used in many places is defined once and referred to,
+   not restated at each use.
+
+   *A project has one CRS and thousands of prims in it.
+   Repeating the definition makes the ones that drift
+   indistinguishable from the ones that were meant to differ.*
+
+10. **Positions that move.**
+    A position that changes over time is correct
+    at any moment it is asked for,
+    not only at the moments it was recorded.
+
+    *A satellite reports latitude, longitude and altitude at intervals.
+    Converting each report into a Cartesian CRS first
+    and interpolating between the results
+    draws a straight line through the planet rather than a path over it.
+    One degree of arc either side of the equator
+    puts the midpoint 971 m below the surface.
+    The order of the two operations is the whole difference.*
 
 ## Design overview
 
