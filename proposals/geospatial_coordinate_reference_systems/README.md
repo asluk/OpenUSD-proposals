@@ -1232,7 +1232,7 @@ above is something the composed stage answers.
 
 #### What this description does not settle
 
-Three things are deliberately not settled here.
+Several things are deliberately not settled here.
 
 **The local origin.** The anchor position is authored on `xformOp:translate`.
 Where a CRS is itself constructed for a site, its natural origin and the anchor
@@ -1249,6 +1249,16 @@ for one reports that rather than producing a plausible-looking result.
 Geographic CRSs remain fully supported as sources, and as an output encoding for
 a point query. The Target CRS is a caller or runtime choice and is never
 authored into a scene, so covering this later breaks no content.
+
+**A position stated in angles, varying over time.** A moving asset whose
+telemetry arrives as latitude and longitude is the one case where converting to
+a Cartesian frame at authoring time is lossy rather than merely inconvenient:
+baked samples interpolate along a chord, and the Time paragraph above measures
+the error. Whether such a position is authored in its source frame or converted
+on ingest is not settled here. It is recorded because the description above
+permits the former — the anchor position is read in the units its bound CRS
+declares, and the axis order names longitude — and a future rule about what may
+be bound would remove that without any other passage flagging the loss.
 
 **External grid files.** WKT2 names transformation grids — geoid grids for
 vertical datums, NADCON, proprietary grids — without embedding them, so a
