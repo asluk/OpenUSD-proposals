@@ -184,61 +184,95 @@ What a solution has to do, stated without reference to any mechanism.
 These are what an implementation is checked against,
 and the terms on which a design decision is argued:
 a proposed change either serves one of these or it does not.
+Where a requirement is easier to recognise than to state,
+a case from practice follows it.
 
-1. **State the CRS.**
-   A prim declares the coordinate reference system
-   its coordinates are expressed in.
+1. **Say what coordinates are expressed in.**
+   Data carries the CRS its coordinates are in,
+   so that a consumer can interpret them
+   without being told out of band.
 
-2. **Keep the source CRS.**
-   Data authored in one CRS can be placed in a project
-   that works in another, without being converted first.
-   A project draws on datasets from many origins,
-   and for regional and global datasets
-   converting them is prohibitive in compute and storage
-   and breaks compatibility with the tools that produced them.
+2. **Say where something is.**
+   A position in a named CRS can be recorded —
+   the location of a site, a structure, a vehicle, a sensor.
 
-3. **Combine CRSs in one scene.**
-   Datasets in different CRSs occupy a single stage
-   and align correctly, without a common conversion step.
+   Requirements 1 and 2 are different acts.
+   Declaring that a terrain tile's coordinates are WGS 84
+   asserts nothing about where anything is;
+   recording that a site's base point is at
+   648237.125 E, 6862251.890 N in Lambert-93
+   asserts nothing about the coordinates of what stands on it.
 
-4. **Work from a building site to a planet.**
-   The scheme serves a single construction site
-   and a whole planet.
-   A local tangent plane is exact enough for the first
-   and degrades across the second;
-   neither may be served at the other's expense.
+3. **Bring in data without converting it first.**
+   Data authored in one CRS is used by a project working in another,
+   with no bulk conversion on the way in.
 
-5. **Carry geospatial magnitudes without losing local detail.**
+   *A regional project draws on imagery, terrain and vector data
+   published in WGS 84.
+   Converting all of it is prohibitive in compute and storage,
+   and the converted copies no longer interoperate
+   with the GIS tools that produced them.*
+
+4. **Combine CRSs in one scene.**
+   Data in different CRSs occupies a single stage and aligns correctly.
+
+   *A pipeline crosses UTM zones 11 and 12.
+   Neither zone is wrong, and neither dataset should have to move.*
+
+5. **Serve a building site and a planet equally.**
+   Neither the small case nor the large one
+   is served at the other's expense.
+
+   *A construction project grid reads (1000, 1000) at its origin
+   so that no coordinate on site is negative,
+   and runs its axes along the construction drawings.
+   It is exact across the site because it does not model curvature at all.
+   A topocentric CRS is exact at its origin
+   and degrades as you move away from it,
+   so it cannot carry a continental or global project.*
+
+6. **Carry geospatial magnitude without losing local detail.**
    Coordinates in the hundreds of thousands of metres
    coexist with millimetre detail,
    and neither is degraded by the storage of the other.
 
-6. **Leave no coordinate ambiguous.**
-   An authored coordinate is unambiguous
-   in its units and its axis order.
-   A value readable as either metres or degrees,
-   or as either easting-first or northing-first,
-   is a defect inspection cannot catch,
-   because the wrong reading is usually still a valid coordinate.
+7. **Leave no coordinate ambiguous.**
+   A recorded coordinate is unambiguous
+   in its units and in its axis order.
 
-7. **Separate placement from authoring convention.**
+   *A latitude of 48.8584 read as 48 metres is a defect
+   that inspection cannot catch,
+   and neither is an easting and northing exchanged:
+   the wrong reading is still a valid coordinate.
+   EPSG:3006 declares northing before easting,
+   and several other national grids do the same.*
+
+8. **Separate placement from conformance.**
    Where an instance sits is independent
-   of how its source asset happened to be authored.
-   Placement differs for every instance;
-   a correction for an asset's up axis or units
-   is the same for all of them.
+   of the conventions its source asset was authored in.
 
-8. **Declare a shared CRS once.**
-   A CRS used by many prims is defined in one place
-   and referred to, not repeated at each use.
+   *Placing the same tower fifty times across a site
+   is fifty different survey records
+   and one unchanging correction for the asset's up axis.
+   Collapsing them makes the correction look like survey data.*
 
-9. **Resolve correctly over time.**
-   A position that varies over time
-   resolves correctly at any requested time code.
-   Resolving two samples and converting the result
-   is not the same operation as converting two samples
-   and interpolating the results,
-   and the two can differ by hundreds of metres.
+9. **Declare a shared CRS once.**
+   A CRS used across a project is defined in one place
+   and referred to, not restated at each use.
+
+10. **Resolve a moving position correctly.**
+    A position that changes over time
+    is correct at any moment it is asked for,
+    not only at the moments it was recorded.
+
+    *A satellite reports latitude, longitude and altitude
+    at intervals.
+    Asked where it was between two reports,
+    a consumer that converts each report into a Cartesian CRS
+    and then interpolates has drawn a straight line through the planet,
+    not a path over it.
+    One degree of arc either side of the equator
+    puts the midpoint 971 m below the surface.*
 
 ## Background: Coordinate Reference Systems
 
