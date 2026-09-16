@@ -13,6 +13,7 @@
 - [Problem statement](#problem-statement)
   - [Placing 3D content on the Earth](#placing-3d-content-on-the-earth)
   - [Why this matters now](#why-this-matters-now)
+- [Functional requirements](#functional-requirements)
 - [Background: Coordinate Reference Systems](#background-coordinate-reference-systems)
   - [Geographic vs. Projected CRS](#geographic-vs-projected-crs)
   - [CRS encodings: OGC WKT, EPSG, and WKID](#crs-encodings-ogc-wkt-epsg-and-wkid)
@@ -157,21 +158,86 @@ rendering pipeline, and standard tooling.
    or tools must implement ad-hoc resolution logic.
 
 3. **Precision hazards.**
-   Geographic coordinates (e.g., UTM easting of 481,948 m)
-   exceed the useful range of `float32`.
-   Without guidance, implementations store these values
-   in `point3f` arrays, causing visible jitter and drift.
+   A UTM easting of 481,948 m exceeds the useful range of `float32`,
+   and implementations store it in a `point3f` array anyway,
+   because nothing tells them not to.
+   The result is visible jitter and drift
+   in scenes that look correct on paper.
 
 4. **Multi-CRS composition is undefined.**
-   Real-world projects routinely combine data from different CRS zones
-   (e.g., a cross-state pipeline project spanning UTM zones 11 and 12).
-   There is no mechanism to compose these into a single USD stage
-   with correct spatial alignment.
+   A cross-state pipeline spans UTM zones 11 and 12,
+   and a regional twin draws on imagery, terrain and vectors
+   that each arrive in their own CRS.
+   Today the only way to put them on one stage
+   is to convert them all first,
+   which is a cost the largest projects cannot pay.
 
 5. **Industry adoption is blocked.**
    GIS vendors, AECO tool makers, and digital twin platforms
    cannot fully adopt USD without a standard way to express CRS,
    because it is a foundational requirement for their workflows.
+
+## Functional requirements
+
+What a solution has to do, stated without reference to any mechanism.
+These are what an implementation is checked against,
+and the terms on which a design decision is argued:
+a proposed change either serves one of these or it does not.
+
+1. **State the frame.**
+   A prim declares the coordinate reference system
+   its coordinates are expressed in.
+
+2. **Keep the source frame.**
+   Data authored in one CRS can be placed in a project
+   that works in another, without being converted first.
+   A project draws on datasets from many origins,
+   and at regional and global extents
+   converting them is prohibitive in compute and storage
+   and breaks compatibility with the tools that produced them.
+
+3. **Combine frames in one scene.**
+   Datasets in different CRSs occupy a single stage
+   and align correctly, without a common conversion step.
+
+4. **Hold at every extent.**
+   The scheme serves a single construction site
+   and a whole planet.
+   A local tangent plane is exact enough for the first
+   and degrades across the second;
+   neither may be served at the other's expense.
+
+5. **Carry geospatial magnitudes without losing local detail.**
+   Coordinates in the hundreds of thousands of metres
+   coexist with millimetre detail,
+   and neither is degraded by the storage of the other.
+
+6. **Leave no coordinate ambiguous.**
+   An authored coordinate is unambiguous
+   in its units and its axis order.
+   A value readable as either metres or degrees,
+   or as either easting-first or northing-first,
+   is a defect inspection cannot catch,
+   because the wrong reading is usually still a valid coordinate.
+
+7. **Separate placement from authoring convention.**
+   Where an instance sits is independent
+   of how its source asset happened to be authored.
+   Placement differs for every instance;
+   a correction for an asset's up axis or units
+   is the same for all of them.
+
+8. **Declare a shared frame once.**
+   A frame used by many prims is defined in one place
+   and referred to, not repeated at each use.
+
+9. **Resolve correctly over time.**
+   A position that varies over time
+   resolves correctly at any requested time code.
+   Resolving two samples and converting the result
+   is not the same operation as converting two samples
+   and interpolating the results,
+   and the two can differ by hundreds of metres.
 
 ## Background: Coordinate Reference Systems
 
@@ -242,14 +308,16 @@ for high-precision applications.
    through all USD composition arcs (references, sublayers, inherits, etc.).
 
 4. **Inheritance.**
-   Child prims should inherit their parent's CRS,
-   just as they inherit material bindings.
-   Overrides at any level in the hierarchy are supported.
+   A CRS applies to a subtree.
+   Any prim that needs a different one says so
+   and its own subtree follows it.
 
 5. **Precision-aware.**
-   The design must address the float32 limitation
-   of `point3f` geometry by separating large geospatial offsets
-   (double-precision transforms) from local vertex positions (single-precision).
+   Geospatial magnitude is never carried
+   in storage that cannot hold it.
+   Where a format constrains precision,
+   the design keeps the large values out of it
+   rather than asking authors to accept the loss.
 
 6. **Minimal disruption.**
    No changes to existing USD schemas or core APIs.
@@ -309,6 +377,33 @@ A child prim may override its parent's CRS
 by applying its own `GeospatialCRSBindingAPI` with a different CRS reference.
 This is how multi-CRS scenes are composed
 (e.g., one subtree in UTM zone 11N, another in UTM zone 18N).
+
+This is also how a project holds data it has not converted.
+An asset referenced into a scene keeps its own coordinates
+and binds the CRS it was authored in;
+the frame the project works in is the stage's Target CRS;
+where the asset sits within that project is its transform stack.
+Those are three separate statements
+and the schema keeps them separate:
+a CRS binding is always about the coordinates of the prim it is on,
+never about a frame the prim is being brought into.
+Nothing is reprojected on ingest,
+and no dataset has to be converted
+to sit alongside one that arrived in a different CRS.
+
+**A CRS binding may name any CRS.**
+What is constrained is anchoring, not binding.
+An anchor's `xformOp:translate` is a length in the bound CRS's axes,
+so a prim can only be anchored in a CRS
+whose coordinate system is `CS[Cartesian, 3]` with length axes —
+a projected, geocentric or engineering CRS.
+A geographic CRS describes the coordinates of the data bound to it
+and is reprojected into the Target CRS on read;
+it is not a frame a position is authored into,
+because a translate holding 48.8584 would be read as 48 metres.
+Deriving a topocentric frame from a geographic CRS
+is the way to anchor near a geographic location,
+and is routine in any GIS package.
 
 ### Precision handling
 
