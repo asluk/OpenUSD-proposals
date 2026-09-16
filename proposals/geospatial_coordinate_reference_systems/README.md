@@ -184,23 +184,23 @@ These are what an implementation is checked against,
 and the terms on which a design decision is argued:
 a proposed change either serves one of these or it does not.
 
-1. **State the frame.**
+1. **State the CRS.**
    A prim declares the coordinate reference system
    its coordinates are expressed in.
 
-2. **Keep the source frame.**
+2. **Keep the source CRS.**
    Data authored in one CRS can be placed in a project
    that works in another, without being converted first.
    A project draws on datasets from many origins,
-   and at regional and global extents
+   and for regional and global datasets
    converting them is prohibitive in compute and storage
    and breaks compatibility with the tools that produced them.
 
-3. **Combine frames in one scene.**
+3. **Combine CRSs in one scene.**
    Datasets in different CRSs occupy a single stage
    and align correctly, without a common conversion step.
 
-4. **Hold at every extent.**
+4. **Work from a building site to a planet.**
    The scheme serves a single construction site
    and a whole planet.
    A local tangent plane is exact enough for the first
@@ -227,8 +227,8 @@ a proposed change either serves one of these or it does not.
    a correction for an asset's up axis or units
    is the same for all of them.
 
-8. **Declare a shared frame once.**
-   A frame used by many prims is defined in one place
+8. **Declare a shared CRS once.**
+   A CRS used by many prims is defined in one place
    and referred to, not repeated at each use.
 
 9. **Resolve correctly over time.**
@@ -381,12 +381,12 @@ This is how multi-CRS scenes are composed
 This is also how a project holds data it has not converted.
 An asset referenced into a scene keeps its own coordinates
 and binds the CRS it was authored in;
-the frame the project works in is the stage's Target CRS;
+the CRS the project works in is the stage's Target CRS;
 where the asset sits within that project is its transform stack.
 Those are three separate statements
 and the schema keeps them separate:
 a CRS binding is always about the coordinates of the prim it is on,
-never about a frame the prim is being brought into.
+never about a CRS the prim is being brought into.
 Nothing is reprojected on ingest,
 and no dataset has to be converted
 to sit alongside one that arrived in a different CRS.
@@ -399,9 +399,9 @@ whose coordinate system is `CS[Cartesian, 3]` with length axes —
 a projected, geocentric or engineering CRS.
 A geographic CRS describes the coordinates of the data bound to it
 and is reprojected into the Target CRS on read;
-it is not a frame a position is authored into,
+it is not a CRS a position is authored into,
 because a translate holding 48.8584 would be read as 48 metres.
-Deriving a topocentric frame from a geographic CRS
+Deriving a topocentric CRS from a geographic one
 is the way to anchor near a geographic location,
 and is routine in any GIS package.
 
