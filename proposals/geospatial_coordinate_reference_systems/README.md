@@ -398,7 +398,7 @@ and carries no requirement of its own.
    Because distances are added to it,
    it has to be stated in a system whose units are distances.*
 
-3. **No conversion at authoring time.**
+3. **Source coordinates left as authored.**
    Data authored in one CRS can be used by a project working in another
    without its stored coordinates being rewritten.
 
