@@ -202,7 +202,8 @@ a case from practice follows it.
    These two look alike, because each names a CRS
    and each involves coordinates.
    What separates them is what happens to the number next.
-   **A dataset's coordinates are read. A recorded location is calculated with.**
+   **A dataset's coordinates are read.
+   A recorded location is where other measurements begin.**
    A door sits three metres from the building's origin;
    a camera turns about the point it stands on.
    Three metres can be added to a location measured in metres.
