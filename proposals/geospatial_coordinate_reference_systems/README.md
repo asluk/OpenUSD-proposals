@@ -402,7 +402,8 @@ and carries no requirement of its own.
    Data authored in one CRS can be used by a project working in another
    without its stored coordinates being rewritten.
 
-   *The conversion still happens; it happens when the data is read.
+   *The conversion still happens, as something a runtime does
+   when it resolves a scene into the project's CRS.
    What this rules out is the other approach:
    reprojecting every dataset into the project's CRS on the way in
    and storing the result.
