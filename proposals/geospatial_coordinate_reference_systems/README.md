@@ -421,18 +421,22 @@ and carries no requirement of its own.
    so neither half should have to move into the other's zone
    to be seen alongside it.*
 
-5. **Accuracy independent of distance.**
-   Accuracy does not degrade with distance
-   from whatever origin a scene has chosen.
+5. **A CRS suited to the project's size.**
+   A project can be expressed in a CRS appropriate to its size,
+   and the scheme never obliges it to use one
+   whose error grows with distance from a chosen origin.
 
-   *This is the requirement a local tangent plane fails.
-   A topocentric CRS is exact at its origin and drifts as you leave it,
-   which is invisible on a building site and disqualifying across a country.
-   A construction project grid does not have this problem:
+   *A topocentric CRS is a plane laid against a curved Earth.
+   Its departure from the surface grows with the square of distance —
+   about 8 cm at 1 km from the origin, about 785 m at 100 km.
+   That is a geometric property of the projection, not a rounding error,
+   and no amount of precision reduces it.
+   On a building site it is invisible; across a country it is disqualifying.
+   A construction project grid has no such term at all:
    it reads (1000, 1000) at its origin,
    runs its axes along the construction drawings,
-   and is exact across the whole site because it models no curvature at all.
-   Both have to work.*
+   and is exact across the whole site because it models no curvature.
+   Both have to be expressible, and neither is the general case.*
 
 6. **Magnitude and detail together.**
    A scene carries coordinates of geospatial magnitude
