@@ -182,116 +182,102 @@ rendering pipeline, and standard tooling.
 
 What a solution has to do, stated without reference to any mechanism.
 These are what an implementation is checked against,
-and the terms on which a design decision is argued:
-a proposed change either serves one of these or it does not.
-Where a requirement is easier to recognise than to state,
-a case from practice follows it.
+and the terms on which a design change is argued:
+it either serves one of these or it does not.
 
-1. **Know what a dataset's coordinates mean.**
-   A file of coordinates cannot be interpreted
-   without knowing the system they were measured in.
-   The numbers already exist and there may be millions of them;
-   this is about being able to read them.
+Each requirement is one sentence.
+The italic text that follows it is rationale or a case from practice,
+and carries no additional requirement.
 
-2. **Record a location that other things are placed relative to.**
-   One position, written down once —
-   the corner of a site, the base of a tower, a vehicle's reported location.
-   This is a new fact being asserted,
-   and everything nearby is positioned by reference to it.
+1. **Coordinate interpretation.**
+   Data carries the CRS its coordinates are expressed in,
+   so that a consumer can interpret them without out-of-band information.
 
-   These two look alike, because each names a CRS
-   and each involves coordinates.
+   *A file of coordinates is meaningless on its own.
+   There may be millions of them, and each is a complete position
+   in whatever system it was measured in.*
+
+2. **Recorded locations.**
+   A position in a named CRS can be recorded
+   as the reference that other content is placed relative to.
+
+   *Requirements 1 and 2 look alike, and are not.
    What separates them is what gets combined with the value.
-   **Every coordinate in a dataset is a complete position in its own right.
-   A recorded location is a position that plain distances get added to.**
-   A terrain tile's vertices each say where that point of terrain is,
-   and converting the tile converts each of them independently.
-   A site's base point is not used that way:
-   a door is three metres from the building's origin,
-   a camera turns about the point it stands on,
-   and those three metres are a distance, not a coordinate in any CRS.
+   A terrain vertex is a complete position that stands alone.
+   A site's base point is a position that plain distances get added to —
+   a door three metres from the building's origin,
+   a camera turning about the point it stands on.
    A distance can be added to a position measured in metres.
    It cannot be added to one measured in degrees,
-   because a degree is not a distance —
-   its size on the ground changes with latitude,
-   and near the poles it shrinks to nothing.
-
+   because a degree is not a distance:
+   its size on the ground changes with latitude.
    This is why a CRS that is indispensable for requirement 1
-   can be unusable for requirement 2.
-   Terrain published in WGS 84 is millions of latitudes and longitudes,
-   and nothing else will do for reading it.
-   The same WGS 84 is a poor choice for recording where a tower stands,
-   because the next thing anyone does with that location
-   is add metres to it.
+   can be unusable for requirement 2.*
 
-3. **Bring in data without converting it first.**
-   Data authored in one CRS is used by a project working in another,
-   with no bulk conversion on the way in.
+3. **Use without conversion.**
+   Data authored in one CRS can be used by a project working in another,
+   without being converted on the way in.
 
    *A regional project draws on imagery, terrain and vector data
    published in WGS 84.
    Converting all of it is prohibitive in compute and storage,
    and the converted copies no longer interoperate
-   with the GIS tools that produced them.*
+   with the tools that produced them.*
 
-4. **Combine CRSs in one scene.**
-   Data in different CRSs occupies a single stage and aligns correctly.
+4. **Several CRSs in one scene.**
+   Data in different CRSs occupies a single scene and aligns correctly.
 
    *A pipeline crosses UTM zones 11 and 12.
    Neither zone is wrong, and neither dataset should have to move.*
 
-5. **Serve a building site and a planet equally.**
-   Neither the small case nor the large one
-   is served at the other's expense.
+5. **Site and planet.**
+   A single site and a planetary project are both served,
+   neither at the other's expense.
 
    *A construction project grid reads (1000, 1000) at its origin
    so that no coordinate on site is negative,
    and runs its axes along the construction drawings.
-   It is exact across the site because it does not model curvature at all.
-   A topocentric CRS is exact at its origin
-   and degrades as you move away from it,
+   It is exact across the site because it models no curvature at all.
+   A topocentric CRS is exact at its origin and degrades with distance,
    so it cannot carry a continental or global project.*
 
-6. **Carry geospatial magnitude without losing local detail.**
+6. **Magnitude and detail together.**
    Coordinates in the hundreds of thousands of metres
    coexist with millimetre detail,
    and neither is degraded by the storage of the other.
 
-7. **Leave no coordinate ambiguous.**
+7. **Unambiguous coordinates.**
    A recorded coordinate is unambiguous
    in its units and in its axis order.
 
    *A latitude of 48.8584 read as 48 metres is a defect
-   that inspection cannot catch,
-   and neither is an easting and northing exchanged:
-   the wrong reading is still a valid coordinate.
+   inspection cannot catch, and neither is a transposed
+   easting and northing: the wrong reading is still a valid coordinate.
    EPSG:3006 declares northing before easting,
-   and several other national grids do the same.*
+   as do several other national grids.*
 
-8. **Separate placement from conformance.**
+8. **Placement separate from conformance.**
    Where an instance sits is independent
    of the conventions its source asset was authored in.
 
    *Placing the same tower fifty times across a site
-   is fifty different survey records
-   and one unchanging correction for the asset's up axis.
+   is fifty survey records and one unchanging correction
+   for the asset's up axis.
    Collapsing them makes the correction look like survey data.*
 
-9. **Declare a shared CRS once.**
+9. **One declaration per CRS.**
    A CRS used across a project is defined in one place
    and referred to, not restated at each use.
 
-10. **Resolve a moving position correctly.**
-    A position that changes over time
-    is correct at any moment it is asked for,
+10. **Positions that move.**
+    A position that changes over time is correct
+    at any moment it is asked for,
     not only at the moments it was recorded.
 
-    *A satellite reports latitude, longitude and altitude
-    at intervals.
-    Asked where it was between two reports,
-    a consumer that converts each report into a Cartesian CRS
-    and then interpolates has drawn a straight line through the planet,
-    not a path over it.
+    *A satellite reports latitude, longitude and altitude at intervals.
+    A consumer that converts each report into a Cartesian CRS
+    and then interpolates has drawn a straight line through the planet
+    rather than a path over it.
     One degree of arc either side of the equator
     puts the midpoint 971 m below the surface.*
 
