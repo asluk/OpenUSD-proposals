@@ -201,10 +201,14 @@ a case from practice follows it.
 
    These two look alike, because each names a CRS
    and each involves coordinates.
-   What separates them is what happens to the number next.
-   **A dataset's coordinates are read.
-   A recorded location is where other measurements begin.**
-   A door sits three metres from the building's origin;
+   What separates them is whether anything else depends on the value.
+   **Nothing is positioned relative to a dataset's coordinates.
+   Everything near a recorded location is positioned relative to it.**
+   A terrain tile's vertices describe only themselves;
+   each one is complete as it stands,
+   and converting the tile converts every one of them independently.
+   A site's base point is different:
+   a door sits three metres from the building's origin;
    a camera turns about the point it stands on.
    Three metres can be added to a location measured in metres.
    It cannot be added to one measured in degrees,
