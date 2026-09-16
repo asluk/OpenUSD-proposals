@@ -438,17 +438,20 @@ and carries no requirement of its own.
    and is exact across the whole site because it models no curvature.
    Both have to be expressible, and neither is the general case.*
 
-6. **Magnitude and detail together.**
-   A scene carries coordinates of geospatial magnitude
-   and detail at millimetre scale at the same time,
-   with neither degrading the other.
+6. **Detail that does not depend on location.**
+   The precision available to local geometry
+   does not depend on where on the Earth the content sits.
 
-   *A UTM easting needs about seven significant digits before the decimal point.
-   Single-precision floating point has roughly seven digits in total,
-   so storing that easting directly leaves nothing for the millimetres,
-   and the geometry visibly jitters.
-   The two cannot share one storage format,
-   and the scheme has to say how they are kept apart.*
+   *Single-precision floating point carries about seven significant digits
+   wherever it is used, so its resolution coarsens as values grow.
+   Near zero it resolves far below a millimetre.
+   At a UTM easting of 481,948 the gap between adjacent representable values
+   is about 3 cm, so millimetre detail is not merely degraded there —
+   it cannot be written down.
+   The same building modelled at the same fidelity
+   is therefore fine in one place and unusable in another,
+   which is an accident of the site's coordinates
+   rather than anything about the building.*
 
 7. **Unambiguous coordinates.**
    A recorded coordinate is unambiguous
