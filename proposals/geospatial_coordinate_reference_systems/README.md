@@ -201,16 +201,16 @@ a case from practice follows it.
 
    These two look alike, because each names a CRS
    and each involves coordinates.
-   What separates them is whether anything else depends on the value.
-   **Nothing is positioned relative to a dataset's coordinates.
-   Everything near a recorded location is positioned relative to it.**
-   A terrain tile's vertices describe only themselves;
-   each one is complete as it stands,
-   and converting the tile converts every one of them independently.
-   A site's base point is different:
-   a door sits three metres from the building's origin;
-   a camera turns about the point it stands on.
-   Three metres can be added to a location measured in metres.
+   What separates them is what gets combined with the value.
+   **Every coordinate in a dataset is a complete position in its own right.
+   A recorded location is a position that plain distances get added to.**
+   A terrain tile's vertices each say where that point of terrain is,
+   and converting the tile converts each of them independently.
+   A site's base point is not used that way:
+   a door is three metres from the building's origin,
+   a camera turns about the point it stands on,
+   and those three metres are a distance, not a coordinate in any CRS.
+   A distance can be added to a position measured in metres.
    It cannot be added to one measured in degrees,
    because a degree is not a distance —
    its size on the ground changes with latitude,
