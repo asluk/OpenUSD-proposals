@@ -187,21 +187,37 @@ a proposed change either serves one of these or it does not.
 Where a requirement is easier to recognise than to state,
 a case from practice follows it.
 
-1. **Say what coordinates are expressed in.**
-   Data carries the CRS its coordinates are in,
-   so that a consumer can interpret them
-   without being told out of band.
+1. **Know what a dataset's coordinates mean.**
+   A file of coordinates cannot be interpreted
+   without knowing the system they were measured in.
+   The numbers already exist and there may be millions of them;
+   this is about being able to read them.
 
-2. **Say where something is.**
-   A position in a named CRS can be recorded —
-   the location of a site, a structure, a vehicle, a sensor.
+2. **Record a location that other things are placed relative to.**
+   One position, written down once —
+   the corner of a site, the base of a tower, a vehicle's reported location.
+   This is a new fact being asserted,
+   and everything nearby is positioned by reference to it.
 
-   Requirements 1 and 2 are different acts.
-   Declaring that a terrain tile's coordinates are WGS 84
-   asserts nothing about where anything is;
-   recording that a site's base point is at
-   648237.125 E, 6862251.890 N in Lambert-93
-   asserts nothing about the coordinates of what stands on it.
+   These two look alike, because each names a CRS
+   and each involves coordinates.
+   What separates them is what happens to the number next.
+   **A dataset's coordinates are read. A recorded location is calculated with.**
+   A door sits three metres from the building's origin;
+   a camera turns about the point it stands on.
+   Three metres can be added to a location measured in metres.
+   It cannot be added to one measured in degrees,
+   because a degree is not a distance —
+   its size on the ground changes with latitude,
+   and near the poles it shrinks to nothing.
+
+   This is why a CRS that is indispensable for requirement 1
+   can be unusable for requirement 2.
+   Terrain published in WGS 84 is millions of latitudes and longitudes,
+   and nothing else will do for reading it.
+   The same WGS 84 is a poor choice for recording where a tower stands,
+   because the next thing anyone does with that location
+   is add metres to it.
 
 3. **Bring in data without converting it first.**
    Data authored in one CRS is used by a project working in another,
