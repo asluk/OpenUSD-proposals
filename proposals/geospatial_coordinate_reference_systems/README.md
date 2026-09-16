@@ -18,6 +18,7 @@
   - [Geographic vs. Projected CRS](#geographic-vs-projected-crs)
   - [CRS encodings: OGC WKT, EPSG, and WKID](#crs-encodings-ogc-wkt-epsg-and-wkid)
   - [3D CRS types](#3d-crs-types)
+- [Terms](#terms)
 - [Design overview](#design-overview)
   - [Principles](#principles)
   - [Schema design](#schema-design)
@@ -284,12 +285,105 @@ The supported types are:
 | 3D Projected | `COMPOUNDCRS` (PROJCRS + VERTCRS) | Easting, Northing, Up | NAD83 / UTM 11N + NAVD88 height |
 | 3D Geographic | `GEOGCRS` with 3 axes | Lat, Lon, Height | WGS 84 (EPSG:4979) |
 | 3D Geocentric (ECEF) | `GEODCRS` | X, Y, Z | ITRF2020 |
-| 3D Engineering / Local | `DERIVEDPROJCRS` | Local X, Y, Z | Site calibration grid |
+| 3D Engineering | `DERIVEDPROJCRS` | Site X, Y, Z | Construction project grid |
 
 For dynamic datums (time-dependent reference frames),
 WKT 2 supports the `COORDINATEMETADATA` wrapper
 with `FRAMEEPOCH` and `EPOCH` clauses
 for high-precision applications.
+
+## Terms
+
+The background above covers the geodesy.
+This section fixes the words this proposal uses for its own constructs,
+and separates several that mean different things
+to the industries this proposal serves.
+Everything after this point uses these terms as defined here.
+
+### Terms this proposal defines
+
+**CRS binding.**
+A statement that the coordinates of a prim,
+and of its subtree down to the next binding,
+are expressed in a named CRS.
+It says nothing about where the prim sits in any other CRS,
+and nothing about where the coordinates came from.
+
+**Target CRS.**
+The CRS a stage resolves into,
+taken from the CRS bound to the composed `defaultPrim`.
+A consumer asks for world transforms in this CRS,
+and prims bound to a different one are converted into it on read.
+It is a property of the stage, not of any asset in it.
+
+**Anchor.**
+A prim whose transform states a position in its bound CRS
+rather than an offset from its parent.
+An anchor is where geodetic coordinates enter a scene;
+everything beneath it is ordinary USD placement in metres.
+
+**Placement.**
+Where an instance sits and how it is oriented within a CRS,
+authored as transform operations on or below an anchor.
+Placement is survey data: it differs for every instance,
+and it is the record of a real-world decision about a real-world object.
+
+**Conformance.**
+A correction for the authoring conventions of a source asset —
+its up axis, its units, the orientation it was modelled in.
+Conformance is not survey data.
+It is identical for every instance of that asset,
+and separating it from placement is what keeps the asset reusable.
+
+### Terms that collide
+
+**Base.**
+Three different things are called *base* by the industries this proposal serves,
+and this proposal uses none of them unqualified.
+
+- A **project's base CRS**, in GIS practice,
+  is the CRS a project works in and brings its data into.
+  This proposal calls that the **Target CRS**.
+- **`BASEGEOGCRS`**, in WKT 2,
+  is the geographic CRS a projected or derived CRS is built *from*.
+  It sits underneath a CRS definition, not above a project.
+- A **project base point**, in surveying practice,
+  is a point on the ground, not a CRS.
+
+**Local.**
+Two established and incompatible uses.
+
+- In AECO, a **local CRS** is a project or construction grid:
+  a flat Cartesian grid agreed for a site,
+  with its own origin and its axes along the construction drawings.
+  It does not degrade with distance because it does not model curvature;
+  it is simply the CRS of that site.
+  This proposal says **engineering CRS** or **project grid**.
+- In GIS, **local** usually means a local tangent plane —
+  a topocentric CRS such as ENU, exact at its origin
+  and degrading as you move away from it.
+  This proposal says **topocentric CRS**.
+
+A statement that local works well and a statement that local does not scale
+are both true, about different things.
+
+**Localization.**
+In ISO/TS 15143-4 and in construction machine control,
+the operation of relating a site's working coordinates to a geodetic CRS.
+It is expressed in WKT 2 as a derived CRS,
+so this proposal introduces no construct for it.
+
+### Terms this proposal avoids
+
+**Frame** is reserved.
+In OpenUSD it reads as a time sample.
+Where a reference system is meant, this proposal says **CRS**;
+where the geodetic sense is meant, it says **reference frame** in full,
+as in *International Terrestrial Reference Frame*.
+
+**Extent** is reserved.
+It is the `UsdGeomBoundable` attribute holding a prim's local bounding box.
+Where geographic size is meant, this proposal says so directly.
 
 ## Design overview
 
