@@ -18,9 +18,9 @@
   - [CRS encodings: OGC WKT, EPSG, and WKID](#crs-encodings-ogc-wkt-epsg-and-wkid)
   - [3D CRS types](#3d-crs-types)
 - [Terms](#terms)
-- [Functional requirements](#functional-requirements)
 - [Design overview](#design-overview)
   - [Principles](#principles)
+  - [Functional requirements](#functional-requirements)
   - [Schema design](#schema-design)
   - [CRS library pattern](#crs-library-pattern)
   - [CRS binding and inheritance](#crs-binding-and-inheritance)
@@ -323,7 +323,48 @@ as in *International Terrestrial Reference Frame*.
 It is the `UsdGeomBoundable` attribute holding a prim's local bounding box.
 Where geographic size is meant, this proposal says so directly.
 
-## Functional requirements
+## Design overview
+
+### Principles
+
+1. **Industry agnosticism.**
+   The CRS mechanism must serve GIS, AECO, M&E, simulation,
+   and defense equally — no single industry's conventions are privileged.
+
+2. **Self-contained CRS definitions.**
+   A USD file must carry all information needed to interpret its coordinates
+   without relying on external registry lookups at runtime.
+
+3. **Composition-friendly.**
+   CRS definitions and bindings must compose correctly
+   through all USD composition arcs (references, sublayers, inherits, etc.).
+
+4. **Inheritance.**
+   A CRS applies to a subtree.
+   Any prim that needs a different one says so
+   and its own subtree follows it.
+
+5. **Precision-aware.**
+   Geospatial magnitude is never carried
+   in storage that cannot hold it.
+   Where a format constrains precision,
+   the design keeps the large values out of it
+   rather than asking authors to accept the loss.
+
+6. **Minimal disruption.**
+   No changes to existing USD schemas or core APIs.
+   The geospatial schemas are additive and optional.
+
+7. **Extensible.**
+   Third-party CRS libraries (PROJ, GDAL, Esri, Trimble)
+   are abstracted behind an internal API.
+   OpenUSD itself does not validate or interpret WKT strings.
+
+8. **Interoperable.**
+   The design should facilitate round-trip exchange
+   with glTF (geospatial extension), IFC, CityGML, and OGC 3D Tiles.
+
+### Functional requirements
 
 What a solution has to do, stated without reference to any mechanism.
 These are what an implementation is checked against,
@@ -446,47 +487,6 @@ and carries no requirement of its own.
     One degree of arc either side of the equator
     puts the midpoint 971 m below the surface.
     The order of the two operations is the whole difference.*
-
-## Design overview
-
-### Principles
-
-1. **Industry agnosticism.**
-   The CRS mechanism must serve GIS, AECO, M&E, simulation,
-   and defense equally — no single industry's conventions are privileged.
-
-2. **Self-contained CRS definitions.**
-   A USD file must carry all information needed to interpret its coordinates
-   without relying on external registry lookups at runtime.
-
-3. **Composition-friendly.**
-   CRS definitions and bindings must compose correctly
-   through all USD composition arcs (references, sublayers, inherits, etc.).
-
-4. **Inheritance.**
-   A CRS applies to a subtree.
-   Any prim that needs a different one says so
-   and its own subtree follows it.
-
-5. **Precision-aware.**
-   Geospatial magnitude is never carried
-   in storage that cannot hold it.
-   Where a format constrains precision,
-   the design keeps the large values out of it
-   rather than asking authors to accept the loss.
-
-6. **Minimal disruption.**
-   No changes to existing USD schemas or core APIs.
-   The geospatial schemas are additive and optional.
-
-7. **Extensible.**
-   Third-party CRS libraries (PROJ, GDAL, Esri, Trimble)
-   are abstracted behind an internal API.
-   OpenUSD itself does not validate or interpret WKT strings.
-
-8. **Interoperable.**
-   The design should facilitate round-trip exchange
-   with glTF (geospatial extension), IFC, CityGML, and OGC 3D Tiles.
 
 ### Schema design
 
