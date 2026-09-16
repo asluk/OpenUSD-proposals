@@ -201,18 +201,14 @@ and carries no additional requirement.
    A position in a named CRS can be recorded
    as the reference that other content is placed relative to.
 
-   *Requirements 1 and 2 look alike, and are not.
-   What separates them is what gets combined with the value.
-   A terrain vertex is a complete position that stands alone.
-   A site's base point is a position that plain distances get added to —
-   a door three metres from the building's origin,
+   *Content in a scene is modelled in local distances —
+   a door three metres from a building's origin,
    a camera turning about the point it stands on.
-   A distance can be added to a position measured in metres.
-   It cannot be added to one measured in degrees,
-   because a degree is not a distance:
-   its size on the ground changes with latitude.
-   This is why a CRS that is indispensable for requirement 1
-   can be unusable for requirement 2.*
+   A recorded location is where those distances meet the Earth:
+   one position, stated in a CRS,
+   that everything else in the assembly is measured from.
+   Because distances are added to it,
+   it has to be stated in a system whose units are distances.*
 
 3. **Use without conversion.**
    Data authored in one CRS can be used by a project working in another,
