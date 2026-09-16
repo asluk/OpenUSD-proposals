@@ -375,15 +375,15 @@ Each requirement is one sentence.
 The italic text that follows it is rationale or a case from practice,
 and carries no requirement of its own.
 
-1. **Coordinate interpretation.**
-   Every coordinate in a scene can be traced
-   to a declaration of the CRS it is expressed in.
+1. **A discoverable CRS.**
+   The CRS that applies to a coordinate
+   can be determined from the scene alone.
 
-   *An easting of 481,948 and a northing of 3,767,521
-   are a valid pair in every one of the sixty UTM zones,
-   and name a different place on the Earth in each.
-   Coordinates without a CRS are not approximately located.
-   They are not located at all.*
+   *An easting of 481,948 with a northing of 3,767,521
+   is a valid pair in every one of the sixty UTM zones
+   and names a different place on the Earth in each.
+   Coordinates whose CRS has to be supplied out of band
+   are not approximately located. They are not located at all.*
 
 2. **Recorded locations.**
    A location can be recorded in a named CRS,
@@ -405,20 +405,19 @@ and carries no requirement of its own.
    *The conversion still happens, as something a runtime does
    when it resolves a scene into the project's CRS.
    What this rules out is the other approach:
-   reprojecting every dataset into the project's CRS on the way in
-   and storing the result.
+   reprojecting every dataset on the way in and storing the result.
    A regional project draws on imagery, terrain and vector data
-   published in WGS 84, and at that size
-   the reprojected copies cost more to hold than the originals
+   published in WGS 84, and at that size the reprojected copies
+   cost more to hold than the originals
    and no longer interoperate with the tools that produced them.*
 
 4. **Several CRSs in one scene.**
    Data expressed in different CRSs can occupy one scene
-   and still align correctly.
+   and resolve to positions consistent with one another.
 
    *A pipeline crosses UTM zones 11 and 12.
    Neither zone is wrong for the half of the route it covers,
-   so neither half should have to move into the other's zone
+   so neither half should have to be moved into the other's zone
    to be seen alongside it.*
 
 5. **A CRS suited to the project's size.**
@@ -429,7 +428,7 @@ and carries no requirement of its own.
    *A topocentric CRS is a plane laid against a curved Earth.
    Its departure from the surface grows with the square of distance —
    about 8 cm at 1 km from the origin, about 785 m at 100 km.
-   That is a geometric property of the projection, not a rounding error,
+   That is a property of the projection, not a rounding error,
    and no amount of precision reduces it.
    On a building site it is invisible; across a country it is disqualifying.
    A construction project grid has no such term at all:
@@ -448,9 +447,8 @@ and carries no requirement of its own.
    At a UTM easting of 481,948 the gap between adjacent representable values
    is about 3 cm, so millimetre detail is not merely degraded there —
    it cannot be written down.
-   The same building modelled at the same fidelity
-   is therefore fine in one place and unusable in another,
-   which is an accident of the site's coordinates
+   The same building at the same fidelity is usable in one place
+   and not in another, which is an accident of the site's coordinates
    rather than anything about the building.*
 
 7. **Unambiguous coordinates.**
@@ -459,42 +457,42 @@ and carries no requirement of its own.
 
    *Both failures are silent.
    A latitude of 48.8584 read as 48 metres is a plausible number,
-   and so is an easting and northing read in the wrong order —
+   and so is an easting and northing taken in the wrong order —
    EPSG:3006 declares northing first, as do several other national grids.
-   Nothing about the resulting scene looks wrong enough to investigate.*
+   Neither produces a scene that looks wrong enough to investigate.*
 
 8. **Placement separate from conformance.**
    Where an instance sits is recorded separately
-   from the corrections its source asset needs
-   to be usable at all.
+   from the corrections that adapt its source asset's conventions.
 
    *Place the same tower fifty times across a site
    and there are fifty survey records, all different,
    and one rotation correcting the asset's up axis, the same every time.
-   Recording them together means the up-axis correction
-   is copied into fifty survey records,
-   where it looks like something a surveyor measured.*
+   Recording them together copies that rotation into fifty survey records,
+   where it is indistinguishable from something a surveyor measured.*
 
-9. **One definition per CRS.**
-   A CRS used in many places is defined once and referred to,
-   not restated at each use.
+9. **A CRS defined once.**
+   A CRS used in many places can be defined once and referred to,
+   rather than restated at each use.
 
    *A project has one CRS and thousands of prims in it.
-   Repeating the definition makes the ones that drift
+   Restating the definition makes the copies that have drifted
    indistinguishable from the ones that were meant to differ.*
 
-10. **Positions that move.**
-    A position that changes over time is correct
-    at any moment it is asked for,
-    not only at the moments it was recorded.
+10. **Positions between recorded moments.**
+    A position asked for between the moments it was recorded
+    is one the recording CRS could itself have expressed.
 
     *A satellite reports latitude, longitude and altitude at intervals.
     Converting each report into a Cartesian CRS first
     and interpolating between the results
-    draws a straight line through the planet rather than a path over it.
-    One degree of arc either side of the equator
+    draws a straight line through the planet rather than a path over it:
+    one degree of arc either side of the equator
     puts the midpoint 971 m below the surface.
-    The order of the two operations is the whole difference.*
+    Interpolating first and converting after
+    keeps the answer on the surface the reports were measured against.
+    Neither order is more precise than the other.
+    They are different operations.*
 
 ### Schema design
 
