@@ -236,7 +236,6 @@ The background above covers the geodesy.
 This section fixes the words this proposal uses for its own constructs,
 and separates several that mean different things
 to the industries this proposal serves.
-Everything after this point uses these terms as defined here.
 
 ### Terms this proposal defines
 
@@ -244,21 +243,21 @@ Everything after this point uses these terms as defined here.
 A statement that the coordinates of a prim,
 and of its subtree down to the next binding,
 are expressed in a named CRS.
-It says nothing about where the prim sits in any other CRS,
-and nothing about where the coordinates came from.
 
 **Target CRS.**
 The CRS a stage resolves into,
 taken from the CRS bound to the composed `defaultPrim`.
 A consumer asks for world transforms in this CRS,
-and prims bound to a different one are converted into it on read.
+and content bound to a different one is converted into it
+when the scene is resolved.
 It is a property of the stage, not of any asset in it.
 
 **Anchor.**
-A prim whose transform states a position in its bound CRS
-rather than an offset from its parent.
-An anchor is where geodetic coordinates enter a scene;
-everything beneath it is ordinary USD placement in metres.
+The prim at which geodetic coordinates enter a scene.
+Content beneath an anchor is positioned relative to it
+in ordinary scene units, without geodetic coordinates of its own.
+What constrains the CRS an anchor may use is a design question,
+not part of the term.
 
 **Placement.**
 Where an instance sits and how it is oriented within a CRS,
@@ -580,33 +579,6 @@ A child prim may override its parent's CRS
 by applying its own `GeospatialCRSBindingAPI` with a different CRS reference.
 This is how multi-CRS scenes are composed
 (e.g., one subtree in UTM zone 11N, another in UTM zone 18N).
-
-This is also how a project holds data it has not converted.
-An asset referenced into a scene keeps its own coordinates
-and binds the CRS it was authored in;
-the CRS the project works in is the stage's Target CRS;
-where the asset sits within that project is its transform stack.
-Those are three separate statements
-and the schema keeps them separate:
-a CRS binding is always about the coordinates of the prim it is on,
-never about a CRS the prim is being brought into.
-Nothing is reprojected on ingest,
-and no dataset has to be converted
-to sit alongside one that arrived in a different CRS.
-
-**A CRS binding may name any CRS.**
-What is constrained is anchoring, not binding.
-An anchor's `xformOp:translate` is a length in the bound CRS's axes,
-so a prim can only be anchored in a CRS
-whose coordinate system is `CS[Cartesian, 3]` with length axes —
-a projected, geocentric or engineering CRS.
-A geographic CRS describes the coordinates of the data bound to it
-and is reprojected into the Target CRS on read;
-it is not a CRS a position is authored into,
-because a translate holding 48.8584 would be read as 48 metres.
-Deriving a topocentric CRS from a geographic one
-is the way to anchor near a geographic location,
-and is routine in any GIS package.
 
 ### Precision handling
 
