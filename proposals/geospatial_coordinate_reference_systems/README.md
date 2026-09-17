@@ -371,29 +371,79 @@ These are what an implementation is checked against,
 and the terms on which a design change is argued:
 it either serves one of these or it does not.
 
-They fall into three groups.
-The first is what has to be true before a coordinate means anything.
-The second is what a scene needs to be able to say.
-The third is what a real project demands
-once it draws on more than one source.
-
 Each requirement is one sentence.
 The italic text that follows it is rationale or a case from practice,
 and carries no requirement of its own.
 
-**Before a coordinate means anything**
+**The CRS itself**
 
-1. **A discoverable CRS.**
+1. **Self-contained definitions.**
+   A CRS carried in a scene can be interpreted from the scene,
+   without a lookup against an external registry at runtime.
+
+   *An identifier alone is a promise that some other service
+   will still be reachable, still be at the same version,
+   and still agree about what that identifier meant,
+   whenever the scene is next opened.*
+
+2. **A definition written once.**
+   A CRS used in many places can be defined once and referred to,
+   rather than restated at each use.
+
+   *Restating it makes the copies that have drifted
+   indistinguishable from the ones that were meant to differ.*
+
+3. **Datum, realization and epoch.**
+   A CRS can state not only its shape
+   but which realization of its datum it uses, and at what epoch.
+
+   *Plate motion moves the ground by centimetres a year.
+   Two surveys of the same point in different realizations
+   disagree by more than the survey's own tolerance,
+   and nothing in the coordinates says so.*
+
+**Attaching it to content**
+
+4. **A discoverable CRS.**
    The CRS that applies to a coordinate
    can be determined from the scene alone.
 
    *An easting of 481,948 with a northing of 3,767,521
    is a valid pair in every one of the sixty UTM zones
    and names a different place on the Earth in each.
-   Coordinates whose CRS has to be supplied out of band
+   Coordinates whose CRS must be supplied out of band
    are not approximately located. They are not located at all.*
 
-2. **A single correct reading.**
+5. **Declared for a subtree, not a prim.**
+   A CRS declared once applies to the content beneath it,
+   and part of that content can declare a different one.
+
+   *A scene has thousands of prims and a handful of CRSs.
+   Requiring each prim to carry its own
+   is both unusable and a source of disagreement between siblings.*
+
+6. **Survives composition.**
+   A CRS declaration and its scope hold
+   when the content carrying them is referenced, sublayered or overridden.
+
+   *An asset georeferenced in isolation
+   is georeferenced the same way when it is brought into a scene,
+   or it was never georeferenced at all.*
+
+**Saying where content is**
+
+7. **Recorded locations.**
+   A location can be recorded in a named CRS,
+   and other content positioned relative to it.
+
+   *Content in a scene is modelled in local distances —
+   a door three metres from a building's origin,
+   a camera turning about the point it stands on.
+   A recorded location is where those distances meet the Earth.
+   Because distances are added to it,
+   it has to be stated in a system whose units are distances.*
+
+8. **A single correct reading.**
    The units of a coordinate, and which axis each component belongs to,
    follow from the scene, with nothing left to local convention.
 
@@ -402,33 +452,9 @@ and carries no requirement of its own.
    and so is an easting and northing taken in the wrong order —
    EPSG:3006 declares northing before easting,
    as do several other national grids.
-   Neither produces a scene that looks wrong enough to investigate,
-   so neither is caught by inspection.*
+   Neither produces a scene that looks wrong enough to investigate.*
 
-3. **A CRS defined once.**
-   A CRS used in many places can be defined once and referred to,
-   rather than restated at each use.
-
-   *A project has one CRS and thousands of prims in it.
-   Restating the definition makes the copies that have drifted
-   indistinguishable from the ones that were meant to differ.*
-
-**What a scene needs to be able to say**
-
-4. **Recorded locations.**
-   A location can be recorded in a named CRS,
-   and other content positioned relative to it.
-
-   *Content in a scene is modelled in local distances —
-   a door three metres from a building's origin,
-   a camera turning about the point it stands on.
-   A recorded location is where those distances meet the Earth:
-   one position, stated in a CRS,
-   that the rest of the assembly is measured from.
-   Because distances are added to it,
-   it has to be stated in a system whose units are distances.*
-
-5. **Placement separate from conformance.**
+9. **Placement separate from conformance.**
    Where an instance sits is recorded separately
    from the corrections that adapt its source asset's conventions.
 
@@ -438,75 +464,76 @@ and carries no requirement of its own.
    Recording them together copies that rotation into fifty survey records,
    where it is indistinguishable from something a surveyor measured.*
 
-6. **Positions between recorded moments.**
-   A position asked for between the moments it was recorded
-   is one the recording CRS could itself have expressed.
+**Resolving a scene**
 
-   *A satellite reports latitude, longitude and altitude at intervals.
-   Converting each report into a Cartesian CRS first
-   and interpolating between the results
-   draws a straight line through the planet rather than a path over it:
-   one degree of arc either side of the equator
-   puts the midpoint 971 m below the surface.
-   Interpolating first and converting after
-   keeps the answer on the surface the reports were measured against.
-   Neither order is more precise than the other.
-   They are different operations.*
+10. **One CRS out.**
+    A consumer can ask for a whole scene in a single CRS of its choosing,
+    whatever the content was authored in.
 
-**What a real project demands**
+    *A renderer, a physics solver and a query all need one space to work in.
+    Which space that is belongs to the consumer, not to the content.*
 
-7. **Several CRSs in one scene.**
-   Data expressed in different CRSs can occupy one scene
-   and resolve to positions consistent with one another.
+11. **Source coordinates left as authored.**
+    Data authored in one CRS can be used by a project working in another
+    without its stored coordinates being rewritten.
 
-   *A pipeline crosses UTM zones 11 and 12.
-   Neither zone is wrong for the half of the route it covers,
-   so neither half should have to be moved into the other's zone
-   to be seen alongside it.*
+    *The conversion still happens, as something a runtime does
+    when it resolves the scene.
+    What this rules out is reprojecting every dataset on the way in
+    and storing the result:
+    at regional size those copies cost more to hold than the originals
+    and no longer interoperate with the tools that produced them.*
 
-8. **Source coordinates left as authored.**
-   Data authored in one CRS can be used by a project working in another
-   without its stored coordinates being rewritten.
+12. **Several CRSs in one scene.**
+    Data expressed in different CRSs can occupy one scene
+    and resolve to positions consistent with one another.
 
-   *The conversion still happens, as something a runtime does
-   when it resolves a scene into the project's CRS.
-   What this rules out is the other approach:
-   reprojecting every dataset on the way in and storing the result.
-   A regional project draws on imagery, terrain and vector data
-   published in WGS 84, and at that size the reprojected copies
-   cost more to hold than the originals
-   and no longer interoperate with the tools that produced them.*
+    *A pipeline crosses UTM zones 11 and 12.
+    Neither zone is wrong for the half of the route it covers.*
 
-9. **A CRS suited to the project's size.**
-   A project can be expressed in a CRS appropriate to its size,
-   and the scheme never obliges it to use one
-   whose error grows with distance from a chosen origin.
+13. **Positions between recorded moments.**
+    A position asked for between the moments it was recorded
+    is one the recording CRS could itself have expressed.
 
-   *A topocentric CRS is a plane laid against a curved Earth.
-   Its departure from the surface grows with the square of distance —
-   about 8 cm at 1 km from the origin, about 785 m at 100 km.
-   That is a property of the projection, not a rounding error,
-   and no amount of precision reduces it.
-   On a building site it is invisible; across a country it is disqualifying.
-   A construction project grid has no such term at all:
-   it reads (1000, 1000) at its origin,
-   runs its axes along the construction drawings,
-   and is exact across the whole site because it models no curvature.
-   Both have to be expressible, and neither is the general case.*
+    *A satellite reports latitude, longitude and altitude at intervals.
+    Converting each report into a Cartesian CRS first
+    and interpolating between the results
+    draws a straight line through the planet rather than a path over it:
+    one degree of arc either side of the equator
+    puts the midpoint 971 m below the surface.
+    Neither order is more precise. They are different operations.*
 
-10. **Detail that does not depend on location.**
+**Staying usable at real sizes**
+
+14. **A CRS suited to the project's size.**
+    A project can be expressed in a CRS appropriate to its size,
+    and the scheme never obliges it to use one
+    whose error grows with distance from a chosen origin.
+
+    *A topocentric CRS departs from the curved Earth
+    as the square of distance — about 8 cm at 1 km, about 785 m at 100 km.
+    That is a property of the projection, not a rounding error,
+    and no amount of precision reduces it.
+    A construction project grid has no such term at all.
+    Both have to be expressible, and neither is the general case.*
+
+15. **Detail that does not depend on location.**
     The precision available to local geometry
     does not depend on where on the Earth the content sits.
 
     *Single-precision floating point carries about seven significant digits
-    wherever it is used, so its resolution coarsens as values grow.
-    Near zero it resolves far below a millimetre.
+    wherever it is used.
     At a UTM easting of 481,948 the gap between adjacent representable values
-    is about 3 cm, so millimetre detail is not merely degraded there —
-    it cannot be written down.
-    The same building at the same fidelity is usable in one place
-    and not in another, which is an accident of the site's coordinates
-    rather than anything about the building.*
+    is about 3 cm, so millimetre detail is not degraded there —
+    it cannot be written down.*
+
+16. **Legible to tools that know nothing of CRSs.**
+    A scene carrying geospatial information
+    remains valid and openable for consumers that ignore it.
+
+    *Most of the tools that will touch these scenes
+    will never implement a transformation engine,
+    and they must not be handed a scene they cannot open.*
 
 ### Schema design
 
