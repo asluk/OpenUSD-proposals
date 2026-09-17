@@ -371,9 +371,17 @@ These are what an implementation is checked against,
 and the terms on which a design change is argued:
 it either serves one of these or it does not.
 
+They fall into three groups.
+The first is what has to be true before a coordinate means anything.
+The second is what a scene needs to be able to say.
+The third is what a real project demands
+once it draws on more than one source.
+
 Each requirement is one sentence.
 The italic text that follows it is rationale or a case from practice,
 and carries no requirement of its own.
+
+**Before a coordinate means anything**
 
 1. **A discoverable CRS.**
    The CRS that applies to a coordinate
@@ -385,7 +393,29 @@ and carries no requirement of its own.
    Coordinates whose CRS has to be supplied out of band
    are not approximately located. They are not located at all.*
 
-2. **Recorded locations.**
+2. **A single correct reading.**
+   The units of a coordinate, and which axis each component belongs to,
+   follow from the scene, with nothing left to local convention.
+
+   *Both failures are silent.
+   A latitude of 48.8584 read as 48 metres is a plausible number,
+   and so is an easting and northing taken in the wrong order —
+   EPSG:3006 declares northing before easting,
+   as do several other national grids.
+   Neither produces a scene that looks wrong enough to investigate,
+   so neither is caught by inspection.*
+
+3. **A CRS defined once.**
+   A CRS used in many places can be defined once and referred to,
+   rather than restated at each use.
+
+   *A project has one CRS and thousands of prims in it.
+   Restating the definition makes the copies that have drifted
+   indistinguishable from the ones that were meant to differ.*
+
+**What a scene needs to be able to say**
+
+4. **Recorded locations.**
    A location can be recorded in a named CRS,
    and other content positioned relative to it.
 
@@ -398,7 +428,43 @@ and carries no requirement of its own.
    Because distances are added to it,
    it has to be stated in a system whose units are distances.*
 
-3. **Source coordinates left as authored.**
+5. **Placement separate from conformance.**
+   Where an instance sits is recorded separately
+   from the corrections that adapt its source asset's conventions.
+
+   *Place the same tower fifty times across a site
+   and there are fifty survey records, all different,
+   and one rotation correcting the asset's up axis, the same every time.
+   Recording them together copies that rotation into fifty survey records,
+   where it is indistinguishable from something a surveyor measured.*
+
+6. **Positions between recorded moments.**
+   A position asked for between the moments it was recorded
+   is one the recording CRS could itself have expressed.
+
+   *A satellite reports latitude, longitude and altitude at intervals.
+   Converting each report into a Cartesian CRS first
+   and interpolating between the results
+   draws a straight line through the planet rather than a path over it:
+   one degree of arc either side of the equator
+   puts the midpoint 971 m below the surface.
+   Interpolating first and converting after
+   keeps the answer on the surface the reports were measured against.
+   Neither order is more precise than the other.
+   They are different operations.*
+
+**What a real project demands**
+
+7. **Several CRSs in one scene.**
+   Data expressed in different CRSs can occupy one scene
+   and resolve to positions consistent with one another.
+
+   *A pipeline crosses UTM zones 11 and 12.
+   Neither zone is wrong for the half of the route it covers,
+   so neither half should have to be moved into the other's zone
+   to be seen alongside it.*
+
+8. **Source coordinates left as authored.**
    Data authored in one CRS can be used by a project working in another
    without its stored coordinates being rewritten.
 
@@ -411,16 +477,7 @@ and carries no requirement of its own.
    cost more to hold than the originals
    and no longer interoperate with the tools that produced them.*
 
-4. **Several CRSs in one scene.**
-   Data expressed in different CRSs can occupy one scene
-   and resolve to positions consistent with one another.
-
-   *A pipeline crosses UTM zones 11 and 12.
-   Neither zone is wrong for the half of the route it covers,
-   so neither half should have to be moved into the other's zone
-   to be seen alongside it.*
-
-5. **A CRS suited to the project's size.**
+9. **A CRS suited to the project's size.**
    A project can be expressed in a CRS appropriate to its size,
    and the scheme never obliges it to use one
    whose error grows with distance from a chosen origin.
@@ -437,62 +494,19 @@ and carries no requirement of its own.
    and is exact across the whole site because it models no curvature.
    Both have to be expressible, and neither is the general case.*
 
-6. **Detail that does not depend on location.**
-   The precision available to local geometry
-   does not depend on where on the Earth the content sits.
+10. **Detail that does not depend on location.**
+    The precision available to local geometry
+    does not depend on where on the Earth the content sits.
 
-   *Single-precision floating point carries about seven significant digits
-   wherever it is used, so its resolution coarsens as values grow.
-   Near zero it resolves far below a millimetre.
-   At a UTM easting of 481,948 the gap between adjacent representable values
-   is about 3 cm, so millimetre detail is not merely degraded there —
-   it cannot be written down.
-   The same building at the same fidelity is usable in one place
-   and not in another, which is an accident of the site's coordinates
-   rather than anything about the building.*
-
-7. **Unambiguous coordinates.**
-   A recorded coordinate is unambiguous
-   in its units and in its axis order.
-
-   *Both failures are silent.
-   A latitude of 48.8584 read as 48 metres is a plausible number,
-   and so is an easting and northing taken in the wrong order —
-   EPSG:3006 declares northing first, as do several other national grids.
-   Neither produces a scene that looks wrong enough to investigate.*
-
-8. **Placement separate from conformance.**
-   Where an instance sits is recorded separately
-   from the corrections that adapt its source asset's conventions.
-
-   *Place the same tower fifty times across a site
-   and there are fifty survey records, all different,
-   and one rotation correcting the asset's up axis, the same every time.
-   Recording them together copies that rotation into fifty survey records,
-   where it is indistinguishable from something a surveyor measured.*
-
-9. **A CRS defined once.**
-   A CRS used in many places can be defined once and referred to,
-   rather than restated at each use.
-
-   *A project has one CRS and thousands of prims in it.
-   Restating the definition makes the copies that have drifted
-   indistinguishable from the ones that were meant to differ.*
-
-10. **Positions between recorded moments.**
-    A position asked for between the moments it was recorded
-    is one the recording CRS could itself have expressed.
-
-    *A satellite reports latitude, longitude and altitude at intervals.
-    Converting each report into a Cartesian CRS first
-    and interpolating between the results
-    draws a straight line through the planet rather than a path over it:
-    one degree of arc either side of the equator
-    puts the midpoint 971 m below the surface.
-    Interpolating first and converting after
-    keeps the answer on the surface the reports were measured against.
-    Neither order is more precise than the other.
-    They are different operations.*
+    *Single-precision floating point carries about seven significant digits
+    wherever it is used, so its resolution coarsens as values grow.
+    Near zero it resolves far below a millimetre.
+    At a UTM easting of 481,948 the gap between adjacent representable values
+    is about 3 cm, so millimetre detail is not merely degraded there —
+    it cannot be written down.
+    The same building at the same fidelity is usable in one place
+    and not in another, which is an accident of the site's coordinates
+    rather than anything about the building.*
 
 ### Schema design
 
