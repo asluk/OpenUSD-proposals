@@ -245,12 +245,13 @@ and of its subtree down to the next binding,
 are expressed in a named CRS.
 
 **Target CRS.**
-The CRS a stage resolves into,
+The stage-defined output CRS for scene resolution,
 taken from the CRS bound to the composed `defaultPrim`.
-A consumer asks for world transforms in this CRS,
-and content bound to a different one is converted into it
-when the scene is resolved.
-It is a property of the stage, not of any asset in it.
+A consumer requests world transforms in this CRS;
+the request does not select a different Target CRS.
+Resolution converts content from other CRSs where supported
+and within the transformation's valid domain,
+and reports an explicit failure if the transformation is unavailable.
 
 **Anchor.**
 The prim at which geodetic coordinates enter a scene.
@@ -293,16 +294,16 @@ Two established and incompatible uses.
 - In AECO, a **local CRS** is a project or construction grid:
   a flat Cartesian grid agreed for a site,
   with its own origin and its axes along the construction drawings.
-  It does not degrade with distance because it does not model curvature;
-  it is simply the CRS of that site.
+  Its relationship to ground distances can include scale distortion.
   This proposal says **engineering CRS** or **project grid**.
-- In GIS, **local** usually means a local tangent plane —
-  a topocentric CRS such as ENU, exact at its origin
-  and degrading as you move away from it.
+- In GIS, **local** often means a topocentric CRS such as
+  east-north-up (ENU), whose horizontal axes define a tangent plane.
+  Its vertical component retains departure from that plane;
+  flattening the surface onto the plane discards that departure.
   This proposal says **topocentric CRS**.
 
-A statement that local works well and a statement that local does not scale
-are both true, about different things.
+A topocentric CRS and a surface flattened onto its tangent plane
+are different representations.
 
 **Localization.**
 In ISO/TS 15143-4 and in construction machine control,
@@ -310,13 +311,19 @@ the operation of relating a site's working coordinates to a geodetic CRS.
 It is expressed in WKT 2 as a derived CRS,
 so this proposal introduces no construct for it.
 
+**Reference epoch and coordinate epoch.**
+A dynamic datum's reference epoch is the date to which its defining
+parameters refer; a coordinate epoch is the date at which a coordinate
+set's positions apply.
+Neither is the time sample used to animate content in a scene.
+
 ### Terms this proposal avoids
 
 **Frame** is reserved.
 In OpenUSD it reads as a time sample.
 Where a reference system is meant, this proposal says **CRS**;
-where the geodetic sense is meant, it says **reference frame** in full,
-as in *International Terrestrial Reference Frame*.
+where a geodetic reference is meant, it says **datum** or
+**datum realization**, as appropriate.
 
 **Extent** is reserved.
 It is the `UsdGeomBoundable` attribute holding a prim's local bounding box.
@@ -380,10 +387,9 @@ and carries no requirement of its own.
    A CRS carried in a scene can be interpreted from the scene,
    without a lookup against an external registry at runtime.
 
-   *An identifier alone is a promise that some other service
-   will still be reachable, still be at the same version,
-   and still agree about what that identifier meant,
-   whenever the scene is next opened.*
+   *An identifier alone leaves its meaning dependent on a registry
+   definition that may be missing or differently versioned
+   when the scene is next opened.*
 
 2. **A definition written once.**
    A CRS used in many places can be defined once and referred to,
@@ -393,13 +399,15 @@ and carries no requirement of its own.
    indistinguishable from the ones that were meant to differ.*
 
 3. **Datum, realization and epoch.**
-   A CRS can state not only its shape
-   but which realization of its datum it uses, and at what epoch.
+   The scene can identify the datum realization and its reference epoch,
+   and separately the coordinate epoch of a coordinate set,
+   wherever applicable.
 
-   *Plate motion moves the ground by centimetres a year.
-   Two surveys of the same point in different realizations
-   disagree by more than the survey's own tolerance,
-   and nothing in the coordinates says so.*
+   *If a point moves at 2 cm per year in a given datum realization,
+   coordinates ten years apart differ by 20 cm,
+   exceeding an assumed 1 cm survey tolerance if motion is ignored.
+   This is a coordinate-epoch effect, not a change of realization;
+   the datum's reference epoch alone does not date the coordinates.*
 
 **Attaching it to content**
 
@@ -408,7 +416,7 @@ and carries no requirement of its own.
    can be determined from the scene alone.
 
    *An easting of 481,948 with a northing of 3,767,521
-   is a valid pair in every one of the sixty UTM zones
+   in metres is valid in all sixty WGS 84 northern UTM zones
    and names a different place on the Earth in each.
    Coordinates whose CRS must be supplied out of band
    are not approximately located. They are not located at all.*
@@ -417,41 +425,41 @@ and carries no requirement of its own.
    A CRS declared once applies to the content beneath it,
    and part of that content can declare a different one.
 
-   *A scene has thousands of prims and a handful of CRSs.
-   Requiring each prim to carry its own
-   is both unusable and a source of disagreement between siblings.*
+   *An added asset may have "its own native CRS",
+   shared by its descendants and different from those of other assets.
+   Repeating the declaration for every descendant risks a missed update
+   among coordinates intended to share the same CRS.*
 
 6. **Survives composition.**
    A CRS declaration and its scope hold
    when the content carrying them is referenced, sublayered or overridden.
 
-   *An asset georeferenced in isolation
-   is georeferenced the same way when it is brought into a scene,
-   or it was never georeferenced at all.*
+   *If composition hides a declaration or changes its scope incorrectly,
+   an asset's coordinates lose their interpretation or acquire another.
+   An intentional override is different from losing that information.*
 
 **Saying where content is**
 
 7. **Recorded locations.**
-   A location can be recorded in a named CRS,
-   and other content positioned relative to it.
+   A location in a named CRS and content positioned relative to it
+   must have an unambiguous interpretation that never treats
+   angular coordinates as scene distances.
 
-   *Content in a scene is modelled in local distances —
-   a door three metres from a building's origin,
+   *Content in a scene is modelled in asset-relative distances:
+   a door offset from a building's origin,
    a camera turning about the point it stands on.
    A recorded location is where those distances meet the Earth.
-   Because distances are added to it,
-   it has to be stated in a system whose units are distances.*
+   Confusing an angle with a distance places that content incorrectly.*
 
 8. **A single correct reading.**
-   The units of a coordinate, and which axis each component belongs to,
-   follow from the scene, with nothing left to local convention.
+   Coordinate units must be unambiguous, and the geospatial mapping
+   must be X=easting, Y=northing, Z=up, preserving right-handedness
+   regardless of the axis order declared by the CRS.
 
-   *Both failures are silent.
-   A latitude of 48.8584 read as 48 metres is a plausible number,
-   and so is an easting and northing taken in the wrong order —
-   EPSG:3006 declares northing before easting,
-   as do several other national grids.
-   Neither produces a scene that looks wrong enough to investigate.*
+   *An angle read as a distance can pass a numeric plausibility check,
+   as can an easting and northing taken in the wrong order.
+   EPSG:3006, a horizontal CRS, declares northing before easting;
+   following that order as X and Y would reverse the agreed mapping.*
 
 9. **Placement separate from conformance.**
    Where an instance sits is recorded separately
@@ -466,65 +474,69 @@ and carries no requirement of its own.
 **Resolving a scene**
 
 10. **One CRS out.**
-    A consumer can ask for a whole scene in a single CRS of its choosing,
-    whatever the content was authored in.
+    A consumer can request scene coordinates in the stage's Target CRS
+    over the required transformation's valid domain, and receives
+    an explicit failure when that transformation is unavailable.
 
-    *A renderer, a physics solver and a query all need one space to work in.
-    Which space that is belongs to the consumer, not to the content.*
+    *A query comparing positions from different source CRSs
+    in the Target CRS needs comparable results;
+    mixing unconverted coordinates gives the query a false answer.*
 
 11. **Source coordinates left as authored.**
     Data authored in one CRS can be used by a project working in another
-    without its stored coordinates being rewritten.
+    without changing its source coordinate values.
 
-    *The conversion still happens, as something a runtime does
-    when it resolves the scene.
-    What this rules out is reprojecting every dataset on the way in
-    and storing the result:
-    at regional size those copies cost more to hold than the originals
-    and no longer interoperate with the tools that produced them.*
+    *A runtime can convert coordinates when it resolves the scene.
+    Requiring a reprojected copy on import adds a dataset to maintain;
+    replacing the source instead loses its native representation.*
 
 12. **Several CRSs in one scene.**
     Data expressed in different CRSs can occupy one scene
     and resolve to positions consistent with one another.
 
-    *A pipeline crosses UTM zones 11 and 12.
-    Neither zone is wrong for the half of the route it covers.*
+    *A pipeline crosses UTM zones 11N and 12N in WGS 84.
+    Interpreting both halves' numeric coordinates as zone 11N
+    without conversion places the zone 12N half incorrectly,
+    separating endpoints that meet on the ground.*
 
 13. **Positions between recorded moments.**
-    A position asked for between the moments it was recorded
-    is one the recording CRS could itself have expressed.
+    Intermediate positions must follow the specified interpolation rule
+    in the recording CRS, including angular-wrap behavior,
+    independently of the output CRS.
 
-    *A satellite reports latitude, longitude and altitude at intervals.
-    Converting each report into a Cartesian CRS first
-    and interpolating between the results
-    draws a straight line through the planet rather than a path over it:
-    two reports on the equator a degree of longitude either side of it,
-    both at zero height, put the midpoint 971 m inside the ellipsoid.
-    Neither order is more precise. They are different operations.*
+    *Consider linear interpolation of geographic coordinate samples
+    on the WGS 84 equator, a degree of longitude either side
+    of the prime meridian, both at zero ellipsoidal height.
+    The geographic midpoint has zero height.
+    Converting the reports to Earth-centered, Earth-fixed (ECEF)
+    coordinates first and interpolating linearly there instead
+    puts the midpoint about 971 m inside the ellipsoid.
+    That chord violates the specified geographic interpolation rule;
+    expressing its midpoint geographically does not fix the path.*
 
 **Staying usable at real sizes**
 
 14. **A CRS suited to the project's size.**
-    A project can be expressed in a CRS appropriate to its size,
-    and the scheme never obliges it to use one
-    whose error grows with distance from a chosen origin.
+    The scheme must support site, regional and global projects
+    without requiring their geometry to be approximated
+    by a single tangent plane.
 
-    *A topocentric CRS departs from the curved Earth
-    as the square of distance — about 8 cm at 1 km, about 785 m at 100 km.
-    That is a property of the projection, not a rounding error,
-    and no amount of precision reduces it.
-    A construction project grid has no such term at all.
-    Both have to be expressible, and neither is the general case.*
+    *Flattening a curved surface onto a tangent plane discards
+    its vertical departure: using a spherical radius of 6,371 km,
+    the small-distance approximation gives about 8 cm at 1 km
+    and about 785 m at 100 km.
+    A full 3D topocentric CRS retains that vertical component.
+    A construction grid can also have ground-to-grid distortion;
+    choosing it does not guarantee undistorted ground distances.*
 
 15. **Detail that does not depend on location.**
-    The precision available to local geometry
-    does not depend on where on the Earth the content sits.
+    Changing only an asset's geospatial placement must not reduce
+    the precision of its asset-relative geometry as authored.
 
-    *Single-precision floating point carries about seven significant digits
-    wherever it is used.
-    At a UTM easting of 481,948 the gap between adjacent representable values
-    is about 3 cm, so millimetre detail is not degraded there —
-    it cannot be written down.*
+    *At a UTM easting of 481,948 m, adjacent float32 values
+    are 3.125 cm apart, so millimetre detail cannot be reliably
+    distinguished in an absolute float32 coordinate at that magnitude.
+    The same detail can be represented as an asset-relative offset.*
 
 16. **Legible to tools that know nothing of CRSs.**
     A scene carrying geospatial information
