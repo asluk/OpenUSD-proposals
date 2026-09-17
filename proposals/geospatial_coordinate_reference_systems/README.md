@@ -498,8 +498,8 @@ and carries no requirement of its own.
     Converting each report into a Cartesian CRS first
     and interpolating between the results
     draws a straight line through the planet rather than a path over it:
-    one degree of arc either side of the equator
-    puts the midpoint 971 m below the surface.
+    two reports on the equator a degree of longitude either side of it,
+    both at zero height, put the midpoint 971 m inside the ellipsoid.
     Neither order is more precise. They are different operations.*
 
 **Staying usable at real sizes**
