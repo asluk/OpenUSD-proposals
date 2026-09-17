@@ -317,18 +317,6 @@ parameters refer; a coordinate epoch is the date at which a coordinate
 set's positions apply.
 Neither is the time sample used to animate content in a scene.
 
-### Terms this proposal avoids
-
-**Frame** is reserved.
-In OpenUSD it reads as a time sample.
-Where a reference system is meant, this proposal says **CRS**;
-where a geodetic reference is meant, it says **datum** or
-**datum realization**, as appropriate.
-
-**Extent** is reserved.
-It is the `UsdGeomBoundable` attribute holding a prim's local bounding box.
-Where geographic size is meant, this proposal says so directly.
-
 ## Design overview
 
 ### Principles
