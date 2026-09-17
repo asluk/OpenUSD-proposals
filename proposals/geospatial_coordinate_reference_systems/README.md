@@ -538,13 +538,16 @@ and carries no requirement of its own.
     distinguished in an absolute float32 coordinate at that magnitude.
     The same detail can be represented as an asset-relative offset.*
 
-16. **Legible to tools that know nothing of CRSs.**
-    A scene carrying geospatial information
-    remains valid and openable for consumers that ignore it.
+16. **Additive for consumers that ignore it.**
+    A consumer that does not interpret the geospatial information
+    reads the same scene it would have read without it.
 
-    *Most of the tools that will touch these scenes
-    will never implement a transformation engine,
-    and they must not be handed a scene they cannot open.*
+    *Such a consumer does not get a correctly placed scene.
+    It reads the authored coordinates as they stand,
+    which for a projected CRS puts content
+    hundreds of kilometres from the origin.
+    What this requires is only that adding the CRS information
+    changed nothing for it.*
 
 ### Schema design
 
