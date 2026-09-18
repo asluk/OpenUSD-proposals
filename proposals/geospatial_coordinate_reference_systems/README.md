@@ -664,15 +664,17 @@ and carries no requirement of its own.
     so an author who omits the declaration has a defect a tool can find.*
 
 25. **Checkable before use.**
-    Each way this section names of misplacing a scene —
-    a position where an offset was meant, an offset in the wrong axes,
-    a missing dependency declaration, a binding to no definition,
-    content outside any CRS — can be detected in the authored scene
-    without resolving it.
+    What the scene itself establishes — a position nested beneath another
+    position, a binding to no definition, content outside any CRS,
+    a dependency declaration missing or left behind by a written-out result —
+    can be detected in the authored scene without resolving it.
 
     *A description that nothing validates against is violated at render time.
     Because resolution writes nothing into the scene,
-    the CRS intent is still present as data, and can be checked.*
+    the CRS intent is still present as data, and can be checked.
+    What the scene does not record cannot be checked from it:
+    plausible offsets authored along the wrong axes
+    are caught by comparing against survey control, not by inspection.*
 
 26. **Implementable from the text alone.**
     Two implementations built from this proposal without consulting
