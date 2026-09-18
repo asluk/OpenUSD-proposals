@@ -388,7 +388,7 @@ and carries no requirement of its own.
    when the scene is next opened.
    This is about the definition. The operation that transforms between
    two CRSs may need resources no scene carries, such as a datum grid;
-   requirement 20 says what happens then.*
+   requirement 21 says what happens then.*
 
 2. **Defined once, and describing no object.**
    A CRS used in many places is defined once and referred to,
@@ -508,11 +508,14 @@ and carries no requirement of its own.
     and it is only detectable if the scene distinguishes the two.*
 
 12. **No angle read as a length.**
-    Every coordinate's unit is unambiguous,
-    and no reading of the scene takes an angular coordinate as a scene distance.
+    Every coordinate's unit, and the surface its height is measured from,
+    are unambiguous, and no reading of the scene takes
+    an angular coordinate as a scene distance.
 
     *A latitude of 48.8584 read as 48 metres passes a numeric plausibility
-    check. This requirement is met either by constraining what may be
+    check, and so does a height whose reference surface was never stated:
+    ellipsoidal and gravity-related heights differ by tens of metres
+    over most of the Earth. This requirement is met either by constraining what may be
     recorded as a position, or by carrying enough about each position
     that no reader can mistake its unit; which is a design question
     this section leaves open.*
@@ -569,7 +572,7 @@ and carries no requirement of its own.
     a viewer with no opinion needs the scene to say what it expects.
     Whether the consumer's choice is the CRS the scene resolves into,
     or a conversion applied after the scene resolves into the CRS it names,
-    is a design question the table below sends to requirements 16, 17, 20 and 22.*
+    is a design question the table below sends to requirements 16, 17, 21 and 23.*
 
 17. **The same answer for every consumer.**
     A world position, a bound, an instance, a physics body and a rendered
@@ -580,18 +583,34 @@ and carries no requirement of its own.
     A building that renders in the right place while a spatial query
     still answers from its unconverted coordinates is two scenes, not one.*
 
-18. **Resolution leaves the scene as authored.**
+18. **Coordinates back out.**
+    Any resolved position can be reported as coordinates in any CRS
+    the scene or the consumer names, and the placement of one prim
+    relative to another can be asked for in the output CRS.
+
+    *A GIS wants a surveyed corner back as latitude, longitude and height
+    whether or not anything in the scene is expressed that way.
+    A picking tool asking where two independently placed objects sit
+    relative to each other gets the wrong answer by walking the authored
+    hierarchy across a position: with one prim at 100 and an independently
+    placed child at 20, the hierarchy says 120 and the resolved scene says 20.*
+
+19. **Resolution leaves the scene as authored.**
     Resolving a scene writes nothing into it —
     authored coordinates, CRS definitions and bindings are unchanged —
     and writing a resolved result out is a separate, explicit act
-    that records the CRS it was written in.
+    that records the CRS it was written in and,
+    for content that varies over time, how it was sampled.
 
     *Once a placement has been baked into a matrix,
     the intent behind it has collapsed and nothing is left to check against.
     A written-out result that records its CRS resolves again
-    to the same place, and a re-resolve does not transform it twice.*
+    to the same place, and a re-resolve does not transform it twice.
+    Matrices baked at sampled times and interpolated afterwards
+    are not the operation requirement 20 describes,
+    and nothing downstream can tell the two apart from the matrices alone.*
 
-19. **Positions between recorded moments.**
+20. **Positions between recorded moments.**
     A position recorded as samples over time is interpolated on the recorded
     values, in the CRS they were recorded in,
     and converting the result to another CRS does not change the path.
@@ -606,21 +625,27 @@ and carries no requirement of its own.
     is part of what this section leaves open, and this requirement is
     what that answer costs or keeps.*
 
-20. **Failure reported, never guessed.**
+21. **Failure reported, never guessed.**
     A transformation that cannot be computed — no engine, a definition
     that cannot be read or is unsupported, a missing grid,
     a point outside the transformation's domain of validity —
-    is reported, and the content is never placed by a substitute.
+    is reported, the content is never placed by a substitute,
+    and a result that could only be partly computed is a failure,
+    not a partial placement.
 
     *A substituted matrix is indistinguishable from a computed one.
     A quiet fallback turns a missing grid file into content
     confidently in the wrong place by hundreds of metres.
+    For a conversion that shifts by 1,000 m, a two-point batch
+    whose second point falls outside the operation's domain and is left in place
+    returns a plausible number 1,000 m from the intended one,
+    in an array the caller has been told succeeded.
     The definitions and bindings survive the failure,
     so the scene is recoverable in a tool that has what was missing.*
 
 **Staying usable at real sizes**
 
-21. **A CRS suited to the project's size.**
+22. **A CRS suited to the project's size.**
     The scheme supports site, regional and global projects
     without requiring their geometry to be approximated
     by a single tangent plane.
@@ -633,7 +658,7 @@ and carries no requirement of its own.
     A construction grid can also have ground-to-grid distortion;
     choosing it does not guarantee undistorted ground distances.*
 
-22. **Detail that does not depend on location.**
+23. **Detail that does not depend on location.**
     Changing only an asset's geospatial placement does not reduce
     the precision of its asset-relative geometry as authored.
 
@@ -642,9 +667,22 @@ and carries no requirement of its own.
     distinguished in an absolute float32 coordinate at that magnitude.
     The same detail can be represented as an asset-relative offset.*
 
+24. **Extent under one position is bounded and stated.**
+    Content beneath one position is placed to within a stated distance
+    of where placing each of its points would put it,
+    and the extent over which that holds is stated.
+
+    *A map is curved and a placement about one point is flat,
+    and the difference grows with the square of the distance from the position:
+    for a UTM position resolved into geocentric coordinates,
+    a point 1 km along the grid lands about 8 cm from where
+    converting it directly would put it.
+    A stated tolerance implies a maximum extent under one position,
+    and content larger than that is split across several.*
+
 **Living alongside everything else**
 
-23. **Additive for consumers that ignore it.**
+25. **Additive for consumers that ignore it.**
     A consumer that does not interpret the geospatial information
     reads the same scene it would have read without it.
 
@@ -655,9 +693,10 @@ and carries no requirement of its own.
     What this requires is only that adding the CRS information
     changed nothing for it.*
 
-24. **Declares its dependency.**
+26. **Declares its dependency.**
     A scene whose correct placement depends on resolving CRSs says so,
-    in a way a consumer can read without traversing the scene.
+    in a way a consumer can read without traversing the scene,
+    and the declaration covers every piece of placed content in it.
 
     *To a consumer that ignores it, a scene of bare offsets
     near the centre of the planet is indistinguishable from a correct one.
@@ -665,7 +704,7 @@ and carries no requirement of its own.
     is its own call. The dependency is a property of the data,
     so an author who omits the declaration has a defect a tool can find.*
 
-25. **Checkable before use.**
+27. **Checkable before use.**
     What the scene itself establishes — a position nested beneath another
     position, a binding to no definition, content outside any CRS,
     a dependency declaration missing or left behind by a written-out result —
@@ -678,7 +717,18 @@ and carries no requirement of its own.
     plausible offsets authored along the wrong axes
     are caught by comparing against survey control, not by inspection.*
 
-26. **Implementable from the text alone.**
+28. **A result says what produced it.**
+    A resolved result can name the coordinate operation that produced it
+    and the accuracy attributed to it.
+
+    *Two datum operations between the same pair of CRSs
+    can legitimately place the same point metres apart.
+    A stated agreement between two implementations means nothing
+    until an adopter can tell an operation choice from numerical drift,
+    and a lower-accuracy operation quietly substituted for an unavailable one,
+    reporting success, is a failure hidden inside a result.*
+
+29. **Implementable from the text alone.**
     Two implementations built from this proposal without consulting
     its authors, using different transformation engines,
     place the same scene in the same place,
@@ -699,14 +749,15 @@ An answer to any of these is argued as whether it meets the requirements named.
 
 | Question | Decided against |
 |---|---|
-| May a position be recorded in a geographic CRS, or only in one with length axes? | 5, 8, 12, 19, 21 |
+| May a position be recorded in a geographic CRS, or only in one with length axes? | 5, 8, 12, 20, 22 |
+| Is a position carried in the prim's transform, or in a typed attribute of its own? | 9, 11, 12, 20 |
 | Where is an asset's own native CRS recorded? | 5, 6, 8 |
 | Whose job is the up-axis and unit correction, the writer's or the reader's? | 14, 15 |
-| Does the scene record where CRS coordinates give way to scene offsets, or does the binding determine it? | 11, 18, 25 |
+| Does the scene record where CRS coordinates give way to scene offsets, or does the binding determine it? | 11, 19, 27 |
 | Which scene axis carries which CRS component? | 13 |
 | Does localization need a construct of its own? | 2, 4 |
-| Is the consumer's chosen CRS the one the scene resolves into, or a conversion of a result resolved into the CRS the scene names? | 16, 17, 20, 22 |
-| Can a scene resolve into a geographic CRS? | 16, 21 |
+| Is the consumer's chosen CRS the one the scene resolves into, or a conversion of a result resolved into the CRS the scene names? | 16, 17, 21, 23 |
+| Can a scene resolve into a geographic CRS? | 16, 18, 22 |
 
 ### Schema design
 
