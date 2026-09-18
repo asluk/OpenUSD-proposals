@@ -244,21 +244,31 @@ A statement that the coordinates of a prim,
 and of its subtree down to the next binding,
 are expressed in a named CRS.
 
-**Target CRS.**
-The stage-defined output CRS for scene resolution,
-taken from the CRS bound to the composed `defaultPrim`.
-A consumer requests world transforms in this CRS;
-the request does not select a different Target CRS.
-Resolution converts content from other CRSs where supported
-and within the transformation's valid domain,
-and reports an explicit failure if the transformation is unavailable.
-
 **Anchor.**
-The prim at which geodetic coordinates enter a scene.
+The prim at which CRS coordinates enter a scene:
+its own location is a position in the CRS bound to it.
 Content beneath an anchor is positioned relative to it
-in ordinary scene units, without geodetic coordinates of its own.
-What constrains the CRS an anchor may use is a design question,
+by offsets in ordinary scene units, with no CRS coordinates of its own.
+What constrains the CRS an anchor may be bound to is a design question,
 not part of the term.
+
+**Position and offset.**
+A *position* is a coordinate in a CRS; an *offset* is a distance
+from another prim, in scene units.
+An anchor's location is a position. Everything beneath it is offsets.
+
+**Resolution.**
+The computation that takes a composed stage and produces
+where each prim is in one output CRS.
+Resolution is work a runtime does; it is not recorded in the scene.
+
+**Target CRS.**
+The CRS a resolution produces its output in.
+It is the one the consumer asks for, or, where the consumer asks for none,
+the one the scene names as its expected output —
+the CRS bound to the composed `defaultPrim`.
+Where neither names one, there is nothing to resolve into.
+A scene never records the Target CRS a consumer chose.
 
 **Placement.**
 Where an instance sits and how it is oriented within a CRS,
@@ -295,7 +305,7 @@ Two established and incompatible uses.
   a flat Cartesian grid agreed for a site,
   with its own origin and its axes along the construction drawings.
   Its relationship to ground distances can include scale distortion.
-  This proposal says **engineering CRS** or **project grid**.
+  This proposal says **project grid**.
 - In GIS, **local** often means a topocentric CRS such as
   east-north-up (ENU), whose horizontal axes define a tangent plane.
   Its vertical component retains departure from that plane;
@@ -364,6 +374,8 @@ What a solution has to do, stated without reference to any mechanism.
 These are what an implementation is checked against,
 and the terms on which a design change is argued:
 it either serves one of these or it does not.
+The questions the discussion has left open are decided the same way;
+the table at the end of this section names the requirements each one is decided against.
 
 Each requirement is one sentence.
 The italic text that follows it is rationale or a case from practice,
@@ -372,19 +384,28 @@ and carries no requirement of its own.
 **The CRS itself**
 
 1. **Self-contained definitions.**
-   A CRS carried in a scene can be interpreted from the scene,
-   without a lookup against an external registry at runtime.
+   A CRS carried in a scene can be read from the scene alone,
+   without a lookup against an external registry.
 
    *An identifier alone leaves its meaning dependent on a registry
    definition that may be missing or differently versioned
-   when the scene is next opened.*
+   when the scene is next opened.
+   This is about the definition. The operation that transforms between
+   two CRSs may need resources no scene carries, such as a datum grid;
+   requirement 18 says what happens then.*
 
-2. **A definition written once.**
-   A CRS used in many places can be defined once and referred to,
-   rather than restated at each use.
+2. **Defined once, and describing no object.**
+   A CRS used in many places is defined once and referred to,
+   and its definition says nothing about where any particular object sits,
+   which way it faces or how large it is.
 
-   *Restating it makes the copies that have drifted
-   indistinguishable from the ones that were meant to differ.*
+   *Restating a definition makes the copies that have drifted
+   indistinguishable from the ones that were meant to differ.
+   A site calibration and an asset placement are the same arithmetic —
+   an origin, a rotation, a scale — so only which of the two a number is
+   tells a reader where to change it.
+   The test: if the number is needed to read a position in the CRS,
+   it belongs to the CRS; if it only puts one object somewhere, it is placement.*
 
 3. **Datum, realization and epoch.**
    The scene can identify the datum realization and its reference epoch,
@@ -397,10 +418,22 @@ and carries no requirement of its own.
    This is a coordinate-epoch effect, not a change of realization;
    the datum's reference epoch alone does not date the coordinates.*
 
+4. **A site's own grid is a CRS like any other.**
+   A project grid — its origin, orientation and scale relative to a geodetic
+   CRS, agreed once for a site — can be the CRS its content is expressed in,
+   and content in it needs nothing that content in a national grid does not.
+
+   *A construction grid typically reads (1000, 1000) at its origin
+   so that no coordinate on site is negative,
+   and runs its axes along the construction drawings, not grid north.
+   Those are properties of the site, shared by every discipline on it.
+   Carrying the grid's relation to a geodetic CRS with its definition
+   is what lets a reader tell grid distances from ground distances.*
+
 **Attaching it to content**
 
-4. **A discoverable CRS.**
-   The CRS that applies to a coordinate
+5. **A discoverable CRS.**
+   The CRS in which any authored position is expressed
    can be determined from the scene alone.
 
    *An easting of 481,948 with a northing of 3,767,521
@@ -409,16 +442,17 @@ and carries no requirement of its own.
    Coordinates whose CRS must be supplied out of band
    are not approximately located. They are not located at all.*
 
-5. **Declared for a subtree, not a prim.**
+6. **Declared for a subtree, not a prim.**
    A CRS declared once applies to the content beneath it,
    and part of that content can declare a different one.
 
-   *An added asset may have "its own native CRS",
-   shared by its descendants and different from those of other assets.
+   *An asset brought into a project keeps its own native CRS,
+   shared by its descendants and different from the project's
+   and from other assets'.
    Repeating the declaration for every descendant risks a missed update
    among coordinates intended to share the same CRS.*
 
-6. **Survives composition.**
+7. **Survives composition.**
    A CRS declaration and its scope hold
    when the content carrying them is referenced, sublayered or overridden.
 
@@ -426,86 +460,144 @@ and carries no requirement of its own.
    an asset's coordinates lose their interpretation or acquire another.
    An intentional override is different from losing that information.*
 
+8. **Brought-in data keeps its coordinates and its CRS.**
+   Data authored in one CRS can be brought into a project working in another,
+   and placed there, with its coordinate values and its CRS unchanged.
+
+   *This is the hierarchy a GIS runs on: each asset's own CRS,
+   the project's CRS, and the placement of the asset in it.
+   A reprojected copy made on import is a second dataset to maintain;
+   replacing the original with it loses the native representation.*
+
 **Saying where content is**
 
-7. **Recorded locations.**
-   A location in a named CRS and content positioned relative to it
-   must have an unambiguous interpretation that never treats
-   angular coordinates as scene distances.
+9. **Positions, and offsets from them.**
+   Content is placed by a position in a named CRS, and the content beneath
+   that position by offsets in scene distances, authored and moved
+   as ordinary scene content by someone who need know no geodesy.
 
-   *Content in a scene is modelled in asset-relative distances:
-   a door offset from a building's origin,
-   a camera turning about the point it stands on.
-   A recorded location is where those distances meet the Earth.
-   Confusing an angle with a distance places that content incorrectly.*
+   *A door is offset from its building's origin;
+   a camera turns about the point it stands on;
+   a bollard sits where it sits, relative to something that carries a CRS.
+   The position is where those distances meet the Earth.
+   Place a tower on a site and not one byte of the tower changes;
+   move the position and everything beneath it moves with it.*
 
-8. **A single correct reading.**
-   Coordinate units must be unambiguous, and the geospatial mapping
-   must be X=easting, Y=northing, Z=up, preserving right-handedness
-   regardless of the axis order declared by the CRS.
+10. **Position or offset, and the scene says which.**
+    Whether an authored location is a position in a CRS or an offset
+    from its parent can be read from the scene,
+    and a position is absolute: nothing above it adds to it.
 
-   *An angle read as a distance can pass a numeric plausibility check,
-   as can an easting and northing taken in the wrong order.
-   EPSG:3006, a horizontal CRS, declares northing before easting;
-   following that order as X and Y would reverse the agreed mapping.*
+    *Two positions in one chain are two absolute statements,
+    not a base and an offset.
+    Authoring a building corner as an independent position,
+    where an offset from the building was meant,
+    misplaces it by the whole distance between the two positions.
+    That is the most common way to misplace a georeferenced scene,
+    and it is only detectable if the scene distinguishes the two.*
 
-9. **Placement separate from conformance.**
-   Where an instance sits is recorded separately
-   from the corrections that adapt its source asset's conventions.
+11. **No angle read as a length.**
+    Every coordinate's unit is unambiguous,
+    and no reading of the scene takes an angular coordinate as a scene distance.
 
-   *Place the same tower fifty times across a site
-   and there are fifty survey records, all different,
-   and one rotation correcting the asset's up axis, the same every time.
-   Recording them together copies that rotation into fifty survey records,
-   where it is indistinguishable from something a surveyor measured.*
+    *A latitude of 48.8584 read as 48 metres passes a numeric plausibility
+    check. This requirement is met either by constraining what may be
+    recorded as a position, or by carrying enough about each position
+    that no reader can mistake its unit; which is a design question
+    this section leaves open.*
+
+12. **One axis mapping.**
+    Which scene axis carries which CRS component is fixed by this proposal,
+    the same for every CRS and every implementation,
+    and never taken from the axis order a CRS declares:
+    X carries easting, Y northing, Z up, right-handed.
+
+    *EPSG:3006, a horizontal CRS, declares northing before easting.
+    Following that order as X and Y would transpose the scene,
+    and a transposed pair is usually still a valid coordinate,
+    so inspection does not catch it.
+    Left to implementations, each would pick its own.*
+
+13. **Scene conventions stay the scene's.**
+    A CRS binding changes neither the scene's units nor its up axis,
+    and where a CRS's units or axes differ from the scene's,
+    the relation between the two is defined by this proposal once,
+    not by each implementation.
+
+    *A State Plane CRS is in US survey feet under a scene declared in metres;
+    a Y-up asset from a graphics pipeline sits in a Z-up survey.
+    Each is a fixed relation, and an implementation that guessed it
+    would place content at a scale or on its side.
+    Whose job the correction is — recorded at authoring time,
+    as OpenUSD's own guidance for the up axis has it today,
+    or applied by the reader — is left open here.*
+
+14. **Placement separate from conformance.**
+    Where an instance sits is recorded separately
+    from the corrections that adapt its source asset's conventions.
+
+    *Place the same tower fifty times across a site
+    and there are fifty survey records, all different,
+    and one rotation correcting the asset's up axis, the same every time.
+    Recording them together copies that rotation into fifty survey records,
+    where it is indistinguishable from something a surveyor measured.*
 
 **Resolving a scene**
 
-10. **One CRS out.**
-    A consumer can request scene coordinates in the stage's Target CRS
-    over the required transformation's valid domain, and receives
-    an explicit failure when that transformation is unavailable.
+15. **One CRS out, chosen by the consumer.**
+    Content expressed in any number of CRSs resolves, in one pass,
+    into one CRS the consumer chooses,
+    and the scene can name the CRS it expects for a consumer that chooses none.
 
-    *A query comparing positions from different source CRSs
-    in the Target CRS needs comparable results;
-    mixing unconverted coordinates gives the query a false answer.*
+    *A pipeline crosses UTM zones 11N and 12N.
+    Read in zone 11N without conversion, the 12N half lands
+    away from the endpoints it shares on the ground.
+    Two scenes that each expect a different output CRS
+    can only be brought together if the consumer, not either scene,
+    picks the one they both resolve into.*
 
-11. **Source coordinates left as authored.**
-    Data authored in one CRS can be used by a project working in another
-    without changing its source coordinate values.
+16. **Resolution leaves the scene as authored.**
+    Resolving a scene writes nothing into it —
+    authored coordinates, CRS definitions and bindings are unchanged —
+    and writing a resolved result out is a separate, explicit act
+    that records the CRS it was written in.
 
-    *A runtime can convert coordinates when it resolves the scene.
-    Requiring a reprojected copy on import adds a dataset to maintain;
-    replacing the source instead loses its native representation.*
+    *Once a placement has been baked into a matrix,
+    the intent behind it has collapsed and nothing is left to check against.
+    A written-out result that records its CRS resolves again
+    to the same place, and a re-resolve does not transform it twice.*
 
-12. **Several CRSs in one scene.**
-    Data expressed in different CRSs can occupy one scene
-    and resolve to positions consistent with one another.
+17. **Positions between recorded moments.**
+    A position recorded as samples over time is interpolated on the recorded
+    values, in the CRS they were recorded in,
+    and converting the result to another CRS does not change the path.
 
-    *A pipeline crosses UTM zones 11N and 12N in WGS 84.
-    Interpreting both halves' numeric coordinates as zone 11N
-    without conversion places the zone 12N half incorrectly,
-    separating endpoints that meet on the ground.*
+    *Take samples on the WGS 84 equator, a degree of longitude
+    either side of the prime meridian, both at zero ellipsoidal height.
+    Interpolated in the recording CRS, the midpoint is on the surface.
+    Converted to Earth-centered, Earth-fixed coordinates first
+    and interpolated there, the midpoint is about 971 m inside the ellipsoid.
+    Telemetry from GPS, AIS or ADS-B arrives as latitude, longitude and
+    altitude over time; whether such samples may be recorded as they arrive
+    is part of what this section leaves open, and this requirement is
+    what that answer costs or keeps.*
 
-13. **Positions between recorded moments.**
-    Intermediate positions must follow the specified interpolation rule
-    in the recording CRS, including angular-wrap behavior,
-    independently of the output CRS.
+18. **Failure reported, never guessed.**
+    A transformation that cannot be computed — no engine, a definition
+    that cannot be read or is unsupported, a missing grid,
+    a point outside the transformation's domain of validity —
+    is reported, and the content is never placed by a substitute.
 
-    *Consider linear interpolation of geographic coordinate samples
-    on the WGS 84 equator, a degree of longitude either side
-    of the prime meridian, both at zero ellipsoidal height.
-    The geographic midpoint has zero height.
-    Converting the reports to Earth-centered, Earth-fixed (ECEF)
-    coordinates first and interpolating linearly there instead
-    puts the midpoint about 971 m inside the ellipsoid.
-    That chord violates the specified geographic interpolation rule;
-    expressing its midpoint geographically does not fix the path.*
+    *A substituted matrix is indistinguishable from a computed one.
+    A quiet fallback turns a missing grid file into content
+    confidently in the wrong place by hundreds of metres.
+    The definitions and bindings survive the failure,
+    so the scene is recoverable in a tool that has what was missing.*
 
 **Staying usable at real sizes**
 
-14. **A CRS suited to the project's size.**
-    The scheme must support site, regional and global projects
+19. **A CRS suited to the project's size.**
+    The scheme supports site, regional and global projects
     without requiring their geometry to be approximated
     by a single tangent plane.
 
@@ -517,8 +609,8 @@ and carries no requirement of its own.
     A construction grid can also have ground-to-grid distortion;
     choosing it does not guarantee undistorted ground distances.*
 
-15. **Detail that does not depend on location.**
-    Changing only an asset's geospatial placement must not reduce
+20. **Detail that does not depend on location.**
+    Changing only an asset's geospatial placement does not reduce
     the precision of its asset-relative geometry as authored.
 
     *At a UTM easting of 481,948 m, adjacent float32 values
@@ -526,7 +618,9 @@ and carries no requirement of its own.
     distinguished in an absolute float32 coordinate at that magnitude.
     The same detail can be represented as an asset-relative offset.*
 
-16. **Additive for consumers that ignore it.**
+**Living alongside everything else**
+
+21. **Additive for consumers that ignore it.**
     A consumer that does not interpret the geospatial information
     reads the same scene it would have read without it.
 
@@ -536,6 +630,56 @@ and carries no requirement of its own.
     hundreds of kilometres from the origin.
     What this requires is only that adding the CRS information
     changed nothing for it.*
+
+22. **Declares its dependency.**
+    A scene whose correct placement depends on resolving CRSs says so,
+    in a way a consumer can read without traversing the scene.
+
+    *To a consumer that ignores it, a scene of bare offsets
+    near the centre of the planet is indistinguishable from a correct one.
+    What the consumer does with the declaration — refuse, defer, warn —
+    is its own call. The dependency is a property of the data,
+    so an author who omits the declaration has a defect a tool can find.*
+
+23. **Checkable before use.**
+    Each way this section names of misplacing a scene —
+    a position where an offset was meant, an offset in the wrong axes,
+    a missing dependency declaration, a binding to no definition,
+    content outside any CRS — can be detected in the authored scene
+    without resolving it.
+
+    *A description that nothing validates against is violated at render time.
+    Because resolution writes nothing into the scene,
+    the CRS intent is still present as data, and can be checked.*
+
+24. **Implementable from the text alone.**
+    Two implementations built from this proposal without consulting
+    its authors, using different transformation engines,
+    place the same scene in the same place,
+    and each states how closely it agrees, as a distance
+    in the output CRS's units at a stated coordinate magnitude.
+
+    *Exact agreement is not achievable: engines differ in grid handling
+    and in floating-point operation order, and two engines can differ
+    by metres because they have different datum operations available,
+    neither in error. A count of matching digits is not comparable
+    across CRS families; a distance at a magnitude is.
+    The survey control this data derives from is generally good to
+    centimetres, so agreement at the millimetre scale sits below the source.*
+
+**What the open questions are decided against**
+
+An answer to any of these is argued as whether it meets the requirements named.
+
+| Question | Decided against |
+|---|---|
+| May a position be recorded in a geographic CRS, or only in one with length axes? | 5, 8, 11, 17, 19 |
+| Where is an asset's own native CRS recorded? | 5, 6, 8 |
+| Whose job is the up-axis and unit correction, the writer's or the reader's? | 13, 14 |
+| Does the scene record where CRS coordinates give way to scene offsets, or does the binding determine it? | 10, 16, 23 |
+| Which scene axis carries which CRS component? | 12 |
+| Does localization need a construct of its own? | 2, 4 |
+| Can a scene resolve into a geographic Target CRS? | 15, 19 |
 
 ### Schema design
 
