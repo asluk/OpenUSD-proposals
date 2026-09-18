@@ -1,0 +1,225 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>[DRAFT / WIP] Review notes for upstream Initial LOD proposal</title><style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+       max-width: 900px; margin: 2em auto; padding: 0 1em;
+       line-height: 1.5; color: #1f2328; }
+h1, h2 { border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }
+h1 { font-size: 1.8em; }
+h2 { font-size: 1.4em; margin-top: 2em; }
+h3 { font-size: 1.15em; margin-top: 1.5em; }
+h4 { font-size: 1em; }
+code { background: #f6f8fa; padding: 0.2em 0.4em; border-radius: 6px;
+       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+       font-size: 0.85em; }
+pre { background: #f6f8fa; padding: 1em; border-radius: 6px; overflow: auto; }
+pre code { background: none; padding: 0; }
+blockquote { border-left: 0.25em solid #d0d7de; padding: 0.2em 1em;
+             color: #59636e; margin-left: 0; }
+table { border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
+th, td { border: 1px solid #d0d7de; padding: 0.5em 0.8em; vertical-align: top; }
+th { background: #f6f8fa; }
+a { color: #0969da; text-decoration: none; }
+hr { border: 0; border-top: 1px solid #d0d7de; margin: 2em 0; }
+ul, ol { padding-left: 1.5em; }
+li { margin: 0.2em 0; }
+@page { size: letter; margin: 0.7in; }
+@media print {
+  h2, h3 { page-break-after: avoid; }
+  pre, blockquote, table { page-break-inside: avoid; }
+}
+</style></head><body><h1>[DRAFT / WIP] Review notes for upstream Initial LOD proposal</h1>
+<p><em>Issue #7 on <code>asluk/OpenUSD-proposals</code> — opened by asluk on 2026-05-04</em></p>
+<p><em>https://github.com/asluk/OpenUSD-proposals/issues/7</em></p>
+<hr />
+<h1>Review feedback — PR 81 "Initial LOD proposal"</h1>
+<blockquote>
+<p><strong>⚠️ Status: DRAFT — work in progress</strong></p>
+<p>Draft of review feedback for the Initial LOD proposal currently under review upstream (Pixar OpenUSD-proposals, PR 81). Still working through the proposal end-to-end and gathering input from other reviewers, so this is not final feedback. Comments on the draft itself are welcome here.</p>
+<p>Note: this Issue intentionally avoids upstream PR URLs and cross-repo notation in its body, so the upstream PR timeline is not pinged. The deliberate cross-reference will come later, when the corresponding PR comment is posted upstream.</p>
+</blockquote>
+<hr />
+<h2>Overview</h2>
+<p>This proposal addresses a real and underspecified gap in OpenUSD: a runtime, prim-level, multi-domain LOD interchange schema. The multi-domain framing — independent activation per domain over a shared hierarchy, with the axiomatic treatment of parent-active propagation and domain independence — is a meaningful step beyond what FBX, Maya, Unreal, glTF MSFT_lod, or X3D LOD have offered. It is worth landing.</p>
+<p>The notes below are organized around scope clarity, not blocking concerns. The intent is to help PR 81 land cleanly for its target use cases (M&amp;E, runtime engines, frame-deterministic pipelines) while leaving clean terminology and design space for adjacent LOD work that several groups in the OpenUSD community would like to follow with: cloud/streaming refinement (Cesium 3D Tiles, UE5 Nanite, Omniverse Geometry Streaming, point cloud streaming), Gaussian-splat / volume / neural-primitive LOD, and AECO/BIM information-maturity workflows. None of those belong inside this proposal. A few small framing adjustments here would let them land later as <strong>peer schemas</strong> alongside this one — siblings in a family that each own their slice cleanly — rather than as extensions to it.</p>
+<hr />
+<h2>1. Scope clarifications that would help downstream work</h2>
+<h3>1.1 Frame-determinism as an explicit non-goal</h3>
+<p>The README's <em>Implementation Considerations</em> §1 specifies that LOD switching should be frame-deterministic and not require access to previous frame states. This is the right design choice for the proposal's target use cases. It is also a meaningful boundary against the streaming and refinement-style LOD systems common in industrial digital-twin, geospatial, and capture workflows:</p>
+<ul>
+<li><a href="https://docs.ogc.org/cs/22-025r4/22-025r4.html">Cesium 3D Tiles</a> (OGC standard) — async tile fetch driven by per-tile geometric error → screen-space error, refines across frames.</li>
+<li><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/nanite-virtualized-geometry-in-unreal-engine">UE5 Nanite</a> — virtualized geometry paged like virtual textures, per-cluster cuts of an LOD tree, view-dependent and frame-coherent rather than frame-deterministic.</li>
+<li><a href="https://docs.omniverse.nvidia.com/dev-guide/latest/release-notes/110_0.html">Omniverse Geometry Streaming</a> — dynamic loading driven by view + GPU-memory budget, with automatic LOD generation.</li>
+<li>Point cloud streaming (<a href="https://potree.github.io/">Potree</a>, <a href="https://copc.io/">COPC</a>, EPT/Entwine) — octree-depth as LOD, HTTP range requests, async refinement.</li>
+</ul>
+<p>Promoting the frame-determinism statement from an implementation note to a stated non-goal in the proposal's "Excluded Topics" section would do two useful things at once: it makes the proposal's design choices easier to defend on their own terms, and it leaves clean terminology room for streaming-style LOD work to follow without scope conflict.</p>
+<h3>1.2 Item mutual-exclusion as an explicit scope choice</h3>
+<p>Axiom 4 (parent-active implies child-eligible, with mutual exclusion among siblings within a domain) matches FBX, Maya, Unreal LODGroups, MSFT_lod, X3D — the conventional LOD family. Several adjacent paradigms aren't shaped that way:</p>
+<ul>
+<li>3D Tiles, Nanite, Gaussian-splat octree LOD (<a href="https://city-super.github.io/octree-gs/">Octree-GS</a>, <a href="https://lodge-gs.github.io/">LODGE</a>, <a href="https://archivesic.ccsd.cnrs.fr/OPAL/hal-04568786v1">H3DGS</a>, <a href="https://arxiv.org/abs/2601.18475">StreamLoD-GS</a>), <a href="https://hhoppe.com/proj/pm/">Hoppe progressive meshes</a> — these select a <em>cut</em> through a hierarchy where multiple nodes can be active at once, or refine continuously rather than discretely.</li>
+</ul>
+<p>Naming hierarchical-cut and continuous-refinement models as out of scope here would mirror §1.1's clarification and serve the same purpose: tighten the proposal's defensible boundary, leave room for adjacent schemas.</p>
+<h3>1.3 "LOD" carries different meanings across verticals</h3>
+<p>Several distinct meanings of "LOD" are in active use across communities. AECO in particular has built up an explicit separation of concerns between visual Level of Detail and adjacent "levels of X" notions, which is a useful reference for how OpenUSD might scope LOD-related schemas across verticals.</p>
+<table>
+<thead>
+<tr>
+<th>Domain</th>
+<th>What "LOD" means</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Games / M&amp;E</td>
+<td>Pick the right detail variant for current view (this proposal)</td>
+<td>de-facto across FBX, Maya, Unreal, Unity, glTF</td>
+</tr>
+<tr>
+<td>Industrial / cloud / capture</td>
+<td>Async refinement; subset/cut of a hierarchy</td>
+<td><a href="https://docs.ogc.org/cs/22-025r4/22-025r4.html">OGC 3D Tiles</a>, <a href="https://copc.io/">COPC</a>, Nanite</td>
+</tr>
+<tr>
+<td>AECO / BIM</td>
+<td>AECO treats visual Level of Detail and adjacent concepts as separate axes: AIA / <a href="https://bimforum.org/resource/lod-level-of-development-lod-specification/">BIMForum LOD Specification</a> (2025 release current) defines <strong>Level of Development</strong> 100/200/300/350/400/500 — model element reliability and information completeness — and <a href="https://www.symetri.co.uk/insights/blog/iso-19650-level-of-information-need-the-elephant-in-the-room/">ISO 19650 / DIN EN 17412-1</a> defines <strong>Level of Information Need (LOIN)</strong> for what information is required at each project stage. These coexist with visual Level of Detail rather than competing for the same name.</td>
+<td>AIA 2008; BIMForum 2025; ISO 19650 (2018+); DIN EN 17412-1</td>
+</tr>
+<tr>
+<td>Geographic / urban</td>
+<td><a href="https://www.ogc.org/standards/citygml/">CityGML 3.0</a> (current OGC standard) defines LOD 0–3 with interior representable across all levels. CityGML 2.0's separate LOD4 for interiors was removed in 3.0. Each level carries different <em>semantic content</em> (footprint → extrusion → roof+balconies → openings, with interiors integrated).</td>
+<td>OGC CityGML 3.0; 2.0 still in use for legacy data</td>
+</tr>
+</tbody>
+</table>
+<p>This proposal does not need to reconcile any of these meanings; it just needs to avoid preempting them. Naming this schema in a way that leaves clean room for adjacent LOD-flavored work in other verticals (industrial streaming, AECO maturity/information, geographic-semantic) would let those land later as peer schemas. AECO's separation of visual Level of Detail from "levels of X" on adjacent axes is a useful reference for the shape of that scoping. Two reasonable options:</p>
+<ul>
+<li>(a) Qualify the schema name to its target — <code>RuntimeRenderLodAPI</code>, <code>ViewDependentLodAPI</code>, or <code>RepresentationSwitchAPI</code> would all leave the bare <code>Lod</code> token free for future siblings.</li>
+<li>(b) Keep the <code>Lod*</code> names but add a <code>lodKind</code> enum on <code>LodGroupAPI</code> (e.g., <code>viewDependent</code>) and reserve tokens like <code>semantic</code>, <code>streaming</code>, <code>maturity</code> for future schemas to occupy. Less invasive in this proposal but more constraining downstream.</li>
+</ul>
+<p>Option (a) is the cleaner long-term choice. Either is preferable to the unqualified term, which a reader arriving from BIM, GIS, or streaming-capture workflows will likely interpret as "this is what LOD means in USD."</p>
+<h3>1.4 The CAD/Engineering use case in <code>use-cases.md</code></h3>
+<p>The "CAD/Engineering Visualization" example applies <code>lodMetric = "distance"</code> with <code>lodRanges = [1.0, 5.0, 20.0]</code> to a <code>MechanicalAssembly</code>. This use case is the most exposed point in the proposal for the AECO terminology question above: a reader from BIM may default to the BIMForum Level of Development reading on a <code>MechanicalAssembly</code>, which doesn't match distance-based view switching. Practitioners using "LOD" informally for visual detail will note that distance-based switching of mechanical assemblies isn't a typical CAD viewer interaction either — semantic filtering, section-cut, per-discipline visibility, and explode/assembly-state are the more common controls.</p>
+<p>The example also doesn't exercise the proposal's strengths (multi-domain coordination, hierarchical heterogeneous evaluation), so removing it tightens the proposal without losing illustrative value. A one-line non-goal in the "Excluded Topics" section — <em>AECO/BIM model maturity (Level of Development per BIMForum, Level of Information Need per ISO 19650) is out of scope</em> — keeps the proposal clean of an industry terminology question that does not need to be settled here.</p>
+<hr />
+<h2>2. Coexistence with adjacent USD work</h2>
+<h3>2.1 Relationship to <code>UsdVolParticleField3DGaussianSplat</code></h3>
+<p><a href="https://aousd.org/blog/openusd-v26-03/">OpenUSD v26.03</a> added the particle-field schema family for 3D Gaussian splats, including <code>UsdVolParticleField3DGaussianSplat</code> and a reference <code>hdParticleField</code> Hydra renderer, via the AOUSD Emerging Geometry Interest Group. Splats are now first-class in USD. Every published 3DGS-LOD method (<a href="https://city-super.github.io/octree-gs/">Octree-GS</a>, <a href="https://lodge-gs.github.io/">LODGE</a>, <a href="https://archivesic.ccsd.cnrs.fr/OPAL/hal-04568786v1">H3DGS</a>, <a href="https://openaccess.thecvf.com/content/CVPR2025/papers/Shen_LOD-GS_Achieving_Levels_of_Detail_using_Scalable_Gaussian_Soup_CVPR_2025_paper.pdf">LOD-GS</a>, FLoD, CLoD-GS, <a href="https://arxiv.org/abs/2601.18475">StreamLoD-GS</a>) is hierarchical-subset-selection, which is incompatible with the <code>LodItemAPI</code> mutual-exclusion model. A short paragraph in the proposal naming the relationship would be helpful. Two reasonable positions:</p>
+<ul>
+<li>"Splat LOD is out of scope; expected to be handled inside <code>UsdVolParticleField*</code> or a sibling proposal," or</li>
+<li>"<code>LodGroupAPI</code> may decorate prims that contain particle fields, but does not govern intra-field refinement."</li>
+</ul>
+<p>Either is fine. Naming it explicitly heads off the question being raised separately by reviewers from groups working on splat LOD.</p>
+<h3>2.2 Relationship to <code>model:drawMode</code></h3>
+<p><code>UsdGeomModelAPI</code> has long defined <a href="https://openusd.org/dev/api/class_usd_geom_model_a_p_i.html"><code>model:drawMode</code></a> (cards / bounds / origin), which is widely used for unloaded-payload proxy rendering — see the <a href="https://forum.aousd.org/t/draw-mode-and-unloaded-payloads/695">AOUSD forum thread on Draw Mode and Unloaded Payloads</a>. This is a degenerate-case LOD already in USD. A sentence in the proposal stating whether <code>LodGroupAPI</code> is expected to interoperate with, supersede, or sit orthogonal to draw modes would be useful for implementers.</p>
+<h3>2.3 Asset resolution and network cost</h3>
+<p>A schema-oriented LOD design composes all authored Items into the stage, so the asset resolver has to resolve every authored variant — including any localization cost in resolvers that fetch assets over the network. For streaming or cloud-sourced workflows, asset transfer can dominate over rendering cost, which makes <em>"all LODs resolved, one active"</em> a meaningfully different cost model from <em>"only the active LOD resolved."</em></p>
+<p><code>comparison.md</code> characterizes payload-based LOD as a load-time alternative considered and rejected. That's a fair editorial choice on its own, but it leaves the underlying asset-resolution question open: is the schema intended to coordinate with payload load/unload (so asset resolution scales with what is <em>active</em>, not what is <em>authored</em>), or is asset-resolution cost explicitly out of scope of this schema (leaving streaming/cloud workflows to a peer schema or a different mechanism)?</p>
+<p>Either answer would be useful to name explicitly. The question shows up prominently across adjacent USD machinery (payloads, <code>ArResolver</code> localization, content-addressed stores), and naming the relationship would clarify what implementers should expect when authoring LODs for network-delivered content.</p>
+<hr />
+<h2>3. Within-scope refinements</h2>
+<h3>3.1 Heuristic API: single-apply vs multi-apply (already an open question in the proposal)</h3>
+<p>The README flags this directly. Reading: the base <code>LodHeuristicAPI</code> being multi-apply is correct (a prim might carry both a <code>Heuristic:graphics</code> and a <code>Heuristic:physics</code>), but the specialized subclasses (<code>LodDistanceHeuristicAPI</code>, <code>LodScreenSizeHeuristicAPI</code>) being single-apply contradicts that — a single-apply distance heuristic cannot represent two distance-driven Items under different domains on the same prim. Making the specializations multi-apply, with the instance name carrying the domain (e.g., <code>Heuristic:DistanceHeuristic:graphics</code>), preserves the orthogonality the proposal is aiming for.</p>
+<h3>3.2 Hysteresis is encoded twice</h3>
+<p><code>LodDistanceHeuristicAPI</code> and <code>LodScreenSizeHeuristicAPI</code> both express hysteresis via min/max threshold pairs. <code>LodFramerateHeuristicAPI</code> has a separate scalar <code>hysteresis</code>. Factoring hysteresis into the base <code>LodHeuristicAPI</code> would let each specialization avoid reinventing it.</p>
+<h3>3.3 The <code>morphGeometry</code> transition token implies geometry correspondence that isn't specified</h3>
+<p>"morphGeometry: Interpolate geometry between levels" is well-defined only when adjacent Items have authored vertex correspondence (or topology that allows interpolation). The proposal doesn't specify where that correspondence lives. Two reasonable resolutions: defer the token to a future revision, or add a relationship for vertex-correspondence / morph-target authoring. As written, the token promises more than the schema delivers.</p>
+<h3>3.4 Stronger upfront framing on advisory semantics</h3>
+<p>Several individual fields are correctly tagged as advisory and not strongly interoperable. The proposal's introductory framing positions itself as standardizing interchange, which sits in tension with that. A statement near the top of the README — <em>this schema standardizes the shape of LOD authoring intent; numerical heuristic values and selection algorithms are advisory; deterministic cross-engine LOD selection is not a goal</em> — would head off later confusion when two engines pick different LODs from the same data.</p>
+<h3>3.5 Instancing semantics need more than a sentence</h3>
+<p><em>Implementation Considerations</em> §4 reads: "For point instancing, each instance can use its own LOD switching based on its position relative to its reference point." PointInstancer interactions (per-instance evaluation, <code>protoIndices</code>, per-instance bounding volumes) and native instancing interactions (does a referenced <code>LodGroupAPI</code> resolve once across instances, or per instance?) are nontrivial. A worked example or an explicit "undefined for now" boundary would help downstream implementers.</p>
+<hr />
+<h2>4. Document sync</h2>
+<p>The auxiliary documents in PR 81 are out of sync with the README's API-schema design. This is mechanically fixable:</p>
+<ul>
+<li><code>api-design.md</code> describes typed schemas <code>UsdLodGroup</code> / <code>UsdLodLevel</code> inheriting from <code>UsdGeomXformable</code>, with <code>lodMetric</code> / <code>lodRanges</code> / <code>fadeTransitions</code> properties. The README defines API schemas (<code>LodGroupAPI</code> / <code>LodItemAPI</code> / <code>LodHeuristicAPI</code>) with different property names. The C++/Python signatures shown in <code>api-design.md</code> will not exist.</li>
+<li><code>use-cases.md</code> uses <code>def LodGroup ".." (lodMetric=..., lodRanges=...)</code> syntax that does not match any schema in the README.</li>
+<li><code>comparison.md</code> describes "Smooth Transitions: Built-in support for cross-fading" and "Performance: Optimized for efficient runtime selection" as schema guarantees; the README correctly frames these as advisory.</li>
+</ul>
+<p>A sync pass on these three files against the README would let new reviewers focus on substance rather than figuring out which version is authoritative. <code>use-cases.md</code> also has TODO placeholders in the README's two flagship examples (City→Buildings→Rooms; multi-domain vehicle); filling those in would do more for the proposal than the broader use-case taxonomy.</p>
+<p><strong>README structural ordering:</strong> the README runs Summary → Problem Statement → an ~80-line "Hierarchical LODGroups" industry survey (FBX, Maya, Unreal HLOD, RealityKit, Unity, Godot, glTF, X3D, Collada) → <em>then</em> "Proposal Details". This follows SIGGRAPH-style related-work-first ordering, which is a defensible convention for a paper. For a proposal read across verticals — where readers may not share the same prior-art familiarity — the survey content might read more naturally in <code>comparison.md</code>, which already exists for this purpose and is stale, so moving it would address both concerns at once. Worth considering rather than necessary.</p>
+<hr />
+<h2>5. Specific items, by category</h2>
+<p><strong>Scope clarifications (would help downstream LOD work land cleanly):</strong></p>
+<ol>
+<li>Drop or rework the CAD/Engineering use case in <code>use-cases.md</code>; add an explicit non-goal for AECO/BIM model maturity (Level of Development per BIMForum, Level of Information Need per ISO 19650).</li>
+<li>Promote frame-determinism and Item mutual-exclusion to explicit non-goals in "Excluded Topics"; add a non-goal for streaming / refinement-style LOD (3D Tiles, Nanite, Gaussian octree LOD, point cloud streaming).</li>
+<li>Add a paragraph stating the relationship to <code>UsdVolParticleField3DGaussianSplat</code> and to <code>model:drawMode</code>.</li>
+<li>Vertical-qualify the schema names, or add a <code>lodKind</code> enum reserving tokens for adjacent paradigms.</li>
+</ol>
+<p><strong>Within-scope refinements:</strong></p>
+<ol start="5">
+<li>Make domain-specialized heuristics multi-apply, mirroring the base.</li>
+<li>Move hysteresis into the base <code>LodHeuristicAPI</code>.</li>
+<li>Defer or scope <code>morphGeometry</code>; correspondence authoring isn't specified.</li>
+<li>Add advisory-not-interoperable framing near the top of the README.</li>
+</ol>
+<p><strong>Document sync:</strong></p>
+<ol start="9">
+<li>Sync <code>api-design.md</code>, <code>use-cases.md</code>, <code>comparison.md</code> to the README's API-schema design.</li>
+<li>Fill in the two flagship examples in <code>use-cases.md</code>.</li>
+<li>Consider moving the README's "Hierarchical LODGroups" industry survey into <code>comparison.md</code> — would address the README ordering and the <code>comparison.md</code> staleness together.</li>
+</ol>
+<p><strong>Open questions worth surfacing in the proposal text:</strong></p>
+<ol start="12">
+<li>PointInstancer + LOD: per-instance, per-prototype, or per-instancer evaluation?</li>
+<li>Native instancing + LOD: shared evaluation across instances, or per-instance?</li>
+<li>When multiple heuristics from different domains affect the same prim, who arbitrates ordering? Axioms specify domain independence, but composability with USD's existing scenegraph evaluation deserves at least an example.</li>
+<li><code>manualLodIndex</code> assumes Items are indexable in stable order. Is the order the <code>lodItems</code> relationship target order? Tie-breaker for inherited/composed cases?</li>
+<li>Asset-resolution and network cost: does <code>LodGroupAPI</code>'s Item activation coordinate with payload load/unload, or is asset-resolution cost explicitly out of scope of this schema? In streaming/cloud workflows, asset transfer can dominate over rendering cost (see §2.3).</li>
+</ol>
+<p><strong>Editorial:</strong></p>
+<ol start="17">
+<li>Stray <code>}</code> in <code>LodGeometryConfigurationAPI</code> doc.</li>
+<li><code>LodScreenSizeHeuristicAPI</code> has <code>propertyNamespacePrefix = "distanceLodHeuristic"</code> — copy-paste from the distance heuristic.</li>
+</ol>
+<hr />
+<h2>6. Specific framing-passage suggestions</h2>
+<p>A few specific passages where small framing nudges would carry disproportionate weight — the Summary, the Problem Statement, an Overview bullet, and the CAD/Engineering use case. These are the surfaces likely to be raised as line-anchored comments on the upstream PR. Each suggested wording is one option among several; the lighter ask is just to qualify the schema's slot in the broader LOD landscape so adjacent peer schemas have clear room to land later.</p>
+<h3>6.1 README — Summary</h3>
+<p>The Summary sets the mental model for readers arriving from BIM, GIS, or streaming/capture backgrounds. Naming the schema's category up front (something like <em>view-driven runtime LOD</em>) might help avoid the unqualified "LOD" being read as universal. One possible shape:</p>
+<blockquote>
+<p>This proposal defines an API schema for <strong>view-driven runtime LOD</strong> in USD compositions — the category of LOD in which engines and applications switch between mutually-exclusive asset representations based on configurable criteria such as distance, screen size, performance heuristics, or explicit authoring. The schema standardizes this category, enabling runtime composition, hierarchical evaluation, and multi-domain decoupling within the M&amp;E / runtime-engine vertical, while maintaining deterministic behavior. Other LOD verticals (industrial streaming/refinement, AECO information-maturity, geographic-semantic) are addressed by separate peer schemas and are out of scope here.</p>
+</blockquote>
+<h3>6.2 README — Problem Statement</h3>
+<p>Pairs with the Summary suggestion: scoping the gap explicitly to the M&amp;E / runtime-engine vertical, and introducing a two-level taxonomy — <em>vertical</em> (industry axis: M&amp;E, industrial, AECO, geographic) and <em>domain</em> (within-vertical subsystems: graphics, physics, audio). The proposal's existing "domain" language stays clean, and "vertical" gives a vocabulary for cross-industry scoping without having to coin new terms each time. Possible shape:</p>
+<blockquote>
+<p>Within the M&amp;E / runtime-engine <strong>vertical</strong>, USD lacks a standardized LOD representation. Current workarounds (variants, payloads, custom schemas) do not provide:<br />
+- Standardized interchange of LOD data within the vertical.<br />
+- Multiple LOD <strong>domains</strong> (graphics, physics, audio, ...) within the vertical simultaneously composed — e.g., cross-fading geometry while switching physics LOD.<br />
+- Runtime evaluation and deterministic selection.</p>
+<p>Other LOD verticals (industrial streaming/refinement, AECO information-maturity, geographic-semantic) have their own gaps and are addressed by separate peer schemas — see Excluded Topics.</p>
+</blockquote>
+<h3>6.3 README — Proposal Overview bullet</h3>
+<p>Smaller item, kept for completeness. "Renderer-agnostic" implies generality across rendering paradigms, but the schema is more precisely agnostic across engines <em>within</em> the runtime view-driven category. Other LOD paradigms have fundamentally different data shapes (per-tile screen-space-error metrics for refinement, octree anchor metadata for splats, lifecycle-stage attributes for AECO maturity), so "renderer-agnostic" sets the wrong expectation for readers from those paradigms. One option:</p>
+<blockquote>
+<ul>
+<li>Engine-agnostic within the M&amp;E / runtime vertical: this schema defines the LOD authoring data; selection logic is engine-dependent. Streaming-refinement, splat-octree, and other LOD paradigms have data shapes that don't fit this model and are addressed by peer schemas.</li>
+</ul>
+</blockquote>
+<h3>6.4 use-cases.md — CAD/Engineering use case (and a paired non-goal)</h3>
+<p>The CAD/Engineering example uses distance-based switching of mechanical assemblies, which doesn't quite exercise the schema's strengths (multi-domain coordination, hierarchical heterogeneous evaluation), and overlaps with the BIMForum Level of Development reading that BIM-side readers may default to on a <code>MechanicalAssembly</code>. The two flagship examples (City→Buildings→Rooms; multi-domain vehicle) carry the illustrative weight without that exposure, so dropping this example would tighten the proposal.</p>
+<p>Pairs with one possible addition to "Excluded Topics" — naming AECO model maturity explicitly as out of scope so the AECO IG has clean room for a peer schema later:</p>
+<blockquote>
+<ol start="5">
+<li><strong>AECO/BIM model maturity</strong>: This proposal addresses the M&amp;E / runtime vertical of LOD. AECO/BIM "Level of Development" (per <a href="https://bimforum.org/resource/lod-level-of-development-lod-specification/">BIMForum's 2025 LOD Specification</a>) and "Level of Information Need" (per <a href="https://www.symetri.co.uk/insights/blog/iso-19650-level-of-information-need-the-elephant-in-the-room/">ISO 19650 / DIN EN 17412-1</a>) are different categories of "LOD" that exist as active industry standards. They are out of scope of this schema and are expected to be addressed by separate peer schemas via the AECO IG.</li>
+</ol>
+</blockquote>
+<hr />
+<h2>7. Forward path: a family of peer schemas</h2>
+<p>With the scope clarifications above, this proposal is well-positioned to be the first member of a family of <strong>peer schemas</strong> for LOD in OpenUSD — schemas that each own a slice of the LOD design space cleanly, rather than one schema being stretched to cover all of them. A plausible shape for the family:</p>
+<ul>
+<li>This proposal — view-driven, prim-level, mutually-exclusive Item activation — for runtime engines.</li>
+<li>A streaming / refinement schema for 3D Tiles- and Nanite-style hierarchical sub-prim LOD, likely closer to <code>UsdVolParticleField</code> and other primitive families that own their own data layout.</li>
+<li>An information-maturity schema for AECO workflows, orthogonal to rendering — aligned more with ISO 19650 LOIN than with view-driven LOD or AIA Level of Development.</li>
+<li>A geographic-LOD schema aligned with CityGML 3.0 semantics, for digital-twin and smart-city work.</li>
+<li>A splat / volume / progressive-mesh hierarchical-cut LOD story, coordinated with the existing <code>UsdVolParticleField</code> schema family.</li>
+</ul>
+<p>These schemas don't need to land together. AOUSD's IG/WG structure provides natural pipelines for several of them: the <strong>AECO IG</strong> is the right venue for AECO-specific use cases that would feed an information-maturity schema; the <strong>Industrial Engineering Digital Twins IG</strong> is the natural home for industrial streaming-refinement and large-scale-capture use cases; the <strong>Emerging Geometry IG</strong> is already the home of the Gaussian-splat work and is the natural venue for splat-LOD use cases. Use cases gathered by these IGs would feed the Spec and Geometry WGs for normative specification.</p>
+<p>The scope and naming asks in §1 matter precisely because the first proposal in this space sets the terminology budget for the others. Clean boundaries here let the follow-on proposals avoid inheriting ambiguity that would be hard to walk back later.</p>
+<p>The terminology discipline and multi-domain decomposition in this proposal are useful precedents for the family as a whole. The peer schemas (streaming-refinement, splat-LOD, AECO information-maturity, CityGML-aligned geographic LOD) would each need their own primitives rather than building on <code>LodGroupAPI</code> / <code>LodItemAPI</code> directly — they sit as peers to this proposal, not descendants of it. What carries across the family is the scope-naming pattern this proposal sets and the discipline of partitioning the LOD design space cleanly across peers. NVIDIA and physical-AI groups would expect to engage with the AECO IG and the Industrial Engineering Digital Twins IG on the use-case pipelines for those peer schemas. More broadly, peer-schema partitioning may be a useful organizing principle wherever a single OpenUSD concept is being asked to span incompatible verticals.</p>
+<hr />
+<h3>Comment by nvmkuruc on 2026-05-05</h3>
+<p>The biggest concern I have is that by orienting level of detail around schemas is that it does not provide a strategy for "asset resolver" level of detail.  All levels of detail contribute to the composed stage, even if not rendered.  All assets must be resolved, which may include localizing (depending on the resolver).</p>
+<p>For some contexts, the cost of transferring asset data over the network is the most expensive part of imaging a stage.</p>
+<hr />
+<h3>Comment by asluk on 2026-05-08</h3>
+<p>That's a more architectural concern than the original §2.3 framing was reaching. I've broadened §2.3 to focus on asset resolution and network cost as the underlying question, with payload coordination as one specific mechanism rather than the framing itself. Added it to §5 as an explicit open-question item too (now #16). The schema's relationship to ArResolver localization and payload load/unload feels worth naming one way or the other in the proposal text — either Item activation scales with what's active, or asset-resolution cost is out of scope and the streaming/cloud case lands in a peer schema or different mechanism.</p></body></html>
