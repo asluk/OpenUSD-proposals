@@ -260,17 +260,16 @@ An anchor's location is a position. Everything beneath it is offsets.
 **Resolution.**
 The computation that takes a composed stage and produces
 where each prim is in one output CRS.
-Resolution is work a runtime does; it is not recorded in the scene.
+Resolution is work a runtime does.
 
 **Target CRS.**
 The CRS a resolution produces its output in.
-How it is chosen is a requirement, not part of the term;
-a scene never records the Target CRS a consumer chose.
+How it is chosen is not part of the term.
 
 **Placement.**
 Where an instance sits and how it is oriented within a CRS,
-authored as transform operations on or below an anchor.
-Placement is survey data: it differs for every instance,
+recorded on or below an anchor.
+Placement is survey data: it differs from instance to instance,
 and it is the record of a real-world decision about a real-world object.
 
 **Conformance.**
@@ -315,8 +314,8 @@ are different representations.
 **Localization.**
 In ISO/TS 15143-4 and in construction machine control,
 the operation of relating a site's working coordinates to a geodetic CRS.
-It is expressed in WKT 2 as a derived CRS,
-so this proposal introduces no construct for it.
+Whether this proposal needs a construct of its own for it
+is a design question, decided against requirements 2 and 4.
 
 **Reference epoch and coordinate epoch.**
 A dynamic datum's reference epoch is the date to which its defining
@@ -557,17 +556,20 @@ and carries no requirement of its own.
 
 **Resolving a scene**
 
-16. **One CRS out, chosen by the consumer.**
-    Content expressed in any number of CRSs resolves, in one pass,
-    into one CRS the consumer chooses,
-    and the scene can name the CRS it expects for a consumer that chooses none.
+16. **One CRS out.**
+    Content expressed in any number of CRSs resolves, in one pass, into one CRS;
+    a consumer can obtain the result in a CRS of its choosing,
+    and a scene can name the CRS it expects to be resolved into.
 
     *A pipeline crosses UTM zones 11N and 12N.
     Read in zone 11N without conversion, the 12N half lands
     away from the endpoints it shares on the ground.
-    Two scenes that each expect a different output CRS
-    can only be brought together if the consumer, not either scene,
-    picks the one they both resolve into.*
+    A GIS host has a project CRS of its own and wants a scene
+    authored elsewhere in it, without editing the scene;
+    a viewer with no opinion needs the scene to say what it expects.
+    Whether the consumer's choice is the CRS the scene resolves into,
+    or a conversion applied after the scene resolves into the CRS it names,
+    is a design question the table below sends to requirements 16, 17, 20 and 22.*
 
 17. **The same answer for every consumer.**
     A world position, a bound, an instance, a physics body and a rendered
@@ -703,7 +705,8 @@ An answer to any of these is argued as whether it meets the requirements named.
 | Does the scene record where CRS coordinates give way to scene offsets, or does the binding determine it? | 11, 18, 25 |
 | Which scene axis carries which CRS component? | 13 |
 | Does localization need a construct of its own? | 2, 4 |
-| How is the Target CRS chosen, and can it be a geographic CRS? | 16, 21 |
+| Is the consumer's chosen CRS the one the scene resolves into, or a conversion of a result resolved into the CRS the scene names? | 16, 17, 20, 22 |
+| Can a scene resolve into a geographic CRS? | 16, 21 |
 
 ### Schema design
 
