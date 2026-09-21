@@ -333,15 +333,17 @@ are expressed in a named CRS.
 **Anchor.**
 The prim at which CRS coordinates enter a scene:
 its own location is a position in the CRS bound to it.
-Content beneath an anchor is positioned relative to it
-by offsets in ordinary scene units, with no CRS coordinates of its own.
+Content beneath an anchor, up to but excluding any nested anchor,
+is positioned relative to it by offsets in ordinary scene units,
+with no CRS coordinates of its own.
 What constrains the CRS an anchor may be bound to is a design question,
 not part of the term.
 
 **Position and offset.**
 A *position* is a coordinate in a CRS; an *offset* is a distance
 from another prim, in scene units.
-An anchor's location is a position. Everything beneath it is offsets.
+An anchor's location is a position. Content beneath it is offsets,
+up to but excluding any nested anchor.
 
 **Resolution.**
 The computation that takes a composed stage and produces
@@ -569,16 +571,15 @@ and carries no requirement of its own.
    Repeating the declaration for every descendant risks a missed update
    among coordinates intended to share the same CRS.*
 
-7. **Survives composition.**
-   A CRS declaration and its scope hold
-   when the content carrying them is referenced, sublayered or overridden.
+7. **Composition agnostic**
+   CRS declarations and their scope are interpreted on the composed stage,
+   following the composition and value-resolution rules of the
+   [AOUSD USD Core Specification v1.0.1](https://github.com/aousd/specifications-public/blob/main/core/1.0.1/core_spec.md).
 
-   *If composition hides a declaration or changes its scope incorrectly,
-   an asset's coordinates lose their interpretation or acquire another.
-   An intentional override is different from losing that information.
-   OpenUSD's composition rules already guarantee this for any authored
-   property; it is stated here so that an implementation is checked
-   against it rather than assumed to inherit it.*
+   *Equivalent composed stage data has the same geospatial interpretation,
+   regardless of the layers or composition arcs used to produce it.
+   Core defines how opinions compose and resolve; this proposal defines
+   the CRS interpretation and scope applied to that result.*
 
 8. **Brought-in data keeps its coordinates and its CRS.**
    Data authored in one CRS can be brought into a project working in another,
@@ -898,7 +899,7 @@ considerations.
 - A decision is recorded in that paragraph and in the design or runtime text it
   changes. It is not recorded by rewording a requirement or a Term.
 - When citing an open question anywhere outside this file, give number and a
-  short name together: "open question 2, the asset's native CRS".
+  short name together: "open question 3, the asset's native CRS".
 -->
 
 An answer to any of these is argued as whether it meets the requirements named.
@@ -914,6 +915,14 @@ An answer to any of these is argued as whether it meets the requirements named.
 | 7 | Does localization need a construct of its own? | 2, 4 |
 | 8 | Is the consumer's chosen CRS the one the scene resolves into, or a conversion of a result resolved into the CRS the scene names? | 16, 17, 21, 23 |
 | 9 | Can a scene resolve into a geographic CRS? | 16, 18, 22 |
+
+Open question 1 asks whether authored positions, including time samples,
+can retain geographic coordinates. A geographic origin in a CRS definition
+does not settle that question. Reporting resolved positions in geographic
+coordinates is covered by requirement 18, Coordinates back out;
+a geographic Target CRS is open question 9.
+Open questions 1 and 2 both have to satisfy requirement 20,
+Positions between recorded moments.
 
 ### Schema design
 
