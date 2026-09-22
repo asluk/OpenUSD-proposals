@@ -330,6 +330,11 @@ A statement that the coordinates of a prim,
 and of its subtree down to the next binding,
 are expressed in a named CRS.
 
+**Native CRS.**
+The CRS in which an asset's currently authored coordinates are expressed.
+It gives those coordinate values their meaning;
+it is not a record of earlier CRSs or of the asset's conversion history.
+
 **Anchor.**
 The prim at which CRS coordinates enter a scene:
 its own location is a position in the CRS bound to it.
@@ -355,10 +360,12 @@ The CRS a resolution produces its output in.
 How it is chosen is not part of the term.
 
 **Placement.**
-Where an instance sits and how it is oriented within a CRS,
+Where an instance sits, how it is oriented and any instance-specific scale
+within a CRS,
 recorded on or below an anchor.
-Placement is survey data: it differs from instance to instance,
-and it is the record of a real-world decision about a real-world object.
+Placement records a real-world decision about an instance:
+it may come from a survey or from adjustments to align the instance
+with better-known features, and can differ from instance to instance.
 
 **Conformance.**
 A correction for the authoring conventions of a source asset —
@@ -375,7 +382,8 @@ and this proposal uses none of them unqualified.
 
 - A **project's base CRS**, in GIS practice,
   is the CRS a project works in and brings its data into.
-  This proposal calls that the **Target CRS**.
+  It is the **Target CRS** when resolving into that project's working coordinates;
+  how a consumer obtains a result in a different CRS is open question 8.
 - **`BASEGEOGCRS`**, in WKT 2,
   is the geographic CRS a projected or derived CRS is built *from*.
   It sits underneath a CRS definition, not above a project.
@@ -410,6 +418,8 @@ A dynamic datum's reference epoch is the date to which its defining
 parameters refer; a coordinate epoch is the date at which a coordinate
 set's positions apply.
 Neither is the time sample used to animate content in a scene.
+A measurement's observation or forecast time likewise supplies neither epoch
+unless that relationship is explicitly recorded.
 
 ## Design overview
 
@@ -588,7 +598,14 @@ and carries no requirement of its own.
    *This is the hierarchy a GIS runs on: each asset's own CRS,
    the project's CRS, and the placement of the asset in it.
    A reprojected copy made on import is a second dataset to maintain;
-   replacing the original with it loses the native representation.*
+   replacing the original with it loses the native representation.
+   In a GIS workflow, native coordinates are converted on demand into the
+   project's CRS, then project-specific rotation, scale and translation
+   adjust their placement in that CRS.
+   The native CRS interprets the coordinates still authored on the asset;
+   preserving it is not a requirement to track earlier CRSs or conversions.
+   These instance-specific adjustments are separate from corrections
+   to the source asset's conventions, as required by requirement 15.*
 
 **Saying where content is**
 
@@ -712,7 +729,9 @@ and carries no requirement of its own.
     "Does this work without a renderer" is the first question
     a GIS or AECO pipeline asks.
     A building that renders in the right place while a spatial query
-    still answers from its unconverted coordinates is two scenes, not one.*
+    still answers from its unconverted coordinates is two scenes, not one.
+    The same is true of image or grid samples: an analytical query and
+    an optional visualization refer to the same resolved sample locations.*
 
 18. **Coordinates back out.**
     Any resolved position can be reported as coordinates in any CRS
@@ -721,6 +740,9 @@ and carries no requirement of its own.
 
     *A GIS wants a surveyed corner back as latitude, longitude and height
     whether or not anything in the scene is expressed that way.
+    An analytical product similarly needs its sample locations in the
+    receiving GIS's CRS, with the measurements and times associated
+    with the same samples.
     A picking tool asking where two independently placed objects sit
     relative to each other gets the wrong answer by walking the authored
     hierarchy across a position: with one prim at 100 and an independently
@@ -756,7 +778,10 @@ and carries no requirement of its own.
     Telemetry from GPS, AIS or ADS-B arrives as latitude, longitude and
     altitude over time; whether such samples may be recorded as they arrive
     is part of what this section leaves open, and this requirement is
-    what that answer costs or keeps.*
+    what that answer costs or keeps.
+    A climate grid can instead have fixed positions and changing measurements:
+    a new measurement time does not by itself move a sample, and this
+    requirement does not define interpolation or resampling of its values.*
 
 21. **Never placed by a guess.**
     A transformation that cannot be computed — no engine, a definition
@@ -780,6 +805,23 @@ and carries no requirement of its own.
     A malformed definition or a binding to nothing is visible when the
     scene is authored; whether a grid covers the point, or an engine
     is present at all, is not, and no authoring API can promise to say so.*
+
+<!-- Start a separate list so the new identifier renders as 30. -->
+
+30. **Measurements remain usable as data.**
+    Georeferenced measurements remain accessible to consumers together with
+    their associated positions and times, without requiring renderable geometry
+    or a visualization, and coordinate resolution preserves those associations
+    and measurement values.
+
+    *An image, terrain model or climate grid carries values that a consumer
+    can analyze to identify features or trends, not just colors to display.
+    Adding or removing a visualization leaves those values and their
+    associations intact.
+    Derived products can be returned to a GIS with their coordinates,
+    values and times still matched.
+    This requires access and preservation; it does not prescribe an analysis
+    algorithm, a storage format or interpolation of measurement values.*
 
 **Staying usable at real sizes**
 
@@ -881,6 +923,27 @@ and carries no requirement of its own.
     The survey control this data derives from is generally good to
     centimetres, so agreement at the millimetre scale sits below the source.*
 
+**Illustrative geographic data workflows**
+
+Geographic datasets can supply measurements for analysis as well as optional
+visualizations, with derived products returned to a GIS:
+
+- A city-scale satellite image has samples of longitude, latitude, height
+  and measurement. A consumer identifies features from the measurement
+  values and obtains their locations in a suitable project CRS;
+  topocentric/ENU coordinates are one candidate.
+- A global climate grid has samples of longitude, latitude, height,
+  measurement and time. A consumer identifies trends while retaining the
+  association between the measurements, sample locations and recorded times;
+  ECEF is one candidate output for the global extent. Positions can stay
+  fixed while measurements change.
+
+Both cases need explicit coordinate units and height references, access to
+the measurements independently of a visualization, and coordinates back
+out in a named CRS. They illustrate requirements 8, 12, 17, 18, 19, 22 and 30
+and inform open question 1; the candidate outputs do not decide how native
+geographic positions are recorded or whether the Target CRS may be geographic.
+
 **What the open questions are decided against**
 
 <!--
@@ -906,9 +969,9 @@ An answer to any of these is argued as whether it meets the requirements named.
 
 | # | Question | Decided against |
 |--:|---|---|
-| 1 | May a position be recorded in a geographic CRS, or only in one with length axes? | 5, 8, 12, 20, 22 |
+| 1 | May a position be recorded in a geographic CRS, or only in one with length axes? | 5, 8, 12, 17, 18, 19, 20, 22, 30 |
 | 2 | How does the scene mark a position: by the binding on the prim, by a marked transform, or by a typed attribute of its own? | 9, 11, 12, 20 |
-| 3 | Where is an asset's own native CRS recorded? | 5, 6, 8 |
+| 3 | Where is an asset's own native CRS recorded? | 5, 6, 8, 9, 11, 15, 16, 19 |
 | 4 | Whose job is the up-axis and unit correction, the writer's or the reader's? | 14, 15 |
 | 5 | Does the scene record where CRS coordinates give way to scene offsets, or does the binding determine it? | 11, 19, 27 |
 | 6 | Which scene axis carries which CRS component? | 13 |
@@ -923,6 +986,20 @@ coordinates is covered by requirement 18, Coordinates back out;
 a geographic Target CRS is open question 9.
 Open questions 1 and 2 both have to satisfy requirement 20,
 Positions between recorded moments.
+The geographic measurement workflows also test preservation and access
+under requirement 30, Measurements remain usable as data; retaining
+geographic data only as a basemap or preconverted visualization does not
+exercise those analytical uses.
+
+Open question 3 concerns the CRS that interprets currently authored
+coordinates and its relationship to project-specific placement.
+The GIS example proposes conversion into project coordinates followed by
+adjustments in that coordinate system. Its recording and evaluation rules
+must distinguish those adjustments from inherited offsets under
+requirements 9 and 11 and from conformance under requirement 15.
+If a consumer requests another output CRS, the relationship to the project's
+working CRS is also subject to open question 8. This clarification records
+the workflow to support, not an accepted storage or evaluation mechanism.
 
 ### Schema design
 
