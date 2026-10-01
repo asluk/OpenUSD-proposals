@@ -20,9 +20,38 @@ This document responds to the "Namespace and Prefix Isolation" requirement raise
 
 ## Problem Statement
 
-USD's extension surface is not a closed set, and this document's scope should be read accordingly. What's visible today -- property names, applied/typed schema type names, metadata dictionary keys (e.g. `assetInfo` sub-dictionaries), file format identifiers, and asset resolver identifiers -- is a starting inventory, not a boundary. New extension points may emerge as USD evolves. A namespace/prefix convention should be defined in terms general enough to extend to surfaces it does not yet name, rather than being scoped only to today's known list.
+USD's extension surface is not a closed set. Property names, applied/typed schema
+identifiers, metadata dictionary keys (e.g. `assetInfo` sub-dictionaries), capability
+identifiers, file format identifiers, and asset resolver identifiers form a starting
+inventory. The requirements should be extensible to new surfaces as USD evolves.
 
-The core failure mode motivating this work is concrete, not hypothetical: two vendors or domains can independently introduce identically-named extensions -- on any of these surfaces -- with different semantics. When assets carrying both move between tools, the result is silent, undetected data corruption rather than a visible error.
+Two vendors or domains can independently introduce identically named extensions
+with different semantics. Depending on the surface and runtime, collisions can
+produce registration errors, ambiguous interpretation, or silent use of the wrong
+semantics when assets move between tools. Naming isolation must address both the
+identifiers a runtime registers and those that content authors exchange.
+
+### Outcomes and initial scope
+
+This proposal supports two ecosystem outcomes:
+
+- **Prevent cratering:** preserve a reliable content ecosystem in which adopters
+  can reason about compatibility and the meaning of a support claim. Supporting
+  USD does not require every application to implement every extension.
+- **Prevent stagnation:** let domains prototype, ship, and build adoption within
+  safe scopes without waiting for full AOUSD approval of each new feature.
+
+Baseline USD, namespaces, profiles, and specification Parts are mechanisms for
+achieving these outcomes. This proposal develops the naming mechanism; it does
+not settle baseline scope, conformance infrastructure, or the organization of Parts.
+
+The proposed first deliverable covers typed schema identifiers, applied API schema
+identifiers, and property names. It must identify how those names relate to
+capability/profile identifiers and metadata dictionary keys, so these surfaces do
+not acquire incompatible ownership conventions. File format and asset resolver
+identifiers remain in the inventory for subsequent work; binary plugin loading,
+distribution, and sandboxing are separate concerns. This phased scope is proposed
+for review, rather than a limit on the eventual extension model.
 
 ## Functional Requirements
 
@@ -34,6 +63,11 @@ This document uses **prefix** and **namespace** as related but distinct terms:
 
 - A **prefix** is the leading token, or sequence of tokens, in an identifier that denotes ownership or scope (e.g. `nvidia`, `KHR_`, `AOUSD.GeomWG`).
 - A **namespace** is the space of identifiers scoped by a given prefix -- a prefix establishes a namespace, within which further hierarchy (domain, feature, version) is composed.
+- **Ownership**, **maturity**, and **version** answer different questions: who
+  controls a definition, how much agreement or validation it has received, and
+  which semantic contract applies. A marker such as `Prelim` expresses maturity;
+  it does not by itself identify an owner or reserve names against other
+  preliminary extensions.
 
 Where the distinction doesn't matter, this document refers to them together as "namespace/prefix."
 
@@ -81,9 +115,28 @@ yoyodyne . dimensional.contabulator
 - **R2 -- Hierarchical scoping.** The convention must support nested/hierarchical scoping on both axes above, without prescribing a specific delimiter, casing rule, or token ordering.
 - **R3 -- Owner sub-hierarchy independence.** The owner/vendor portion of an identifier must support its own internal sub-hierarchy, independent of and orthogonal to the extension's domain/feature hierarchy. This applies whether the owner is a standards body (organized into working groups) or a single vendor structuring its own namespace (e.g. into internal tiers, divisions, or product lines) -- the convention should not assume what an owner's sub-hierarchy levels mean, only that they can exist. A single flat vendor token and a multi-level owner hierarchy must both be expressible under the same convention.
 - **R4 -- Syntax may vary by extension surface.** Different extension surfaces (property names, schema/type names, capability or profile identifiers, etc.) may reasonably use different concrete syntaxes, provided each satisfies R1--R3. The requirement is on the properties each syntax must guarantee (legibility, hierarchy, owner-sub-hierarchy support) -- not a single notation mandated uniformly everywhere.
-- **R5 -- Collision-prevention guarantee.** Some mechanism -- stronger than convention alone -- should give independent parties confidence that their top-level tokens will not collide. The proportionate strength of this mechanism is an open question (see below).
-- **R6 -- Tiered/graduated lifecycle, with a variable starting point.** Vendor-specific conventions should be able to ship immediately; proven conventions should have a path to multi-vendor or core status over time. The lifecycle itself remains sequential (vendor &rarr; multi-vendor &rarr; ratified/core), but the starting point within it need not always be the vendor-specific stage -- a submission can enter directly at the multi-vendor or working-group-authored stage if that's where consensus already exists, the same way Khronos's prefix-request process lets a submission request a multi-vendor `EXT_` prefix directly rather than first shipping a vendor-specific one. From whatever point it enters, the remaining stages still proceed in order.
-- **R7 -- Proportionate governance cost.** The common case (one vendor, one schema) should not require the same process as a core-track schema.
+- **R5 -- Ownership assurance and collision handling.** The solution must specify
+  how top-level ownership is established, how an owner delegates sub-namespaces,
+  and how conflicting definitions are detected and resolved. A naming convention
+  alone, with no ownership or conflict-handling mechanism, does not meet this
+  requirement. Candidate mechanisms include lightweight prefix reservation,
+  verifiable owner-controlled namespaces with validation, and explicit
+  qualification with ambiguity detection. The choice and its guarantees remain
+  open; no mechanism should silently select one of two conflicting definitions.
+- **R6 -- Independent entry and a path to broader agreement.** Vendor extensions
+  should be able to ship immediately within the agreed naming and baseline
+  constraints. Proven extensions should have a path to multi-vendor or core
+  consideration, and a submission may enter directly at a multi-vendor or
+  working-group stage when agreement already exists. Graduation is optional and
+  requires evidence and agreement; adoption does not imply AOUSD ratification.
+  A change of governance or maturity must not imply an automatic identifier
+  rename. Any renaming, aliasing, versioning, or content migration needs an
+  explicit compatibility policy.
+- **R7 -- Proportionate governance cost.** An additive extension within an owner's
+  namespace should be self-enabled without full AOUSD feature approval upfront.
+  Establishing namespace ownership must be distinct from approving the extension's
+  semantics. Changes to the shared baseline or use of a namespace governed by
+  others require the relevant broader agreement.
 
 ### B. Discoverability (separate requirement, not conflated with A)
 
@@ -97,14 +150,22 @@ Adapted from Gordon Bradley's comment on the governance doc:
 
 Ranked by relevance: existing AOUSD/USD-native precedent first, then external standards bodies, then field evidence from production use.
 
-| Source | Syntax | Collision prevention | Registry | Promotion path |
+| Source | Syntax | Collision prevention | Prefix reservation registry | Promotion path |
 |---|---|---|---|---|
 | **USD Profiles** (proposal PR #75, Dhruv Govil, merged 2025-01; updated by PR #110, Nick Porcino, merged 2026-06; now shipped in OpenUSD as `usdProfiles`) | Reverse-domain (e.g. `usd.geom.skel`, `yoyodyne.dimensional.contabulator`) | Unique-prefix convention + mandatory ancestral derivation from the `usd` root capability | None | Yes -- worked example in Appendix B: vendor (`epic.nanite`) &rarr; AOUSD WG standardization (`aousd.meshlet`) &rarr; USD core (`usd.meshlet`) |
-| **Khronos glTF extension registry** | `PREFIX_scope_feature`, prefix uppercase + underscore, remainder lowercase snake_case | Reserved prefix per vendor, requested via issue | Yes -- lightweight, file-based (`Prefixes.md`) | Yes -- 5 stages: Proposal &rarr; Initial Draft &rarr; Review Draft &rarr; Release Candidate &rarr; Ratified (vendor &rarr; `EXT_` multi-vendor &rarr; `KHR_` ratified) |
+| **Khronos glTF extension registry** | `PREFIX_scope_feature`, prefix uppercase + underscore, remainder lowercase snake_case | Reserved prefix per vendor, requested via issue | Yes -- lightweight, file-based (`Prefixes.md`) | Specification maturity stages: Proposal &rarr; Initial Draft &rarr; Review Draft &rarr; Release Candidate &rarr; Ratified. Prefix category and maturity are distinct; ratified extensions can retain `EXT_`. |
 | **IETF RFC 6838** (media type registration trees) | `facet.subtype`, e.g. `vnd.bigcompany.funnypictures` | Tree-based: `vnd.` (vendor), `prs.` (personal), `x.` (private/experimental, explicitly not for interop) | Yes -- IANA, centralized and heavyweight | None -- no formal vendor-to-standards graduation |
 | **W3C Custom Elements (Web Components)** | Mandatory hyphen in the local name | Structural guarantee only: spec commits that no future built-in HTML/SVG/MathML element name will contain a hyphen | None | N/A |
 
-These promotion paths remain sequential, but the entry point within them can vary. Khronos's prefix-request process (a GitHub issue) is the same mechanism used to request a multi-vendor `EXT_` prefix directly -- entering the sequence at that stage rather than at single-vendor, with ratification into `KHR_` still to follow. Likewise, the Profiles proposal's worked example doesn't require every extension to start at the vendor stage -- a working-group-authored capability can enter directly at the AOUSD-WG tier and proceed from there toward core integration.
+These precedents do not require every extension to pass through a vendor prefix,
+then a multi-vendor prefix, then a ratified prefix. The
+[glTF registry](https://github.com/KhronosGroup/glTF/blob/main/extensions/README.md)
+allows `KHR` for work intended for ratification, and lists ratified extensions that
+retain `EXT` to preserve their established names. Its specification maturity stages
+are distinct from prefix categories. Likewise, the Profiles proposal's worked
+example illustrates a possible vendor-to-WG-to-core path; it does not establish a
+mandatory renaming sequence for this proposal. Direct multi-vendor or WG entry and
+stable identifiers across changes in maturity remain options to evaluate under R6.
 
 Field evidence from production use (illustrative, not proposed as a template):
 
@@ -123,8 +184,8 @@ Its governance journey is the one R6 describes. The schema was worked in the AOU
 Geometry Working Group, socialized with other interest groups, and put up as
 OpenUSD-proposals PRs -- more than one organization behind it, and past the point
 where a single-vendor prefix would describe it accurately. `Prelim` is being
-considered as the marker for exactly that status: not one company's, and not yet
-ratified.
+considered as a marker for preliminary status. The marker does not specify which
+owner governs the extension or reserves its identifiers.
 
 ### What the marker landed on
 
@@ -139,9 +200,10 @@ Joe Umhoefer's rationale for leaving the applied APIs unprefixed is that they ca
 only be applied to the prefixed type -- `apiSchemaCanOnlyApplyTo` constrains them to
 `PrelimBrepArray`, so the marker is carried structurally rather than in their names.
 
-That rationale has real merit. It minimizes renaming at graduation: one type name
-changes rather than six. And from authored data the status is legible, because the
-prim type is visible at the point of use.
+That rationale reduces the number of identifiers that would change if graduation
+removed the marker. A prim authored with `PrelimBrepArray` also exposes preliminary
+status through its type name. It does not establish ownership or isolate every
+identifier the extension introduces.
 
 ### Where it does not hold
 
@@ -151,62 +213,85 @@ reserve the name. Another party defining a differently-shaped `BrepPointAPI`
 collides in the schema registry regardless of what either one can be applied to.
 That is R5, and structural association does not address it.
 
-**The argument generalizes further than intended.** If association through
-containment is sufficient, the typed prim needed no prefix either -- it already sits
-inside `PrelimUsdSolid`. The same reasoning excuses the change the PR makes.
+**Library naming does not qualify every scene identifier.** A library name or C++
+namespace does not automatically provide ownership scope for its registered schema
+identifiers or property names. Each surface needs an explicit naming rule.
 
-**And the surfaces that persist in content received nothing.** The marker is on the
-library and the type name, both of which exist only in the schema registry. Every
-surface that ends up in a customer's file is unmarked:
+**Authored content carries both type and property identifiers.** A concrete prim's
+type name persists as `typeName`; explicitly applied API schema identifiers persist
+in `apiSchemas`. Built-in schema properties can exist through a prim definition
+without being individually authored. These distinctions are documented in
+[OpenUSD's schema generation guide](https://openusd.org/release/api/_usd__page__generating_schemas.html).
+
+The following illustrative excerpt uses the proposed typed name; the B-Rep README
+examples still use the earlier `BrepArray` spelling. It is not a complete B-Rep asset:
 
 ```usda
-def BrepArray "Cube" (
+def PrelimBrepArray "Cube" (
     prepend apiSchemas = ["BrepPointAPI:vertexPoint", "BrepCurve3dNurbAPI:edge3dNurb"]
 )
 {
     uniform double[] brep:intersectTol3d = [0.00002]
     uniform uint[] brep:regionCount = [2]
-    uniform point3d[] brep:edge3dNurb:curve3d:nurb:controlVertices = [...]
 }
 ```
 
-Two sources of `brep:` appear here. The typed schema declares its own properties with
-the namespace built into their names, so they are authored on every instance. And
-the multiple-apply instancing composes API schema instance names into property paths
--- `brep:edge3dNurb:...` -- so the applied schemas do leave a trace in authored data,
-through instance names rather than through type names.
+Here, `PrelimBrepArray` carries maturity information, while `BrepPointAPI`,
+`BrepCurve3dNurbAPI`, and the authored `brep:` properties do not carry an owner or
+maturity marker. Multiple-apply property names also incorporate instance names
+such as `edge3dNurb`; that instance name does not reserve the API schema identifier.
 
-If a preliminary design changes at ratification, content authored in the interim
-carries `brep:` properties whose semantics differ from ratified `brep:` properties,
-with nothing in the file to distinguish them.
+The type provides useful context when present. A property opinion may also be
+authored in a separate override layer without a local type declaration or
+`apiSchemas` opinion. Its interpretation then depends on composition and the
+applicable schema definition. A property prefix keeps the governing owner visible
+in that setting, but still needs version/dependency information
+when semantics change. A missing prefix alone does not prove content is
+uninterpretable; the question is whether the complete contract isolates independent
+definitions and distinguishes incompatible versions.
 
 ### The question this poses
 
 Stating it as a requirement question rather than a naming preference:
 
-**Does a maturity or ownership marker belong on the surfaces that persist in authored
-data, or on the surfaces that exist in the schema registry?** The B-Rep PR currently
-answers "registry," and the asymmetry appears to be incidental rather than chosen.
+**Which identifiers need ownership isolation, and how are maturity and incompatible
+versions represented across authored data and runtime registration?**
 
-The answer has a cost either way, which is why it needs deciding rather than
-defaulting. Marking the property namespace -- `prelimBrep:intersectTol3d` -- makes
-status legible in the one place that outlives every tool, and makes graduation a
-content migration rather than a schema rename. Not marking it keeps graduation cheap
-and keeps property names readable, at the price of authored data that cannot be
-dated.
+Answer this for the typed name, every applied API identifier, and property names,
+including opinions authored in separate layers. `Prelim` alone cannot isolate two
+independent preliminary extensions. An owner-qualified prefix and a separate
+maturity/version declaration may be preferable to encoding all three in each name;
+the exact syntax remains open.
 
-This is R4 in practice. R4 permits different surfaces to use different concrete
-syntaxes, provided each satisfies R1--R3. It does not say a surface may carry no
-marker at all, and the B-Rep case shows that the distinction between "different
-syntax" and "absent" has not yet been drawn.
+Renaming a typed schema can already require migration of authored `typeName`
+opinions. Renaming an explicitly applied API can require migration of `apiSchemas`;
+renaming properties adds another migration surface. Prefixing only the typed schema
+therefore does not make graduation a content-free registry change. Conversely,
+keeping property names stable can be safe when the owner maintains a compatible
+contract and incompatible changes have an explicit version/migration policy.
+
+This is R4 and R6 in practice: assess each surface's ownership rule and compatibility
+cost, while allowing governance maturity to change without unnecessary renaming.
 
 ## Design Considerations
 
 ### Separability from OpenUSD's plugin system
 
-The namespace/prefix paradigm, and its enforcement, should be separable from OpenUSD's plugin system -- `pluginfo.json`, C++ namespace macros (`PXR_NS`), `dlopen`-based dynamic loading, or any other mechanism a given runtime happens to use to implement extensibility. The convention, and any enforcement mechanism built around it, should be definable and usable without depending on OpenUSD's plugin system to exist.
+The namespace/prefix paradigm, and its enforcement, should be separable from OpenUSD's plugin system -- `plugInfo.json`, C++ namespace macros (`PXR_NS`), `dlopen`-based dynamic loading, or any other mechanism a given runtime happens to use to implement extensibility. The convention, and any enforcement mechanism built around it, should be definable and usable without depending on OpenUSD's plugin system to exist.
 
-This separability holds even inside mechanisms that happen to use OpenUSD's plugin system today. The Profiles proposal's `ProfileAPI` has two distinct layers: a **query contract** -- what an explicit query (authored capability metadata on a prim, resolved via standard USD value resolution) or an introspective query (capabilities inferred from schema/scene analysis) is supposed to return, given a prim or scene -- and a **registration mechanism** -- how a runtime populates the capability graph that answers those queries. The Profiles proposal describes the latter via `pluginfo.json` / `schema.usda` and OpenUSD's existing `PlugInfo` machinery, because that fits the reference implementation. But the query contract itself is implementation-agnostic: a different runtime could populate an equivalent capability graph from a database, a sidecar manifest, or a service call, and still correctly answer the same queries. Only the registration mechanism is OpenUSD-plugin-specific; the query contract is not. AOUSD's governance role, following the same separability principle, is to normatively specify the query contract that capabilities and profiles must satisfy -- not to require `pluginfo.json`-based registration as the only conforming implementation. The AOUSD Core Specification 1.0 already draws an analogous distinction for schemas generally: it specifies schema conformance without prescribing a plugin or registry mechanism.
+The current [UsdProfiles overview](https://github.com/PixarAnimationStudios/OpenUSD/blob/dev/docs/user_guides/schemas/UsdProfiles/overview.md)
+distinguishes `UsdProfilesClaimsAPI`, which records capability usages and profile
+compatibility claims, from `UsdProfileRegistry`, which loads capability definitions
+from `plugInfo.json` and supports graph queries. Schema implications can be declared
+in `schema.usda` and propagated into plugin metadata by code generation.
+
+A future AOUSD extension model should distinguish the semantics of declarations
+and compatibility queries from how a runtime discovers those definitions. Another
+implementation could populate equivalent definitions from a manifest, database, or
+service, provided it satisfies the agreed contract. The OpenUSD implementation is
+a useful reference; its documentation does not itself establish an AOUSD normative
+contract for independent implementations. The namespace convention should work
+across those implementations without requiring OpenUSD's plugin machinery.
 
 This is worth stating explicitly because a related conflation is already visible in the governance doc's own comment thread (a question about whether "sandboxing" extensions is even possible given OpenUSD's `dlopen`-based plugin loading). That is a legitimate question about a different requirement (trust/sandboxing) than namespace/prefix isolation, and naming the separability principle explicitly should help keep the two separate in discussion.
 
@@ -214,14 +299,72 @@ This is worth stating explicitly because a related conflation is already visible
 
 Namespace and prefix isolation defines the naming layer: how an identifier for a property, schema, capability, or other extension surface is constructed so that ownership is legible and collisions are preventable. It does not by itself address how an asset declares which extensions or capabilities it requires.
 
-Profiles' `ProfileAPI` is an existing, already-accepted mechanism for exactly that: assets carry explicit or introspectively-derived declarations of the capabilities/profiles they require, using identifiers this namespace/prefix convention would govern. As discussed under Separability above, it is the query contract of `ProfileAPI` -- not any particular registration mechanism -- that is relevant here. Namespace/prefix isolation (Functional Requirements, section A) and Discoverability (section B) are complementary, not competing, requirements -- Profiles' declaration mechanism is one candidate vehicle for satisfying the Discoverability requirement, not a mandated one. Governance of how vendor extensions get folded into or referenced by profiles is deferred to AOUSD, consistent with how the Profiles proposal itself defers canonical-capability governance to OpenUSD/AOUSD.
+The current [ClaimsAPI documentation](https://github.com/PixarAnimationStudios/OpenUSD/blob/dev/docs/user_guides/schemas/UsdProfiles/ClaimsAPI.md)
+describes capability usages with `hard`, `soft`, or `enhancement` degradation classes,
+and profile compatibility claims with optional exceptions. Claims are stored in
+`customData` under `profilesInfo`; usages can also be populated from declared schema
+and file format implications. These are declarations whose evidentiary basis still
+needs to be defined for a given support or conformance claim.
+
+This provides a candidate vehicle for declaring extension use and making unsupported
+capabilities visible. It does not establish namespace ownership, provide extension
+distribution, or prove semantic conformance by itself. Define the mapping from
+extension identifiers to capability/profile identifiers and the evidence behind
+claims separately. Using this mechanism need not make OpenUSD's registration
+implementation mandatory, or make a complete discovery system a prerequisite for
+shipping the naming convention.
+
+### Independent adoption and baseline boundaries
+
+The proposed entry rule is that an owner may publish and ship an additive,
+owner-prefixed schema without full AOUSD approval of its feature semantics. Prefix
+ownership is a naming obligation, not a feature-review queue. The extension must
+state its semantics, baseline/version dependencies, and expected behavior when a
+consumer lacks support. A consumer may decline an extension; preserving its data
+does not imply correctly interpreting it.
+
+For example, independently developed text and line-style schemas could use
+Autodesk-owned identifiers and build adoption among willing applications. This is
+an illustrative pathway, not a claim that Autodesk has accepted a particular
+schema or naming syntax. It should not require waiting for inclusion in OpenUSD's
+core distribution or AOUSD's highest governance tier.
+
+An extension that changes shared composition behavior, redefines an existing
+baseline identifier, or uses another owner's namespace crosses a different
+boundary. Those changes need broader review. Using the current Core Specification
+as a starting baseline is a candidate for discussion; namespace isolation does not
+decide that boundary on its own.
+
+Graduation should consider documented semantics, independent adoption and
+interoperability evidence, conformance expectations, and compatibility/migration
+costs. Some extensions may remain independently governed. Broader technical
+agreement, resource prioritization, and escalation authority are distinct decisions
+and should have named owners rather than being collapsed into one approval step.
 
 ## Open Questions for Discussion
 
-1. Which collision-prevention strength does AOUSD actually need: convention-only, a lightweight file-based registry, a centralized registry, or resolve-time ambiguity detection? This is a governance-cost tradeoff (R7), not a right-or-wrong call.
-2. Does the convention need to cover schema/type names and asset resolver identifiers, in addition to property names (SimReady, USD's own colon idiom) and capability/profile identifiers (the Profiles proposal and its adopters)? None of the precedent surveyed above directly addresses schema/type-name or asset-resolver naming. IETF's media type registration (RFC 6838) is the closest existing analog for file-format identification, but it is a different namespace than USD's own file-format plugin identifiers, not a direct precedent for them.
-3. Can namespace/prefix isolation ship independently of the discoverability/registry track, with discoverability layered on later?
-4. Ownership: is this a TAC front-line concern with SC escalation for unresolved priority conflicts, or does it belong with a dedicated working or interest group?
+1. Which ownership and conflict-handling mechanism satisfies R5 at proportionate
+   cost: lightweight prefix reservation, owner-controlled namespaces with validation,
+   qualification with ambiguity detection, or a combination? A bare convention is
+   insufficient under the proposed requirement. How are conflicts reported without
+   silently substituting another owner's semantics?
+2. Is the proposed schema-first deliverable the right initial scope? Specify typed
+   names, applied API identifiers, and property names, with mappings to metadata and
+   capability/profile identifiers. Which additional surfaces are urgent enough to
+   include now, and which require a subsequent work item?
+3. Can namespace isolation and the minimum ownership mechanism ship before a full
+   extension discovery/distribution system? Prefix reservation, if selected, must
+   not be conflated with a catalog of all extension implementations.
+4. What precisely makes an extension additive within baseline constraints, and what
+   triggers broader review? Use concrete schema and composition examples, including
+   an application declining an extension, before drafting the boundary rule.
+5. For the B-Rep case, which owner governs each identifier, how is preliminary status
+   represented, and what compatibility policy applies to incompatible changes or
+   later graduation?
+6. Who authors and maintains the convention? A candidate arrangement is a TAC
+   sponsor with a small authoring group, dedicated maintenance ownership, and SC
+   escalation for resource/priority conflicts. Confirm the mandates and capacity
+   rather than assuming TAC itself can perform all implementation and upkeep.
 
 ## Relationship to Other Proposals
 
@@ -231,7 +374,14 @@ Profiles' `ProfileAPI` is an existing, already-accepted mechanism for exactly th
 
 ## Next Steps
 
-- Resolve the open questions above into concrete requirements: the specific collision-prevention mechanism (R5), and the extension-surface coverage boundary.
+- Confirm a TAC sponsor and authoring/maintenance owners; record deliverables,
+  capacity, dependencies, and the approving body for decisions beyond their mandate.
+- Agree the initial surface inventory and the ownership/conflict-handling mechanism
+  (R5), independently of a complete discovery/distribution system.
 - Evaluate candidate concrete syntaxes against R1--R7, rather than adopting one by default -- the Profiles proposal's reverse-domain notation is a strong existing candidate, not the only one capable of satisfying the requirements.
-- Define how vendor/domain extension identifiers relate to `ProfileAPI`'s query contract, so that namespace/prefix isolation and Discoverability compose rather than requiring two separate declaration mechanisms.
-- Establish ongoing ownership of the convention: a dedicated working group, or a TAC-front-line concern with SC escalation for unresolved priority conflicts.
+- Walk the B-Rep and independently owned schema cases through each naming surface,
+  unsupported-consumer behavior, incompatible version, and graduation/migration
+  policy. Record unresolved choices with an owner and next action.
+- Define how extension identifiers map to ClaimsAPI capability/profile declarations
+  and what evidence supports compatibility claims, while keeping the contract
+  separable from OpenUSD's plugin implementation.
