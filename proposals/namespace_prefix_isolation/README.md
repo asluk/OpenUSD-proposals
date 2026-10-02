@@ -175,10 +175,8 @@ Field evidence from production use (illustrative, not proposed as a template):
 
 ## Case Study: `Prelim` in the UsdSolid B-Rep Proposal
 
-The B-Rep proposal is the first live instance of these requirements meeting a real
-schema, and it is worth reading closely because it exposes a question the
-requirements above state abstractly: **which extension surfaces does a marker attach
-to?**
+The B-Rep proposal provides a concrete example of a question the requirements
+above state abstractly: **which extension surfaces does a marker attach to?**
 
 Its governance journey is the one R6 describes. The schema was worked in the AOUSD
 Geometry Working Group, socialized with other interest groups, and put up as
@@ -196,26 +194,37 @@ schemas (`BrepPointAPI`, `BrepCurve3dNurbAPI`, `BrepCurveUvNurbAPI`,
 `BrepSurfaceNurbAPI`), the property namespace prefix `brep`, and the authored
 examples in the proposal's own README, which still read `def BrepArray`.
 
-Joe Umhoefer's rationale for leaving the applied APIs unprefixed is that they can
-only be applied to the prefixed type -- `apiSchemaCanOnlyApplyTo` constrains them to
-`PrelimBrepArray`, so the marker is carried structurally rather than in their names.
+The four applied API definitions use `apiSchemaCanOnlyApplyTo` to express intended
+applicability to the prefixed type. When encoded correctly, this associates the
+API with the target type's maturity marker without changing the API identifier.
 
-That rationale reduces the number of identifiers that would change if graduation
-removed the marker. A prim authored with `PrelimBrepArray` also exposes preliminary
+There is a local implementation correction: the PR's four entries currently use
+`PrelimUsdSolidPrelimBrepArray`. As [Joe explains](https://github.com/aousd/OpenUSD-proposals/pull/2#issuecomment-5649170022),
+that internal type name follows from combining the library prefix and class name;
+the repeated `Prelim` alone is not an error. OpenUSD 26.08's
+[`CanApplyAPI` check](https://github.com/PixarAnimationStudios/OpenUSD/blob/v26.08/pxr/usd/usd/prim.cpp#L645)
+looks up these entries by schema identifier, however, so the intended target entry
+is `PrelimBrepArray`. This source-level finding still needs an end-to-end check
+with the generated B-Rep plugin.
+
+Keeping the API identifiers stable reduces the number of identifiers that would
+change if graduation removed the marker. A prim authored with `PrelimBrepArray` also exposes preliminary
 status through its type name. It does not establish ownership or isolate every
 identifier the extension introduces.
 
 ### Where it does not hold
 
-**Type names are globally registered; the application constraint is local.**
-`apiSchemaCanOnlyApplyTo` restricts where an API schema may be applied. It does not
-reserve the name. Another party defining a differently-shaped `BrepPointAPI`
-collides in the schema registry regardless of what either one can be applied to.
+**Schema identifiers are globally registered; applicability checks do not reserve names.**
+With correct target identifiers, `apiSchemaCanOnlyApplyTo` guides `CanApplyAPI`;
+[`ApplyAPI` itself](https://github.com/PixarAnimationStudios/OpenUSD/blob/v26.08/pxr/usd/usd/prim.cpp#L825)
+does not enforce that target list. Another party defining a differently-shaped `BrepPointAPI`
+collides in the schema registry regardless of either API's intended target types.
 That is R5, and structural association does not address it.
 
-**Library naming does not qualify every scene identifier.** A library name or C++
-namespace does not automatically provide ownership scope for its registered schema
-identifiers or property names. Each surface needs an explicit naming rule.
+**Library naming does not qualify every scene identifier.** `libraryPrefix`
+qualifies the internal type name. It does not automatically provide ownership
+scope for scene-facing schema identifiers or property names. Each surface needs
+an explicit naming rule.
 
 **Authored content carries both type and property identifiers.** A concrete prim's
 type name persists as `typeName`; explicitly applied API schema identifiers persist
