@@ -16,7 +16,7 @@
 
 ## Introduction
 
-This document responds to the "Namespace and Prefix Isolation" requirement raised in the AOUSD USD Extension Ecosystem Governance Proposal (Sean Snyders, Trimble, 2026-06-22), and to the comment thread on that requirement (Guy Martin, F. Sebastian Grassia, Aaron Luk). It separates namespace/prefix isolation from discoverability, per Grassia's comment, and works it into a standalone requirements framework with a survey of relevant precedent -- both from other standards bodies and from within the OpenUSD/AOUSD ecosystem itself.
+This document responds to the "Namespace and Prefix Isolation" requirement raised in the [AOUSD USD Extension Ecosystem Governance Proposal](https://docs.google.com/document/d/1zL7Igy5QN6bTHZavczkjaW2U5TBk95hP_Ooa_zL-tJc/edit) (Sean Snyders, Trimble, 2026-06-22), and to the comment thread on that requirement (Guy Martin, F. Sebastian Grassia, Aaron Luk). It separates namespace/prefix isolation from discoverability, per Grassia's comment, and works it into a standalone requirements framework with a survey of relevant precedent -- both from other standards bodies and from within the OpenUSD/AOUSD ecosystem itself.
 
 ## Problem Statement
 
@@ -274,6 +274,17 @@ This is R4 and R6 in practice: assess each surface's ownership rule and compatib
 cost, while allowing governance maturity to change without unnecessary renaming.
 
 ## Design Considerations
+
+### Ownership across naming surfaces
+
+An owner-first convention is a candidate to evaluate consistently across property,
+schema, and capability identifiers. A feature or product token alone does not
+establish namespace ownership; having a trademark does not itself reserve a USD
+identifier under an agreed naming mechanism. If a product or domain token is used
+as the outermost component, the convention must still establish its governing
+owner and satisfy R1 and R5. This applies equally to independently governed and
+consortium-governed extensions. Token ordering remains a design choice to compare,
+rather than an already selected syntax.
 
 ### Separability from OpenUSD's plugin system
 
