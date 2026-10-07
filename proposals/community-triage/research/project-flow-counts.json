@@ -1,0 +1,56 @@
+[
+  {
+    "repository": "python/cpython",
+    "event": "created",
+    "year": 2025,
+    "count": 4318,
+    "query": "repo:python/cpython is:issue created:2025-01-01..2025-12-31",
+    "incomplete_results": false,
+    "retrieved_utc": "2026-10-07T17:24:35.7717706Z"
+  },
+  {
+    "repository": "python/cpython",
+    "event": "closed",
+    "year": 2025,
+    "count": 4393,
+    "query": "repo:python/cpython is:issue closed:2025-01-01..2025-12-31",
+    "incomplete_results": false,
+    "retrieved_utc": "2026-10-07T17:24:36.6049255Z"
+  },
+  {
+    "repository": "kubernetes/kubernetes",
+    "event": "created",
+    "year": 2025,
+    "count": 1859,
+    "query": "repo:kubernetes/kubernetes is:issue created:2025-01-01..2025-12-31",
+    "incomplete_results": false,
+    "retrieved_utc": "2026-10-07T17:24:37.4191650Z"
+  },
+  {
+    "repository": "kubernetes/kubernetes",
+    "event": "closed",
+    "year": 2025,
+    "count": 1928,
+    "query": "repo:kubernetes/kubernetes is:issue closed:2025-01-01..2025-12-31",
+    "incomplete_results": false,
+    "retrieved_utc": "2026-10-07T17:24:38.3221105Z"
+  },
+  {
+    "repository": "rust-lang/rust",
+    "event": "created",
+    "year": 2025,
+    "count": 4868,
+    "query": "repo:rust-lang/rust is:issue created:2025-01-01..2025-12-31",
+    "incomplete_results": false,
+    "retrieved_utc": "2026-10-07T17:24:39.1682839Z"
+  },
+  {
+    "repository": "rust-lang/rust",
+    "event": "closed",
+    "year": 2025,
+    "count": 3824,
+    "query": "repo:rust-lang/rust is:issue closed:2025-01-01..2025-12-31",
+    "incomplete_results": false,
+    "retrieved_utc": "2026-10-07T17:24:40.0379250Z"
+  }
+]

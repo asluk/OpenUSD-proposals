@@ -1,0 +1,183 @@
+{
+  "collection_start_utc": "2026-10-07T17:25:33.9855299Z",
+  "collection_end_utc": "2026-10-07T17:26:16.3453752Z",
+  "method": "Public GitHub REST /repos/{repository}/issues?state=all&per_page=100, all pages via gh api --paginate --slurp. Issues and pull requests separated by pull_request field. Deduplicated repository/number. UTC calendar years 2023-2025. closed_timestamp counts current closed_at values, not all historical close/reopen events; no merge or semantic disposition inference. Collection is non-atomic; deleted/private items unavailable.",
+  "summary": [
+    {
+      "repository": "PixarAnimationStudios/OpenUSD",
+      "type": "issue",
+      "inventoried": 2232,
+      "open": 727,
+      "open_updated_before_365_days": 581,
+      "open_created_before_365_days": 612
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD",
+      "type": "pull_request",
+      "inventoried": 1999,
+      "open": 286,
+      "open_updated_before_365_days": 160,
+      "open_created_before_365_days": 179
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD-proposals",
+      "type": "issue",
+      "inventoried": 16,
+      "open": 12,
+      "open_updated_before_365_days": 11,
+      "open_created_before_365_days": 11
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD-proposals",
+      "type": "pull_request",
+      "inventoried": 101,
+      "open": 26,
+      "open_updated_before_365_days": 9,
+      "open_created_before_365_days": 14
+    },
+    {
+      "repository": "aousd/build-ig-initiatives",
+      "type": "issue",
+      "inventoried": 41,
+      "open": 32,
+      "open_updated_before_365_days": 0,
+      "open_created_before_365_days": 0
+    },
+    {
+      "repository": "aousd/build-ig-initiatives",
+      "type": "pull_request",
+      "inventoried": 10,
+      "open": 1,
+      "open_updated_before_365_days": 0,
+      "open_created_before_365_days": 0
+    }
+  ],
+  "annual": [
+    {
+      "repository": "PixarAnimationStudios/OpenUSD",
+      "type": "issue",
+      "year": 2023,
+      "created": 281,
+      "closed_timestamp": 197
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD",
+      "type": "issue",
+      "year": 2024,
+      "created": 277,
+      "closed_timestamp": 176
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD",
+      "type": "issue",
+      "year": 2025,
+      "created": 227,
+      "closed_timestamp": 163
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD",
+      "type": "pull_request",
+      "year": 2023,
+      "created": 472,
+      "closed_timestamp": 366
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD",
+      "type": "pull_request",
+      "year": 2024,
+      "created": 296,
+      "closed_timestamp": 275
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD",
+      "type": "pull_request",
+      "year": 2025,
+      "created": 229,
+      "closed_timestamp": 213
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD-proposals",
+      "type": "issue",
+      "year": 2023,
+      "created": 0,
+      "closed_timestamp": 0
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD-proposals",
+      "type": "issue",
+      "year": 2024,
+      "created": 12,
+      "closed_timestamp": 2
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD-proposals",
+      "type": "issue",
+      "year": 2025,
+      "created": 3,
+      "closed_timestamp": 0
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD-proposals",
+      "type": "pull_request",
+      "year": 2023,
+      "created": 24,
+      "closed_timestamp": 15
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD-proposals",
+      "type": "pull_request",
+      "year": 2024,
+      "created": 38,
+      "closed_timestamp": 34
+    },
+    {
+      "repository": "PixarAnimationStudios/OpenUSD-proposals",
+      "type": "pull_request",
+      "year": 2025,
+      "created": 24,
+      "closed_timestamp": 21
+    },
+    {
+      "repository": "aousd/build-ig-initiatives",
+      "type": "issue",
+      "year": 2023,
+      "created": 0,
+      "closed_timestamp": 0
+    },
+    {
+      "repository": "aousd/build-ig-initiatives",
+      "type": "issue",
+      "year": 2024,
+      "created": 0,
+      "closed_timestamp": 0
+    },
+    {
+      "repository": "aousd/build-ig-initiatives",
+      "type": "issue",
+      "year": 2025,
+      "created": 16,
+      "closed_timestamp": 4
+    },
+    {
+      "repository": "aousd/build-ig-initiatives",
+      "type": "pull_request",
+      "year": 2023,
+      "created": 0,
+      "closed_timestamp": 0
+    },
+    {
+      "repository": "aousd/build-ig-initiatives",
+      "type": "pull_request",
+      "year": 2024,
+      "created": 0,
+      "closed_timestamp": 0
+    },
+    {
+      "repository": "aousd/build-ig-initiatives",
+      "type": "pull_request",
+      "year": 2025,
+      "created": 5,
+      "closed_timestamp": 5
+    }
+  ]
+}

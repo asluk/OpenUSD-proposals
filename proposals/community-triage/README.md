@@ -1,454 +1,389 @@
 # Continuous Community Triage and Disposition for OpenUSD
 
-**Status:** Working draft for future discussion with Pixar and the AOUSD Technical
-Advisory Committee (TAC). Scope, participation, and review capacity remain to be agreed.
+**Status:** Working proposal for future discussion with Pixar/OpenUSD maintainers
+and relevant AOUSD forums, including the Technical Advisory Committee (TAC).
+Participation and operating responsibilities remain to be agreed.
 
 ## Summary
 
-Domain requirements are already generating issues, implementation pull requests,
-and proposals across the USD ecosystem. Related discussions can develop separately,
-making it difficult to see which requirements have been addressed, which decisions
-remain open, and where existing work could satisfy additional needs.
+OpenUSD's continued evolution depends on turning community needs into reliable
+capabilities that tools, content, and domain ecosystems can share. Those needs
+emerge through practical use, experimentation, issue reports, proposals,
+implementation contributions, and standards discussions. A credible path connects
+them to an appropriate decision, an implementation or alternative, and evidence
+that the intended outcome has been achieved.
 
-This proposal would establish triage and follow-through built on three pillars:
-agentic evidence preparation, contributor validation, and focused maintainer
-decisions. Agents would pursue connected reading and analysis tasks, maintain
-source-linked records, and prepare recommendations. Contributors would check those
-records and assemble decision batches for existing decision makers. Requested
-outcomes would remain traceable through design, implementation, verification, and release.
-The intended outcomes are reliable behavior across tools and over time, and timely
-progress from growing domain demand to deployed capabilities.
+This proposal establishes **continuous community triage and disposition as an
+ecosystem capability**. It would preserve requirements and decision history across
+venues, connect related contributions, expose unmet needs, and help domain
+innovation progress toward adoption and shared standards where appropriate.
+Repository reconciliation is one application of that capability.
 
-A living disposition register would make remaining requirements, decision
-dependencies, and accepted next steps visible across the open inventory. An
-illustrative six-week pilot would demonstrate the method on a bounded sample and
-measure preparation throughput, evidence quality, and maintainer time. Those
-measurements would show how the work could expand toward full coverage.
+Three pillars make the work scalable: **agents prepare, contributors validate,
+maintainers and standards authorities decide**. Agents pursue connected reading
+and analysis tasks and maintain source-linked records. Contributors check the
+findings, develop reproducible evidence, and prepare focused questions. Existing
+decision makers exercise their authority with a clearer view of requirements,
+alternatives, dependencies, and remaining uncertainty.
 
-![OpenUSD triage overview: 4,391 inventoried items, 1,081 open items, 26 preliminary recommendations; four candidate portfolios and an evidence review loop for future Pixar and TAC discussions.](assets/triage-overview.png)
+The intended result is broader community coverage, better reuse of contributions,
+focused expert decisions, and reliable follow-through. A living disposition record
+would connect needs to accepted decisions, implementation, interoperability checks,
+and release or adoption. Recorded deferrals and declines would also leave useful
+rationale and revisit conditions. The benefits would be measured in operation.
 
-[View the full-size overview](assets/triage-overview.png) ·
-[Editable SVG](assets/triage-overview.svg)
+![Continuous triage connects community needs to checked decisions, implementation paths, verified capabilities, and roadmap learning.](assets/triage-overview.png)
 
-The overview summarizes the retained October 3–4, 2026 inventory and the candidate
-portfolios below. Counts describe a non-atomic historical snapshot. Full semantic
-reading is unfinished; no independent builds or behavioral closure verification
-were performed. The 26 recommendations are preliminary.
+[Full-size overview](assets/triage-overview.png) · [Editable SVG](assets/triage-overview.svg)
 
-**Navigate:** [Discussion path](#discussion-path) · [Workflow](#proposed-workflow) ·
-[Agentic assistance](#agentic-assistance) ·
-[Pilot](#pilot-and-acceptance-criteria) · [Review questions](#questions-for-review) ·
-[Evidence](#appendix-initial-evidence-and-candidate-portfolios) ·
+**Navigate:** [Strategic purpose](#problem-and-strategic-purpose) ·
+[Operating model](#operating-model-and-agentic-assistance) ·
+[Lessons from other communities](#lessons-from-other-communities) ·
+[Workflow](#continuous-workflow) · [Measures](#measures-and-staged-adoption) ·
+[Discussion path](#discussion-path) ·
+[Initial evidence](#appendix-initial-evidence-and-candidate-portfolios) ·
 [Candidate register](#candidate-register)
 
-## Problem Statement
+## Problem and Strategic Purpose
 
-Related requests are distributed across issue discussions, proposal reviews,
-implementation pull requests, and ecosystem initiatives. A fix can supersede an
-old pull request while its original discussion remains open. A published proposal
-can leave implementation requirements unresolved. Similar reports can also describe
-distinct failures requiring distinct tests. These relationships are difficult to
-keep current through individual thread review.
+Community participation is effective when a contributor can understand how a need
+will be assessed, which decision is required, and what evidence would move it
+forward. Domain experts, implementers, and standards participants contribute
+different parts of that evidence. Their work can span repositories, independent
+extensions, working groups, tests, and deployed tools. A thread's local state gives
+only part of the account.
 
-The initial inventory collected October 3–4, 2026 contains 4,391 items across three
-repositories, including 1,081 open items. Within OpenUSD, 587 of 728 open issues
-(80.6%) had no update for at least one year. These observations motivate
-reassessment; they do not establish that old reports are obsolete, that any item
-is ready for closure, or why an item remains open. The inventory alone does not
-measure the rate of growing demand or attribute delays to any participant.
+The enduring challenge is continuity across that work. A promising experiment may
+need wider interoperability evidence before shared agreement. A published proposal
+can leave implementation work outstanding. An implementation may address only
+part of a requirement, or lack release and adoption evidence. A deferred need can
+become actionable when a dependency changes. Repeated investigation consumes
+expert time when these relationships and prior rationales are not maintained.
 
-## Goals
+Triage identifies the need, its evidence, and the next useful question. Disposition
+records an authorized decision and rationale. Follow-through connects that decision
+to action and outcome. Together they serve five strategic purposes:
 
-- Work toward a source-linked assessment of every open item, with explicit reading coverage and unresolved questions.
-- Use agentic assistance to expand reading, relationship analysis, and continuing follow-through, with checked evidence and measured effort.
-- Preserve distinct requirements when reconciling duplicates or superseded work.
-- Identify existing and focused new changes with useful coverage of independent needs.
-- Track proposal publication, implementation, verification, and release separately.
-- Prepare traceable community-demand briefs for OpenUSD and appropriate AOUSD forums.
-- Keep the historical inventory and incoming work current without losing review coverage.
+| Purpose | Useful result |
+| --- | --- |
+| Community participation | A visible route for contributions, correction, and feedback, including pending needs and meaningful deferrals. |
+| Domain innovation | Experiments and independently governed extensions can develop with an explicit relationship to shared USD behavior. |
+| Interoperability | Compatibility questions and acceptance criteria remain traceable across implementations and standards work. |
+| Effective stewardship | Experts receive checked evidence and precise questions; earlier work and decisions remain reusable. |
+| Ecosystem learning | Sourced unmet needs, dependencies, and verified outcomes inform implementation and standards roadmaps. |
 
-## Scope and Decision Authority
+The process should work across changing components, repositories, and domains.
+Its scope follows community requirements and their relationships, including work
+across independently maintained implementations and evolving standards. Shared
+semantics, compatibility expectations, and reproducible checks provide common
+ground for tools, content, and agents to participate across domains. The initial
+inventory and recommendations supply concrete examples of preparation, with
+separate [research and trend analysis](research/triage-comparisons.md) to test
+assumptions about the available evidence.
 
-Pixar/OpenUSD maintainers retain responsibility for implementation priorities,
-architectural acceptance, integration, and release decisions. Repository actions
-remain with the authorized maintainers of each repository. Triage contributors
-prepare evidence and recommendations to support those existing processes.
-A suggested reviewer or proposed action becomes an assignment only when accepted.
+## Goals and Decision Authority
 
-Questions involving specification requirements, interoperability, or dependencies
-across groups would be raised through relevant existing proposal and AOUSD processes.
-TAC could help coordinate questions spanning groups, subject to its mandate and
-agreement to participate. Implementation capacity, adopted specification changes,
-and roadmap dates remain decisions for the appropriate existing authorities.
-The proposed discussion route should be checked against the
+Work toward current, source-linked assessments of historical and incoming needs;
+preserve independent requirements when reconciling related work; identify existing
+or focused new changes with useful reach; and maintain the decisions, blockers,
+tests, releases, and remaining needs that connect participation to outcomes.
+Prepare traceable demand briefs for the relevant implementation and standards
+forums. Public GitHub activity is one evidence channel, supplemented by public or
+publication-authorized requirements and interoperability evidence.
+
+Pixar/OpenUSD maintainers retain implementation, architecture, integration, and
+release authority. Repository actions remain with each repository's authorized
+maintainers. Relevant standards bodies retain their own decision processes. A
+proposed reviewer or owner becomes an assignment only when accepted. A prepared
+record is a contributor assessment, not official acknowledgment or acceptance.
+
+Shared behavior can develop through several paths: a reference implementation
+change, an independent extension or experiment, supporting infrastructure, or
+specification clarification and evolution. Record why a path is appropriate and
+which decisions it needs. Domain capabilities need not all enter OpenUSD's
+distribution or become standards. TAC coordination may help where questions span
+groups, subject to its mandate and agreement to participate. Check the
 [AOUSD Working Group Processes](https://aousd.org/wp-content/uploads/sites/28/2025/05/AOUSD-Processes-Revision-v1.3-5.19.25.pdf)
-and any subsequent revisions when engagement is proposed.
+and relevant charters when proposing a forum.
 
-The historical inventory includes open and historical issues and PRs in
-[OpenUSD](https://github.com/PixarAnimationStudios/OpenUSD) and
-[OpenUSD-proposals](https://github.com/PixarAnimationStudios/OpenUSD-proposals).
-[AOUSD Build IG initiatives](https://github.com/aousd/build-ig-initiatives) provide an
-initial public coordination source. Additional sources can be included after their
-scope and public availability are confirmed. GitHub demand is a partial view of
-the community. The proposed records would be grounded in public evidence and
-contributions authorized for publication.
+## Operating Model and Agentic Assistance
 
-## How the Work Can Scale
+Preparation can expand across the corpus while authoritative decisions proceed
+at an agreed capacity. The aim is to make more of the community's needs understood
+and actionable without making every prepared record demand immediate expert
+attention. Validation and implementation capacity also matter; the process should
+expose those constraints and help contributors take on suitable work.
 
-The proposed division of work is straightforward: agents and contributors prepare
-evidence across the inventory, while maintainers receive selected questions that
-need their judgment. Agents would carry out connected tasks from collection and
-reading through relationship analysis and updates. Contributors check source links,
-preserve distinct requirements, prepare reproductions or tests, and flag uncertainty
-before a record enters a decision batch. Authoritative decisions remain with the
-appropriate forum.
-
-The retained census and 26 candidate recommendations demonstrate an initial step:
-enumeration and connected evidence can yield a prepared queue. The pilot would
-test the quality and cost of extending that preparation, including less obvious
-relationships and longer discussions. Full semantic assessment and sustained
-throughput remain work to demonstrate.
-
-| Layer | Work prepared | Output for the next layer |
+| Pillar | Responsibility | Reviewable handoff |
 | --- | --- | --- |
-| Agentic inventory and reading | Enumerate items and changed revisions; read connected evidence; expose coverage and gaps. | A complete list with visible preparation states and source-linked draft findings. |
-| Contributor assessment | Check evidence, reconcile related work, retain distinct requirements, and prepare verification needs. | Checked recommendations with uncertainty and residual needs. |
-| Focused decision batches | Select questions by impact, readiness, dependencies, and agreed review capacity. | A concise requested decision, supporting evidence, and links for deeper inspection. |
-| Follow-through | Record accepted decisions; contributors update evidence, tests, remaining requirements, and release status. | Reusable knowledge and less repeated investigation. |
+| Agents prepare | Read connected discussions, proposal revisions, code and tests; extract requirements; propose relationships; identify gaps; refresh affected findings. | Source-linked draft assessments with revisions, uncertainty, proposed next checks, and visible reading coverage. |
+| Contributors validate | Check semantics and relationships, reproduce behavior, retain residual needs, compare alternatives, and prepare cases for decisions. | Checked evidence, a precise requested decision, dependencies, and a contribution or verification plan. |
+| Maintainers and standards authorities decide | Assess design, scope, priorities, implementation, integration, or specification questions through existing processes. | Authorized rationale, accepted next steps, unresolved objections, and revisit conditions. |
 
-Each item can have a visible preparation state even while a decision is pending:
-inventoried, evidence under review, recommendation prepared, awaiting decision,
-decision recorded, or implemented outcome verified. These are community-record
-states; a prepared entry does not imply official maintainer acknowledgment.
+Community participants follow through by implementing, reviewing, testing, and
+updating outcomes. Reusable knowledge then informs subsequent preparation. Domain
+experts contribute requirements and acceptance evidence; triage is not solely
+administrative work delegated to repository maintainers.
 
-Batch size and cadence would fit an agreed review budget. Contributor findings
-would remain in the register rather than generating a comment on every issue or
-requiring a maintainer response to every entry. Each batch would foreground a few
-decisions, what evidence supports them, and what work contributors can take on.
-Broader coverage would improve visibility and candidate selection between batches.
+Agentic assistance is a continuing operating pillar. An assistant would follow a
+bounded research objective across sources, perform the next relevant read or check,
+and update a persistent record. It would distinguish retrieved evidence, inferred
+relationships, contributor-validated findings, and authorized decisions. Exact
+sources, reviewed revisions, retrieval checkpoints, and unavailable or truncated
+content would remain inspectable. Candidate coverage stays hypothetical until
+checked; implemented requirements require appropriate verification.
 
-The scalability claim should be demonstrated through growing coverage, checked
-evidence, and lower maintainer effort per useful decision. Measure total preparation
-and upkeep cost as well, so effort transferred to contributors remains visible.
+Agents could prepare and, in agreed environments, execute reproduction or test
+tasks, retaining commands, revisions, and results. New evidence would trigger
+review of affected claims rather than rebuilding every assessment. Work would be
+resumable, with a ledger of successful reads and pending checks. Contributors would
+validate cases selected for decisions and audit the broader queue for errors and
+missed relationships. External repository actions remain separately authorized.
 
-### Agentic Assistance
+Established automation can supply event collection, labels, dashboards, and
+stage timing. The agent layer adds semantic preparation and connected investigation.
+Tool selection should support provenance, revision-aware retrieval, structured
+relationships, reproducible checks, and human correction. Start with a versioned
+register and machine-readable records where useful; expand the service only as
+operation demonstrates a need.
 
-Agentic assistance is a proposed operating pillar. An assistant would follow a
-bounded research objective across issues, comments, proposal revisions, implementation
-PRs, and tests; identify missing evidence; perform the next relevant read or check;
-and update a persistent record. This goes beyond summarizing individual threads:
-the useful output is a maintained account of requirements, relationships, candidate
-coverage, and the next decision or verification needed.
+## Lessons from Other Communities
 
-| Agent task | Reviewable output |
+The practices below support a design approach; they do not prove a particular
+OpenUSD throughput or staffing requirement.
+
+| Primary-source precedent | Lesson proposed for OpenUSD |
 | --- | --- |
-| Read and reconcile | Requirements, prior decisions, contradictions, and gaps, linked to exact sources and reviewed revisions. |
-| Connect existing work | Candidate relationships between reports, proposals, fixes, and releases; complete, partial, and possible coverage kept distinct. |
-| Prepare focused actions | A requested decision, residual requirements, proposed reproduction or test plan, and dependencies. |
-| Refresh affected findings | Changes since the last successful read, conclusions needing reassessment, and a resumable work queue. |
-| Build demand evidence | Independent needs and recurring themes with source links, explicit denominators, and unresolved implementation or standards questions. |
+| [Kubernetes triage](https://www.kubernetes.dev/docs/guide/issue-triage/) distributes classification, ownership, priority, and follow-up through SIGs and shared tooling. | Divide preparation by expertise and keep current assessment state visible. |
+| [Rust RFCs](https://github.com/rust-lang/rfcs) use explicit merge/close/postpone decisions, a comment period, and a distinction between active RFCs and implementation. | Prepare alternatives, record rationale and objections, and distinguish agreement from delivery. |
+| [Python PEP 1](https://peps.python.org/pep-0001/) separates accepted, final, deferred, rejected, and other states. | Preserve meaningful non-implementation dispositions and the path to later completion. |
+| [W3C review](https://www.w3.org/guide/documentreview/) records comment dispositions and supports review of substantive changes. | Maintain cross-cutting review evidence and reassess affected conclusions as work changes. |
+| [IETF's public process](https://www.ietf.org/process/rfcs/) exposes document stages; [RPC minutes](https://datatracker.ietf.org/doc/minutes-interim-2025-rpc-04-202506251900/) discuss clearer queues and service measures. | Make waiting states and dependencies explicit and measure each stage separately. |
 
-Each record would distinguish retrieved evidence, an agent's inference, a
-contributor's assessment, and an authorized decision. Source URLs, revisions,
-retrieval checkpoints, and reading gaps would remain inspectable. A proposed
-relationship is a hypothesis until its supporting evidence has been checked;
-an implemented outcome requires appropriate verification. Agents could prepare
-and, in agreed environments, execute reproduction or test tasks, preserving the
-commands, revisions, and results for review.
+Independent public queries found 4,393 CPython issue closure timestamps in 2025,
+1,928 for Kubernetes, and 3,824 for Rust. Those demonstrate observable activity at
+substantial scale; they do not measure verified resolutions or a same-cohort
+acceptance rate. [W3C's 2023 process revision](https://www.w3.org/policies/process/drafts/issues-20211102)
+documented both categorized closures and 66 deferred issues. The
+[IETF RPC](https://datatracker.ietf.org/doc/minutes-interim-2025-rpc-04-202506251900/)
+reported approximately 13 weeks for a defined publication stage in June 2025.
+These observations argue for clear state and time
+definitions, rather than a universal disposition target.
+[The comparative research](research/triage-comparisons.md) supplies exact queries,
+dates, process details, technologies, and limitations.
 
-Contributors would validate records selected for a decision batch and sample the
-broader preparation queue to measure errors and missed relationships. Record
-maintenance would be incremental: new evidence triggers review of affected claims
-and linked candidates. External repository actions would remain a separately
-authorized activity; preparation itself can progress across the full inventory.
+Agent output must improve the total work. A
+[Python developer-in-residence update](https://blog.python.org/2026/09/language-summit-2026-developer-in-residence-update-and-future/)
+reported that likely LLM-generated PR submissions disrupted earlier backlog
+progress. The proposed evaluation would count checked coverage, useful decisions,
+and outcomes relative to contributor and expert effort. Generated PR count is an
+unsuitable success measure.
 
-The retained census and recommendation register are an initial demonstration of
-agent-assisted preparation. The pilot would measure its accuracy, correction cost,
-coverage, and upkeep under continuing changes. Agent activity or generated record
-count alone would not establish progress; the test is whether checked preparation
-helps contributors and maintainers reach useful outcomes with less repeated work.
+## Continuous Workflow
 
-## Discussion Path
-
-The first discussion would present a prepared batch and ask Pixar/OpenUSD maintainers
-to evaluate its usefulness within an agreed review budget. Agree on a manageable
-sample, useful evidence, and a review format before starting.
-The steward would prepare the records; participating reviewers would choose where
-their expertise is needed and how much time they can contribute.
-
-A subsequent TAC discussion could use those records to identify specification,
-interoperability, and cross-group decisions that would benefit from coordination.
-The ask would be to assess the relevant questions and dependencies, and determine
-appropriate forums through existing processes.
-
-| Discussion | Concrete ask | Useful output |
-| --- | --- | --- |
-| Pixar / OpenUSD maintainers | Can this prepared batch produce useful decisions within an agreed time budget? Which evidence or presentation changes would make it more useful? | A measured review exercise, evidence corrections, and any accepted next steps. |
-| TAC, where relevant | Which recorded questions require coordination across implementation and standards work? | Appropriate decision forums, dependencies, and any accepted coordination next steps. |
-
-## Definitions
-
-| Term | Meaning |
-| --- | --- |
-| Disposition | An authorized decision, rationale, and any accepted next step; an item can remain open. |
-| Recommendation | A proposed disposition or next action awaiting consideration by the relevant decision maker. |
-| Independent requirement | A distinct requested outcome with its own acceptance criterion, even if several reports describe it. |
-| Coverage | The relationship between a requirement and a candidate change: complete, partial, possible, or unrelated. |
-| Verified resolution | Evidence that the reported behavior is satisfied on a specified revision and environment. |
-| Roadmap signal | A sourced account of unmet needs and dependencies for consideration by a decision forum. |
-
-## Proposed Workflow
-
-Triage first identifies the decision or evidence needed to advance an item. A bug
-report may need a reproduction; a proposal may need agreement on scope or behavior;
-an implementation PR may need focused review or tests; a specification question
-may need interpretation or revision. Contributors prepare a recommendation for
-the existing decision forum, recording pending questions and accepted decisions separately.
-
-Verification supports a claim that an implemented requirement is satisfied. It is
-not a prerequisite for recording an unresolved design question or an authorized
-decision to defer or decline.
+The record follows a requirement through changing evidence and appropriate routes.
+An issue, a proposal, and a test can describe different stages of the same need.
+Several reports can also contain distinct requirements that need separate checks.
 
 ```mermaid
 flowchart TD
-    A["New or changed item"] --> B["Read and map requirements"]
-    B --> C["Identify missing evidence or decisions"]
-    C --> D["Prepare a source-linked recommendation"]
-    D --> Q["Register findings; select a focused decision batch"]
-    Q --> E["Existing maintainer or standards decision forum"]
-    E -->|Evidence or design needed| C
-    E -->|Implementation path agreed| F["Review existing or focused new work"]
-    F --> G{"Implemented requirements verified?"}
-    G -->|No| F
-    G -->|Yes| H["Record verified coverage and release status"]
-    E -->|Defer, decline, or route| I["Record authorized decision and remaining needs"]
-    H --> J["Update outcomes and roadmap evidence"]
-    I --> J
-    J -->|New evidence or changed revision| B
+    A["Community needs, experiments, and changed evidence"] --> B["Agents read, connect, and prepare"]
+    B --> C["Contributors validate requirements and alternatives"]
+    C -->|Corrections or missing evidence| B
+    C --> D["Living record and focused decision questions"]
+    D --> E["Existing maintainer or standards forum"]
+    E -->|Design or evidence needed| B
+    E --> F["Implementation, extension, infrastructure, or standards path"]
+    F --> G["Verify applicable requirements; track release and adoption"]
+    E --> H["Record deferral, decline, or acknowledged routing"]
+    G --> I["Update residual needs and roadmap learning"]
+    H --> I
+    I -->|Changed evidence or revisit trigger| B
 ```
 
-### Inventory and Reading Coverage
+Verification supports a claim that a requirement is satisfied. It is not a
+prerequisite for recording an unresolved design question or an authorized
+deferral. Track specification agreement, implementation, verification, release,
+and evidenced adoption separately; none automatically proves the next stage.
 
-Enumerate paginated collections and deduplicate by repository, item type, and
-number. Record retrieval times and revisions rather than implying an atomic
-snapshot. Read bodies, discussions, reviews, relevant changed files, and linked
-evidence to the depth needed for each claim. Historical reading supplies prior
-decisions, fixes, and rejected approaches; record unavailable or truncated content.
+### Definitions and Living Records
 
-Keep separate states for inventoried, discussion read, implementation examined,
-and behavior verified. Publish coverage denominators by repository, type, and state.
-Useful bounded recommendations can be prepared while historical reading continues.
-
-Incremental collection uses an overlap around its last successful watermark.
-Advance the watermark after successful collection, deduplicate repeat events,
-and periodically reconcile the open inventory. New evidence or revisions trigger
-reassessment of findings they may invalidate.
-
-### Disposition Record
-
-Start with a Markdown register and a machine-readable export where useful.
-Tooling should follow experience from the pilot. Reuse existing discussions and
-link to supporting evidence so reviewers can focus on the requested decision.
-
-| Field | Information to record |
+| Term | Meaning |
 | --- | --- |
-| Identity | Canonical URL, repository, issue or PR number, current state, and reviewed revision/time. |
-| Requirement | Requested outcome, affected workflow, environment, and known or proposed acceptance criteria. |
-| Evidence | Supporting discussion, code, tests, prior decisions, and outstanding reading gaps. |
-| Relationships | Duplicate of, supersedes, implements, partially addresses, or blocked by; evidence for each claim. |
-| Recommendation | Proposed disposition or next action, rationale, confidence, and missing evidence. |
-| Accountability | Proposed next action, accepted owner if any, known blockers, and appropriate revisit trigger. |
-| Outcome | Authorized decision, verification result, implementation revision, and applicable release. |
-| Roadmap | Theme, independent demand, decision needed, dependencies, and proposed forum. |
+| Triage | Assess a need, its evidence and relationships, and the next useful question or action. |
+| Disposition | An authorized decision, rationale, and any accepted next step; an item can remain open. |
+| Recommendation | A proposed disposition or action awaiting the relevant decision maker. |
+| Independent requirement | A distinct requested outcome with its own acceptance criterion, even if several reports describe it. |
+| Coverage | Complete, partial, possible, or unrelated coverage of a requirement by candidate work. |
+| Verified resolution | Evidence that the requirement is satisfied on a specified revision and environment. |
+| Roadmap signal | A sourced account of unmet needs and dependencies for consideration by an appropriate forum. |
 
-### Disposition Criteria
+A record contains identity and source revisions; the use case and acceptance
+criteria; checked evidence and reading gaps; proposed or validated relationships;
+alternatives and a requested decision; an accepted owner where available;
+blockers and revisit conditions; and decisions, verification, release, and remaining
+needs. Keep recommendation and authoritative state separate. A routed item records
+whether the receiving forum has acknowledged the handoff.
 
-| Action | Minimum basis |
+Enumerate paginated collections and deduplicate identities. Read discussions,
+reviews, changed files, and linked evidence to the depth needed for each claim.
+Publish separate coverage states for inventoried, discussion read, implementation
+examined, and behavior verified. Incremental collection uses an overlap around a
+successful watermark, plus periodic full reconciliation. A new revision invalidates
+only conclusions affected by its material changes, subject to validation.
+
+Contributor records can remain visible while awaiting a decision. Selected batches
+foreground a few questions with evidence and alternatives, sized to agreed expert
+capacity. A comment on every source item is unnecessary for maintaining the record;
+public feedback should reflect validated, useful information and the relevant
+repository's practices.
+
+### Disposition Criteria and Useful Reach
+
+| Proposed action | Minimum basis |
 | --- | --- |
-| Resolve | Match every retained requirement to a verified fix and applicable revision/environment. |
-| Consolidate duplicate or superseded work | Identify the canonical record and preserve distinct requirements and evidence. |
-| Advance an existing PR | Identify exact coverage, review blockers, missing tests, and integration dependencies. |
-| Propose a new PR | Define focused scope, affected requirements, proposed tests, and dependencies. |
-| Request information or a decision | Specify the missing reproduction, environment, measurement, or design question. |
-| Defer or decline | Record the authorized rationale, alternative, and revisit trigger. |
-| Route elsewhere | Record the proposed destination and whether the handoff is acknowledged; source-item disposition remains with its maintainers. |
+| Resolve | Match every retained requirement to verified evidence and an applicable revision/environment. |
+| Consolidate related work | Identify a canonical record while preserving distinct requirements and evidence. |
+| Advance existing or focused new work | Define exact coverage, missing tests, review blockers, dependencies, and residual needs. |
+| Request evidence or a decision | Specify the missing reproduction, measurement, acceptance criterion, or design question. |
+| Defer or decline | Record authorized rationale, alternatives where applicable, and revisit conditions. |
+| Route | Explain the destination, applicable authority, and acknowledgment or remaining handoff gap. |
 
-Age, silence, a closure phrase in a PR, and a merged proposal are individually
-insufficient evidence of resolution. Sensitive security reports follow the
-repository's security reporting process. Pending decisions and ownership gaps
-remain visible findings rather than blocking preparation of the register.
+Age, silence, a PR closure phrase, and proposal acceptance alone do not establish
+resolution. Security reports follow existing security-reporting processes.
 
-### Select Work with Useful Reach
+Review existing work before proposing competing changes. Count independent
+requirements separately from threads and deduplicate coverage across candidates.
+Select work by severity, workflow impact, readiness, additional useful coverage,
+compatibility risk, effort, and upkeep. Shared tests may serve several focused
+changes; unrelated changes should remain separate. Urgent correctness work can
+take precedence over broad coverage. The preliminary register supplies examples,
+not a permanent taxonomy or an approved ranking.
 
-List affected items and independent requirements separately. Review existing PRs
-first and distinguish complete, partial, and speculative coverage. Deduplicate
-requirements across a selected portfolio so overlapping candidates do not inflate
-the claimed benefit. Shared tests can support several focused changes.
+### Roadmap Feedback and Domain Evolution
 
-Rank candidates by severity, workflow impact, additional verified coverage,
-readiness, confidence, effort, compatibility risk, and maintenance cost. Keep those
-factors visible. Urgent correctness and security work can take precedence over
-broad coverage. Split unrelated fixes even if combining them increases an apparent
-closure count.
+Demand briefs connect use cases to evidence, independent needs, alternatives,
+compatibility implications, dependencies, and the next decision. Separate
+implementation defects, specification questions, domain requirements, and gaps
+in tests or infrastructure. Record the evidence needed for experimentation,
+independent deployment, shared implementation, or standardization, and revisit
+the route as experience accumulates.
 
-For example, [R13](#r13-hydra-material-parity) brings several Hydra material reports
-into one review matrix while retaining separate requirements:
+Count authors, reports, comments, and independent requirements as different signals.
+Compare explicit periods and denominators. Neither GitHub activity nor a title
+classification is a census of community demand. Domain experts should be able to
+correct interpretations and contribute acceptance evidence. Roadmap briefs remain
+recommendations until the appropriate authority considers them.
 
-| Requirement to examine | Source | Verification or decision evidence needed |
-| --- | --- | --- |
-| Material-purpose behavior | [OpenUSD issue #3320](https://github.com/PixarAnimationStudios/OpenUSD/issues/3320) | Compare core binding resolution with scene-index outputs. |
-| Collection binding | [Issue #3484](https://github.com/PixarAnimationStudios/OpenUSD/issues/3484) | Check preservation of collection semantics through the imaging path. |
-| Nested instances | [Issue #3690](https://github.com/PixarAnimationStudios/OpenUSD/issues/3690) | Check binding results across instance/prototype boundaries. |
-| Additional parity cases | [#4113](https://github.com/PixarAnimationStudios/OpenUSD/issues/4113), [#4122](https://github.com/PixarAnimationStudios/OpenUSD/issues/4122), [#4121](https://github.com/PixarAnimationStudios/OpenUSD/issues/4121) | Retain a separate acceptance test for each reported behavior. |
+## Measures and Staged Adoption
 
-This is an illustrative matrix from the preliminary R13 record. Shared fixtures
-may support distinct fixes; no combined resolution is established. A coordinated
-review can identify shared infrastructure and missing coverage before new work is proposed.
+Measure the continuing capability before choosing a permanent tool or cadence.
+An initial exercise can calibrate evidence and review cost; broader preparation
+can continue while selected cases reach decision forums. Expand by demonstrated
+quality, reusable knowledge, and participating capacity. A fixed sample or six-week
+duration is an optional evaluation choice, not the scope of the proposal.
 
-### Community Demand and Roadmap Input
-
-Each brief states the use case, linked evidence, independent requirements,
-publicly evidenced participants, chronology, alternatives, compatibility implications,
-dependencies, and suggested next milestone. Compare historical and recent demand
-with explicit windows and denominators. Authors, comments, reactions, and duplicate
-reports are distinct signals rather than interchangeable measures of demand.
-
-Identify the requested decision and why the proposed forum is appropriate.
-Distinguish implementation defects, specification ambiguities or defects, domain
-requirements, and gaps in tests or supporting infrastructure. When implementation
-and specification decisions interact, record the dependencies and decisions needed
-from each. Build and distribution topics should reconcile existing public Build IG
-initiatives and linked work.
-
-An independently governed extension may also be an appropriate implementation path
-where it builds on shared USD behavior. Make that option visible without presuming
-every domain capability must enter OpenUSD's distribution or become an AOUSD standard.
-Verify the relevant forum's charter before recommending a destination. TAC coordination
-would be considered where questions span groups. A brief remains a recommendation.
-
-## Pilot and Acceptance Criteria
-
-The proposed pilot would begin after its steward and participating decision makers
-agree on scope, review capacity, and how recommendations will be presented. The
-steward would prepare evidence records and bounded review batches. Component
-reviewers, proposal authors, and AOUSD contacts would participate where selected
-items require their expertise.
-
-Six weeks and 20–30 open items are illustrative planning choices for contributor
-assessment. Only selected decision questions would enter maintainer review batches,
-sized to an agreed time budget. The sample need not cover every candidate portfolio.
-Proposed work remains unassigned until accepted; recommendations can remain pending.
-
-| Period | Work | Reviewable output |
-| --- | --- | --- |
-| Weeks 1–2 | Refresh inventory; calibrate reading effort; prepare an agreed sample, including cross-repository relationships where relevant. | Coverage ledger, sample, source-linked requirements, and missing evidence. |
-| Weeks 3–4 | Review existing PRs and historical fixes; validate candidate coverage with participating reviewers. | Bounded recommendation batch, decision questions, and focused verification needs. |
-| Weeks 5–6 | Present recommendations; record accepted decisions and pending questions; prepare demand briefs where useful. | Outcome record, reviewer-effort assessment, and a continue/change/stop recommendation. |
-
-Each selected item should have a source-linked account of its requirements, current
-evidence, recommended next step, and unresolved questions. Accepted decisions and
-assignments are recorded separately. Every claimed resolution requires verification
-appropriate to that claim. A pending decision or ownership gap is a valid finding.
-Where evidence permits, show how coordinated review can cover independent requirements
-without enlarging unrelated changes.
-
-Assess whether prepared records help participants reach clearer decisions, preserve
-remaining requirements, and reduce repeated investigation. Measure maintainer and
-contributor effort alongside coverage, evidence gaps, intake, review blockers,
-verified needs, and revised findings. Track publication, implementation, and release
-separately; closures alone are not success.
-
-The pilot should publish a measured case for expansion:
-
-| Measure | What it would demonstrate |
+| Measure | Definition and purpose |
 | --- | --- |
-| Preparation throughput and coverage | How many items are assessed to the declared depth per contributor-hour, agent runtime and cost, and whether coverage grows relative to new intake. |
-| Evidence quality | Corrections found during independent checks, unsupported agent claims, missed relationships, and retained residual requirements. |
-| Maintainer review cost | Minutes per batch and per useful decision; where a comparable case is available, preparation and review time with and without a prepared record. |
-| Reuse and upkeep | Related items served by reusable evidence or fixtures, and effort to refresh records after new comments or revisions. |
+| Validated assessment coverage | Open items with an assessment current to their latest material revision / all open items in the declared scope. Report counts and gaps by source, type, component, and age. |
+| Preparation and validation rates | Prepared and validated assessments per period, contributor-hour, and agent cost; record corrections, missed relationships, and refresh effort. |
+| Decision flow | Decision-ready cases, authorized dispositions, and waiting cases by stage, with rationale and blockers. Record time to assessment and disposition separately. |
+| Expert effort | Time per useful decision and per batch; compare cases of similar complexity with and without prepared records where feasible. |
+| Verified outcomes | Independent requirements satisfied, partial coverage, accepted work completed, and release/adoption evidence. Closures alone are insufficient. |
+| Roadmap and learning | Unmet needs surfaced, cross-group questions considered, prior evidence reused, and conclusions changed after new evidence. |
 
-Use the observed rates to estimate the effort needed for wider coverage and the
-decision throughput supported by the agreed review budget. Publish assumptions and
-uncertainty, including difficult cases and any remaining bottleneck. A smaller
-pilot demonstrates a method and supplies scaling estimates; it does not establish
-that every case will be equally inexpensive.
+For timing, report medians and upper percentiles where samples permit, plus the
+ages and sizes of still-open queues. State the observation window and cohort;
+statistics on completed cases alone omit work still waiting. Keep incoming items,
+material revisions, prepared records, validated records, decisions, and outcomes
+as different populations. Decision throughput need not equal intake when related
+requirements share a case, but that relationship must be evidenced.
 
-Any continuation proposal would state participating capacity, maintenance
-responsibilities, and the review cadence demonstrated to be useful during the pilot.
-Historical reading can continue without requiring completion of the entire corpus
-before a bounded batch is useful.
+Evaluation proceeds through calibration of representative cases; continuing
+preparation and correction; focused decisions and follow-through; and a measured
+case for expansion. Include difficult cases, contributor upkeep, and remaining
+bottlenecks. The central hypothesis is that validated coverage and useful outcomes
+can increase while repeated investigation and expert effort per decision decrease.
+The inventory and candidate register do not yet establish that result.
 
-## Risks and Alternatives
+## Discussion Path
 
-| Risk | Mitigation |
+Bring Pixar/OpenUSD maintainers a concrete operating proposal and checked examples.
+Discuss the desired continuity from requirements to outcomes, how contributors
+can support it, which evidence makes decisions useful, and the participation and
+review capacity available. Agree on a practical initial evaluation and how the
+record would be maintained and corrected.
+
+Bring relevant AOUSD forums sourced questions about shared behavior, compatibility,
+domain needs, and dependencies between implementation and standards work. TAC
+coordination could help identify appropriate decision routes where questions span
+groups. The discussion should establish accepted responsibilities and useful
+interfaces between existing processes.
+
+## Risks, Alternatives, and Boundaries
+
+| Risk | Response |
 | --- | --- |
-| Premature closure from superficial matches | Per-requirement evidence and maintainer review; preserve residual needs. |
-| Administrative burden | Agree a review time budget; keep broad preparation with contributors; measure preparation, correction, and maintainer review effort separately. |
-| Record volume exceeds useful decision capacity | Make pending states visible, rank small decision batches, and measure intake against preparation and decision throughput. |
-| Agent findings are inaccurate or lose important context | Preserve inspectable evidence and revisions; validate decision-batch records; audit broader coverage and measure correction effort. |
-| Coverage incentives favor large PRs | Count marginal independent coverage and retain urgent single-item work. |
-| Stale register or automated summaries | Revision tracking, periodic reconciliation, and explicit human review. |
-| Demand overrepresented by vocal participants | Separate duplicates and independent needs; state GitHub participation limits. |
-| Recommendations interpreted as authority or assignments | Record proposed and accepted actions separately; preserve existing decision processes. |
+| Superficial matches or incorrect agent claims | Inspectable revisions and evidence; validated decision cases; independent sampling and measured correction cost. |
+| Preparation moves a queue downstream | Measure validation, expert review, and follow-through capacity; prioritize useful cases and expose waiting states. |
+| Register upkeep becomes extra administration | Reuse source discussions, refresh affected claims, and count total human effort. |
+| Closure incentives obscure residual needs | Count independent requirements, partial coverage, rationale, and verified outcomes. |
+| Vocal or well-represented users dominate signals | State source limits and invite domain evidence and corrections. |
+| Recommendations become perceived assignments | Separate proposed actions from accepted owners and authorized decisions. |
 
-Ad hoc triage has low startup cost but leaves cross-repository relationships hard
-to audit. Labels aid discovery while providing limited detail on partial coverage
-or verification. Automated stale closure reduces item counts without establishing
-outcomes. A dedicated service might eventually help; a document-based pilot can
-first establish useful records and actual workload.
+Labels and project boards can support discovery and workflow; deeper relationships
+can live in linked records. A versioned register allows evaluation before a
+dedicated service. Ad hoc review can remain useful, while shared records preserve
+continuity between reviews. Staffing and stewardship remain necessary even with
+better automation.
 
-## Out of Scope
-
-The proposal concerns review operations. It introduces no USD schema, file-format
-change, runtime behavior, assigned roadmap dates, or new authority over repositories
-and standards groups. Automatic closures and merges are outside its scope.
-Automation may collect or suggest records; authorized participants decide actions.
-Scene-representation examples are therefore unnecessary.
+This proposal introduces no schema, file-format or runtime change, roadmap dates,
+automatic closure or merge policy, or new authority over repositories and standards
+groups. It proposes a continuing community capability and evidence for evaluating it.
 
 ## Questions for Review
 
-1. Does the prepared batch enable useful decisions within an agreed maintainer time budget?
-2. What evidence, contributor support, and review format would improve that result?
-3. What verification and release conditions should support a resolution claim?
-4. Which questions could benefit from TAC coordination, and which existing forums should decide them?
-5. What measured preparation rates, evidence quality, and upkeep costs would justify wider coverage, and where should continuing records live?
+1. Which continuity gaps most hinder useful participation, domain innovation, and interoperability?
+2. Which records and contribution paths would help existing implementation and standards processes?
+3. What evidence and verification conditions make a recommendation decision-ready or an outcome resolved?
+4. How should responsibilities and handoffs work across maintainers, independent contributors, and relevant AOUSD forums?
+5. What coverage, quality, effort, and outcome measures would justify sustained participation and wider scope?
 
 ## References and Proposal Precedents
 
 The structure follows the repository's
 [proposal guidance](https://github.com/PixarAnimationStudios/OpenUSD-proposals/blob/main/README.md)
 and [PR template](https://github.com/PixarAnimationStudios/OpenUSD-proposals/blob/main/.github/pull_request_template.md).
-Recently accepted examples reviewed for the original draft include
+Examples reviewed for the original draft include
 [Authorship, PR #106](https://github.com/PixarAnimationStudios/OpenUSD-proposals/pull/106),
 [Back Plate, PR #104](https://github.com/PixarAnimationStudios/OpenUSD-proposals/pull/104),
 [LOD, PR #81](https://github.com/PixarAnimationStudios/OpenUSD-proposals/pull/81), and
 [Alternate Libwork implementations, PR #86](https://github.com/PixarAnimationStudios/OpenUSD-proposals/pull/86).
-Their useful patterns are clear motivation, explicit boundaries, concrete examples,
-implementation considerations, and alternatives.
+See [comparative research](research/triage-comparisons.md) for external precedents
+and an independent, dated activity analysis.
 
-The overview uses blue colors and layered geometry inspired by
+The original diagrams use blues and layered geometry inspired by
 [AOUSD's public website](https://aousd.org/) and [media assets](https://aousd.org/media-assets/),
-with clean sans-serif typography and original outline icons. It is an editable
-illustration of this working proposal; the figures and candidate groupings are
-qualified by the retained evidence below.
+with clean sans-serif typography. They illustrate this working proposal and its
+qualified supporting evidence.
 ## Appendix: Initial Evidence and Candidate Portfolios
 
 The following findings are from retained, non-atomic October 3–4, 2026 snapshots.
-They are preliminary inputs to the pilot and should be refreshed before action.
+They are preliminary examples of evidence preparation and should be refreshed before action.
 Inventory is complete for those retained snapshots; full semantic reading is unfinished.
 No independent OpenUSD builds or behavioral closure verification were performed.
 No confirmed closure count is claimed.
 
 | Repository | Inventoried items | Open issues | Open PRs |
 | --- | ---: | ---: | ---: |
-| OpenUSD | 4,224 | 728 | 283 |
-| OpenUSD-proposals | 116 | 12 | 25 |
-| AOUSD Build IG initiatives | 51 | 32 | 1 |
+| [OpenUSD](https://github.com/PixarAnimationStudios/OpenUSD) | 4,224 | 728 | 283 |
+| [OpenUSD-proposals](https://github.com/PixarAnimationStudios/OpenUSD-proposals) | 116 | 12 | 25 |
+| [AOUSD Build IG initiatives](https://github.com/aousd/build-ig-initiatives) | 51 | 32 | 1 |
 | Total | 4,391 | 772 | 309 |
 
 Four candidate portfolios organize the reviewed evidence:
 
-| Portfolio | Recurring needs | Pilot focus |
+| Portfolio | Recurring needs | Candidate investigation |
 | --- | --- | --- |
 | Build and distribution | Portable CMake, runnable development trees, useful Python packages. | Reconcile existing Build IG initiatives and implementation PRs. |
 | Hydra reliability | Material binding, nested instances, consistent live edits. | Shared regression fixtures with distinct fixes and acceptance criteria. |
@@ -459,6 +394,34 @@ These are evidence-backed work groupings, not measured community-wide rankings.
 Title screening was used for discovery and is not a validated demand classification.
 Start with superseded-work reconciliation, revalidation of older behavior, and
 existing evidence-ready PRs; urgent correctness or security reports take precedence.
+
+### Retained Snapshot Illustration
+
+![Initial October 3–4 evidence: inventory, preliminary portfolios, and preparation tasks.](assets/initial-evidence.png)
+
+[Editable snapshot SVG](assets/initial-evidence.svg). This figure retains its
+historical counts and candidate groupings. It does not define the enduring scope
+of the proposal. In the retained OpenUSD snapshot, 587 of 728 open issues (80.6%)
+had no update for at least one year; this identifies reassessment work, not
+obsolete reports or verified closure opportunities.
+
+### Independent Refresh and Activity Analysis
+
+A separate October 7 metadata collection found 4,399 public items across the
+three repositories, including 771 open issues and 313 open PRs. It did not read
+all discussions or verify behavior. The two dated snapshots are non-atomic and
+their differences are not a measured event stream.
+
+OpenUSD annual issue creation was 281, 277, and 227 in 2023–2025; PR creation was
+472, 296, and 229. Those observations do not establish increasing repository
+intake or the direction of wider ecosystem demand. Of 727 open OpenUSD issues
+in the fresh collection, 581 (79.9%) had update timestamps older than 365 days.
+The refresh supports continuing assessment rather than age-based closure.
+
+See [the independent trend analysis and comparison](research/triage-comparisons.md)
+and [derived metadata](research/openusd-trends.json) for flows, denominators,
+retrieval checkpoints, and limitations. The earlier recommendations remain
+preliminary; the metadata refresh does not revalidate their semantic claims.
 
 ## Candidate Register
 
