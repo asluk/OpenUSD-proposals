@@ -1,6 +1,6 @@
 # Namespace and Prefix Isolation for USD Extensions
 
-> **Draft status -- under active review, not yet complete.** This is an AI-assisted working draft by Aaron Luk (NVIDIA), originally prepared as discussion input for the 2026-09-04 AOUSD TAC meeting and now being revised based on that discussion and further review. Content, framing, examples, and citations are subject to change without notice. This is **not** an AOUSD position, **not** a finalized proposal, and **not** citable as a reference. If you've come across this outside of direct collaboration with the author, please treat it as incomplete and reach out before relying on anything in it.
+> **Draft status -- under active review, not yet complete.** This is an AI-assisted working draft by Aaron Luk (NVIDIA). Content, framing, examples, and citations are subject to change without notice. This is **not** an AOUSD position, **not** a finalized proposal, and **not** citable as a reference. If you've come across this outside of direct collaboration with the author, please treat it as incomplete and reach out before relying on anything in it.
 
 ## Contents
 
@@ -15,6 +15,11 @@
 9. [Next Steps](#next-steps)
 
 ## Introduction
+
+This proposal develops requirements for identifying the owners of USD extensions
+and isolating their identifiers across tools and authored content. The aim is to
+support reliable interoperability while letting independently governed capabilities
+ship, gain production experience, and evolve toward broader agreement where useful.
 
 This document responds to the "Namespace and Prefix Isolation" requirement raised in the [AOUSD USD Extension Ecosystem Governance Proposal](https://docs.google.com/document/d/1zL7Igy5QN6bTHZavczkjaW2U5TBk95hP_Ooa_zL-tJc/edit) (Sean Snyders, Trimble, 2026-06-22), and to the comment thread on that requirement (Guy Martin, F. Sebastian Grassia, Aaron Luk). It separates namespace/prefix isolation from discoverability, per Grassia's comment, and works it into a standalone requirements framework with a survey of relevant precedent -- both from other standards bodies and from within the OpenUSD/AOUSD ecosystem itself.
 
@@ -35,15 +40,23 @@ identifiers a runtime registers and those that content authors exchange.
 
 This proposal supports two ecosystem outcomes:
 
-- **Prevent cratering:** preserve a reliable content ecosystem in which adopters
-  can reason about compatibility and the meaning of a support claim. Supporting
-  USD does not require every application to implement every extension.
-- **Prevent stagnation:** let domains prototype, ship, and build adoption within
-  safe scopes without waiting for full AOUSD approval of each new feature.
+- **Reliability:** USD content works predictably across tools and over time.
+  Explicit ownership, dependencies, and compatibility expectations let adopters
+  understand what a tool's support claim means and how unsupported capabilities
+  affect a workflow. Supporting USD does not require every application to
+  implement every extension.
+- **Leadership:** USD turns growing domain demand into deployed capabilities,
+  with a clear path from experimentation to shared standards.
+  Independently governed extensions let domains prototype, ship, learn
+  from production use, and correct designs without waiting for full AOUSD
+  approval of each new feature. Proven capabilities can then seek broader
+  adoption and standardization with evidence from that experience.
 
-Baseline USD, namespaces, profiles, and specification Parts are mechanisms for
-achieving these outcomes. This proposal develops the naming mechanism; it does
-not settle baseline scope, conformance infrastructure, or the organization of Parts.
+Baseline USD, vendor and domain extensions, profiles, and a multi-part specification
+are mechanisms for achieving these outcomes. Namespace isolation supplies the
+ownership and naming foundation for independently governed extensions. This
+proposal develops that mechanism; it does not settle baseline scope, conformance
+infrastructure, or the organization of specification Parts.
 
 The proposed first deliverable covers typed schema identifiers, applied API schema
 identifiers, and property names. It must identify how those names relate to
@@ -125,18 +138,23 @@ yoyodyne . dimensional.contabulator
   open; no mechanism should silently select one of two conflicting definitions.
 - **R6 -- Independent entry and a path to broader agreement.** Vendor extensions
   should be able to ship immediately within the agreed naming and baseline
-  constraints. Proven extensions should have a path to multi-vendor or core
-  consideration, and a submission may enter directly at a multi-vendor or
-  working-group stage when agreement already exists. Graduation is optional and
-  requires evidence and agreement; adoption does not imply AOUSD ratification.
+  constraints. Proven extensions should have a path to multi-vendor agreement,
+  domain standardization, or inclusion in the shared baseline. These are distinct
+  commitments: a domain standard need not become part of the baseline. A submission
+  may enter directly at a multi-vendor or working-group stage when agreement
+  already exists. Graduation is optional and requires evidence and agreement;
+  adoption does not imply AOUSD ratification.
   A change of governance or maturity must not imply an automatic identifier
   rename. Any renaming, aliasing, versioning, or content migration needs an
   explicit compatibility policy.
 - **R7 -- Proportionate governance cost.** An additive extension within an owner's
   namespace should be self-enabled without full AOUSD feature approval upfront.
   Establishing namespace ownership must be distinct from approving the extension's
-  semantics. Changes to the shared baseline or use of a namespace governed by
-  others require the relevant broader agreement.
+  semantics. Review and evidence should grow with the scope of the shared
+  commitments being requested. Changes to the shared baseline, changes to shared
+  behavioral contracts, or use of a namespace governed by others require the
+  relevant agreement from the outset; an ownership prefix does not remove those
+  obligations. See [Independent adoption and baseline boundaries](#independent-adoption-and-baseline-boundaries).
 
 ### B. Discoverability (separate requirement, not conflated with A)
 
@@ -336,6 +354,31 @@ shipping the naming convention.
 
 ### Independent adoption and baseline boundaries
 
+For this proposal, **baseline USD** refers to the shared capabilities and behavioral
+commitments on which extensions can rely. The
+[AOUSD Core Specification](https://aousd.org/usd-core-specification/) provides
+normative definitions of data representation, scene construction, and interchange
+formats. A lightweight baseline description could reference those definitions and
+make extension boundaries and compatibility expectations explicit. The precise
+baseline inventory remains a separate question; neither inclusion in an OpenUSD
+distribution nor adoption of an extension alone establishes that inventory.
+
+The proposed behavioral boundary is that an **additive extension builds on USD's
+existing composition and value-resolution semantics**. Its USD-authored inputs
+continue to use those semantics; it adds domain interpretation or computation on
+top of the resolved values. Authored extension opinions can change resolved values through
+ordinary USD mechanisms without changing the rules by which values are resolved.
+
+Geospatial and B-Rep capabilities illustrate a boundary worth examining: their
+domain behavior can build on core value resolution while requiring an explicit
+relationship with shared behavior such as
+[UsdGeom transforms](https://openusd.org/release/api/class_usd_geom_xformable.html).
+Using an existing behavioral contract and proposing a change to that contract are
+different commitments. A new integration point or a changed contract may need
+focused architectural review, while the extension's domain semantics remain
+independently governed. Namespace isolation identifies ownership; it does not
+establish behavioral compatibility by itself.
+
 The proposed entry rule is that an owner may publish and ship an additive,
 owner-prefixed schema without full AOUSD approval of its feature semantics. Prefix
 ownership is a naming obligation, not a feature-review queue. The extension must
@@ -349,17 +392,27 @@ an illustrative pathway, not a claim that Autodesk has accepted a particular
 schema or naming syntax. It should not require waiting for inclusion in OpenUSD's
 core distribution or AOUSD's highest governance tier.
 
-An extension that changes shared composition behavior, redefines an existing
-baseline identifier, or uses another owner's namespace crosses a different
-boundary. Those changes need broader review. Using the current Core Specification
-as a starting baseline is a candidate for discussion; namespace isolation does not
-decide that boundary on its own.
+An extension that changes shared composition or value-resolution rules, redefines
+an existing baseline identifier's semantics, or uses another owner's namespace
+crosses a different boundary. Those changes need the relevant broader agreement
+even during initial rollout.
 
-Graduation should consider documented semantics, independent adoption and
-interoperability evidence, conformance expectations, and compatibility/migration
-costs. Some extensions may remain independently governed. Broader technical
-agreement, resource prioritization, and escalation authority are distinct decisions
-and should have named owners rather than being collapsed into one approval step.
+Governance should be proportionate to the commitments being sought:
+
+| Commitment | Proposed review and evidence |
+|---|---|
+| **Independently governed extension** | Establish ownership and collision handling; document semantics, dependencies, and unsupported-consumer behavior. Additive work within the agreed boundaries can ship without full AOUSD feature approval. |
+| **Shared, multi-vendor extension** | Agree stewardship and compatibility policy; demonstrate that participating implementations interpret the extension consistently. |
+| **AOUSD standard extension or domain specification** | Formal technical review, explicit support and conformance expectations, and maintenance commitments, informed by production experience. |
+| **Change to the shared baseline** | Broader review of cross-domain applicability, effects on existing content and implementations, ongoing test and maintenance responsibilities, and compatibility or migration costs. |
+
+These commitments do not prescribe a mandatory sequence or require promotion.
+Some extensions may remain independently governed. Changes in governance or
+maturity need not rename identifiers. Production experience may also reveal a
+mistaken design; revisions need an explicit compatibility policy regardless of
+whether the extension seeks promotion. Broader technical agreement, resource
+prioritization, and escalation authority are distinct decisions and should have
+named owners rather than being collapsed into one approval step.
 
 ## Open Questions for Discussion
 
@@ -375,9 +428,12 @@ and should have named owners rather than being collapsed into one approval step.
 3. Can namespace isolation and the minimum ownership mechanism ship before a full
    extension discovery/distribution system? Prefix reservation, if selected, must
    not be conflated with a catalog of all extension implementations.
-4. What precisely makes an extension additive within baseline constraints, and what
-   triggers broader review? Use concrete schema and composition examples, including
-   an application declining an extension, before drafting the boundary rule.
+4. Does the proposed additive boundary distinguish domain behavior above core value
+   resolution from changes to shared semantics? Evaluate it with concrete schema
+   and composition examples, including participation in UsdGeom transforms and an
+   application declining an extension. Which shared contracts and baseline/version
+   dependencies must an extension declare, and what triggers focused or broader
+   review?
 5. For the B-Rep case, which owner governs each identifier, how is preliminary status
    represented, and what compatibility policy applies to incompatible changes or
    later graduation?
@@ -400,8 +456,10 @@ and should have named owners rather than being collapsed into one approval step.
   (R5), independently of a complete discovery/distribution system.
 - Evaluate candidate concrete syntaxes against R1--R7, rather than adopting one by default -- the Profiles proposal's reverse-domain notation is a strong existing candidate, not the only one capable of satisfying the requirements.
 - Walk the B-Rep and independently owned schema cases through each naming surface,
-  unsupported-consumer behavior, incompatible version, and graduation/migration
-  policy. Record unresolved choices with an owner and next action.
+  the proposed additive boundary, unsupported-consumer behavior, incompatible
+  version, and graduation/migration policy. Record unresolved choices with an owner
+  and next action, including which decisions concern naming, shared behavioral
+  contracts, or baseline scope.
 - Define how extension identifiers map to ClaimsAPI capability/profile declarations
   and what evidence supports compatibility claims, while keeping the contract
   separable from OpenUSD's plugin implementation.
