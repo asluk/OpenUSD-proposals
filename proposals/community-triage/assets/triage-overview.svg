@@ -10,7 +10,7 @@
 <text x="48" y="42" font-size="20" font-weight="700" style="fill:#FFFFFF">OPENUSD COMMUNITY TRIAGE  /  WORKING DRAFT</text>
 <text x="48" y="101" font-size="49" font-weight="700" style="fill:#FFFFFF">Turn community needs</text>
 <text x="48" y="156" font-size="49" font-weight="700" style="fill:#FFFFFF">into verified outcomes</text>
-<text x="49" y="185" font-size="22" font-weight="400" style="fill:#D6EDFF">Requests → existing work → decisions → roadmap evidence</text>
+<text x="49" y="185" font-size="22" font-weight="400" style="fill:#D6EDFF">Agentic preparation. Focused maintainer decisions.</text>
 <rect x="48" y="229" width="356" height="140" rx="16" fill="#fff" stroke="#D3E6F2"/>
 <g transform="translate(73 254)">
 <path d="M0 10 L24 0 L48 10 L24 20 Z" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -95,7 +95,7 @@
 <text x="819" y="960" font-size="20" font-weight="400" style="fill:#102B50">Verify each requirement</text>
 <text x="819" y="986" font-size="20" font-weight="400" style="fill:#102B50">before proposing new work.</text>
 <text x="48" y="1028" font-size="21" font-weight="700" style="fill:#102B50">Urgent correctness and security reports take precedence.</text>
-<text x="48" y="1076" font-size="22" font-weight="700" style="fill:#0555B6">A LIVING EVIDENCE LOOP</text>
+<text x="48" y="1076" font-size="22" font-weight="700" style="fill:#0555B6">AGENTS PREPARE. CONTRIBUTORS CHECK. MAINTAINERS DECIDE.</text>
 <rect x="48" y="1098" width="199" height="53" rx="12" fill="#E8F4FA"/>
 <text x="71" y="1132" font-size="24" font-weight="700" style="fill:#0555B6">Intake</text>
 <path d="M254 1124 H266 M260 1119 L266 1124 L260 1129" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>

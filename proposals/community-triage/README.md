@@ -10,17 +10,20 @@ and proposals across the USD ecosystem. Related discussions can develop separate
 making it difficult to see which requirements have been addressed, which decisions
 remain open, and where existing work could satisfy additional needs.
 
-This proposal would establish community-supported triage and follow-through that
-connects those requirements to implementation and standards decisions. Contributors
-would prepare source-linked recommendations for existing decision makers, tracking
-requested outcomes through design, implementation, verification, and release.
+This proposal would establish triage and follow-through built on three pillars:
+agentic evidence preparation, contributor validation, and focused maintainer
+decisions. Agents would pursue connected reading and analysis tasks, maintain
+source-linked records, and prepare recommendations. Contributors would check those
+records and assemble decision batches for existing decision makers. Requested
+outcomes would remain traceable through design, implementation, verification, and release.
 The intended outcomes are reliable behavior across tools and over time, and timely
 progress from growing domain demand to deployed capabilities.
 
 A living disposition register would make remaining requirements, decision
-dependencies, and accepted next steps visible. An illustrative six-week pilot
-would assess whether prepared evidence and bounded review batches help participants
-reach clearer decisions while keeping additional review effort proportionate.
+dependencies, and accepted next steps visible across the open inventory. An
+illustrative six-week pilot would demonstrate the method on a bounded sample and
+measure preparation throughput, evidence quality, and maintainer time. Those
+measurements would show how the work could expand toward full coverage.
 
 ![OpenUSD triage overview: 4,391 inventoried items, 1,081 open items, 26 preliminary recommendations; four candidate portfolios and an evidence review loop for future Pixar and TAC discussions.](assets/triage-overview.png)
 
@@ -33,6 +36,7 @@ reading is unfinished; no independent builds or behavioral closure verification
 were performed. The 26 recommendations are preliminary.
 
 **Navigate:** [Discussion path](#discussion-path) · [Workflow](#proposed-workflow) ·
+[Agentic assistance](#agentic-assistance) ·
 [Pilot](#pilot-and-acceptance-criteria) · [Review questions](#questions-for-review) ·
 [Evidence](#appendix-initial-evidence-and-candidate-portfolios) ·
 [Candidate register](#candidate-register)
@@ -55,7 +59,8 @@ measure the rate of growing demand or attribute delays to any participant.
 
 ## Goals
 
-- Make evidence, unresolved decisions, and possible next steps progressively clearer.
+- Work toward a source-linked assessment of every open item, with explicit reading coverage and unresolved questions.
+- Use agentic assistance to expand reading, relationship analysis, and continuing follow-through, with checked evidence and measured effort.
 - Preserve distinct requirements when reconciling duplicates or superseded work.
 - Identify existing and focused new changes with useful coverage of independent needs.
 - Track proposal publication, implementation, verification, and release separately.
@@ -85,13 +90,89 @@ The historical inventory includes open and historical issues and PRs in
 [AOUSD Build IG initiatives](https://github.com/aousd/build-ig-initiatives) provide an
 initial public coordination source. Additional sources can be included after their
 scope and public availability are confirmed. GitHub demand is a partial view of
-the community; the register can be useful without access to confidential internal work.
+the community. The proposed records would be grounded in public evidence and
+contributions authorized for publication.
+
+## How the Work Can Scale
+
+The proposed division of work is straightforward: agents and contributors prepare
+evidence across the inventory, while maintainers receive selected questions that
+need their judgment. Agents would carry out connected tasks from collection and
+reading through relationship analysis and updates. Contributors check source links,
+preserve distinct requirements, prepare reproductions or tests, and flag uncertainty
+before a record enters a decision batch. Authoritative decisions remain with the
+appropriate forum.
+
+The retained census and 26 candidate recommendations demonstrate an initial step:
+enumeration and connected evidence can yield a prepared queue. The pilot would
+test the quality and cost of extending that preparation, including less obvious
+relationships and longer discussions. Full semantic assessment and sustained
+throughput remain work to demonstrate.
+
+| Layer | Work prepared | Output for the next layer |
+| --- | --- | --- |
+| Agentic inventory and reading | Enumerate items and changed revisions; read connected evidence; expose coverage and gaps. | A complete list with visible preparation states and source-linked draft findings. |
+| Contributor assessment | Check evidence, reconcile related work, retain distinct requirements, and prepare verification needs. | Checked recommendations with uncertainty and residual needs. |
+| Focused decision batches | Select questions by impact, readiness, dependencies, and agreed review capacity. | A concise requested decision, supporting evidence, and links for deeper inspection. |
+| Follow-through | Record accepted decisions; contributors update evidence, tests, remaining requirements, and release status. | Reusable knowledge and less repeated investigation. |
+
+Each item can have a visible preparation state even while a decision is pending:
+inventoried, evidence under review, recommendation prepared, awaiting decision,
+decision recorded, or implemented outcome verified. These are community-record
+states; a prepared entry does not imply official maintainer acknowledgment.
+
+Batch size and cadence would fit an agreed review budget. Contributor findings
+would remain in the register rather than generating a comment on every issue or
+requiring a maintainer response to every entry. Each batch would foreground a few
+decisions, what evidence supports them, and what work contributors can take on.
+Broader coverage would improve visibility and candidate selection between batches.
+
+The scalability claim should be demonstrated through growing coverage, checked
+evidence, and lower maintainer effort per useful decision. Measure total preparation
+and upkeep cost as well, so effort transferred to contributors remains visible.
+
+### Agentic Assistance
+
+Agentic assistance is a proposed operating pillar. An assistant would follow a
+bounded research objective across issues, comments, proposal revisions, implementation
+PRs, and tests; identify missing evidence; perform the next relevant read or check;
+and update a persistent record. This goes beyond summarizing individual threads:
+the useful output is a maintained account of requirements, relationships, candidate
+coverage, and the next decision or verification needed.
+
+| Agent task | Reviewable output |
+| --- | --- |
+| Read and reconcile | Requirements, prior decisions, contradictions, and gaps, linked to exact sources and reviewed revisions. |
+| Connect existing work | Candidate relationships between reports, proposals, fixes, and releases; complete, partial, and possible coverage kept distinct. |
+| Prepare focused actions | A requested decision, residual requirements, proposed reproduction or test plan, and dependencies. |
+| Refresh affected findings | Changes since the last successful read, conclusions needing reassessment, and a resumable work queue. |
+| Build demand evidence | Independent needs and recurring themes with source links, explicit denominators, and unresolved implementation or standards questions. |
+
+Each record would distinguish retrieved evidence, an agent's inference, a
+contributor's assessment, and an authorized decision. Source URLs, revisions,
+retrieval checkpoints, and reading gaps would remain inspectable. A proposed
+relationship is a hypothesis until its supporting evidence has been checked;
+an implemented outcome requires appropriate verification. Agents could prepare
+and, in agreed environments, execute reproduction or test tasks, preserving the
+commands, revisions, and results for review.
+
+Contributors would validate records selected for a decision batch and sample the
+broader preparation queue to measure errors and missed relationships. Record
+maintenance would be incremental: new evidence triggers review of affected claims
+and linked candidates. External repository actions would remain a separately
+authorized activity; preparation itself can progress across the full inventory.
+
+The retained census and recommendation register are an initial demonstration of
+agent-assisted preparation. The pilot would measure its accuracy, correction cost,
+coverage, and upkeep under continuing changes. Agent activity or generated record
+count alone would not establish progress; the test is whether checked preparation
+helps contributors and maintainers reach useful outcomes with less repeated work.
 
 ## Discussion Path
 
-The first discussion would ask Pixar/OpenUSD maintainers whether a community-prepared
-batch of source-linked recommendations could help their existing triage and review.
-Agree on a manageable sample, useful evidence, and a review format before starting.
+The first discussion would present a prepared batch and ask Pixar/OpenUSD maintainers
+to evaluate its usefulness within an agreed review budget. Agree on a manageable
+sample, useful evidence, and a review format before starting.
 The steward would prepare the records; participating reviewers would choose where
 their expertise is needed and how much time they can contribute.
 
@@ -102,7 +183,7 @@ appropriate forums through existing processes.
 
 | Discussion | Concrete ask | Useful output |
 | --- | --- | --- |
-| Pixar / OpenUSD maintainers | Would a bounded, prepared review batch help? What sample, evidence, and review format fit available capacity? | Agreed pilot scope and participation, or specific feedback on what would make the contribution useful. |
+| Pixar / OpenUSD maintainers | Can this prepared batch produce useful decisions within an agreed time budget? Which evidence or presentation changes would make it more useful? | A measured review exercise, evidence corrections, and any accepted next steps. |
 | TAC, where relevant | Which recorded questions require coordination across implementation and standards work? | Appropriate decision forums, dependencies, and any accepted coordination next steps. |
 
 ## Definitions
@@ -133,7 +214,8 @@ flowchart TD
     A["New or changed item"] --> B["Read and map requirements"]
     B --> C["Identify missing evidence or decisions"]
     C --> D["Prepare a source-linked recommendation"]
-    D --> E["Existing maintainer or standards decision forum"]
+    D --> Q["Register findings; select a focused decision batch"]
+    Q --> E["Existing maintainer or standards decision forum"]
     E -->|Evidence or design needed| C
     E -->|Implementation path agreed| F["Review existing or focused new work"]
     F --> G{"Implemented requirements verified?"}
@@ -252,9 +334,10 @@ steward would prepare evidence records and bounded review batches. Component
 reviewers, proposal authors, and AOUSD contacts would participate where selected
 items require their expertise.
 
-Six weeks and 20–30 open items are illustrative planning choices. The sample should
-fit agreed capacity and need not cover every candidate portfolio. Proposed work
-remains unassigned until accepted; recommendations can remain pending.
+Six weeks and 20–30 open items are illustrative planning choices for contributor
+assessment. Only selected decision questions would enter maintainer review batches,
+sized to an agreed time budget. The sample need not cover every candidate portfolio.
+Proposed work remains unassigned until accepted; recommendations can remain pending.
 
 | Period | Work | Reviewable output |
 | --- | --- | --- |
@@ -275,6 +358,21 @@ contributor effort alongside coverage, evidence gaps, intake, review blockers,
 verified needs, and revised findings. Track publication, implementation, and release
 separately; closures alone are not success.
 
+The pilot should publish a measured case for expansion:
+
+| Measure | What it would demonstrate |
+| --- | --- |
+| Preparation throughput and coverage | How many items are assessed to the declared depth per contributor-hour, agent runtime and cost, and whether coverage grows relative to new intake. |
+| Evidence quality | Corrections found during independent checks, unsupported agent claims, missed relationships, and retained residual requirements. |
+| Maintainer review cost | Minutes per batch and per useful decision; where a comparable case is available, preparation and review time with and without a prepared record. |
+| Reuse and upkeep | Related items served by reusable evidence or fixtures, and effort to refresh records after new comments or revisions. |
+
+Use the observed rates to estimate the effort needed for wider coverage and the
+decision throughput supported by the agreed review budget. Publish assumptions and
+uncertainty, including difficult cases and any remaining bottleneck. A smaller
+pilot demonstrates a method and supplies scaling estimates; it does not establish
+that every case will be equally inexpensive.
+
 Any continuation proposal would state participating capacity, maintenance
 responsibilities, and the review cadence demonstrated to be useful during the pilot.
 Historical reading can continue without requiring completion of the entire corpus
@@ -285,7 +383,9 @@ before a bounded batch is useful.
 | Risk | Mitigation |
 | --- | --- |
 | Premature closure from superficial matches | Per-requirement evidence and maintainer review; preserve residual needs. |
-| Administrative burden | Small agreed sample, prepared review batches, reuse existing discussions, and measure reviewer effort. |
+| Administrative burden | Agree a review time budget; keep broad preparation with contributors; measure preparation, correction, and maintainer review effort separately. |
+| Record volume exceeds useful decision capacity | Make pending states visible, rank small decision batches, and measure intake against preparation and decision throughput. |
+| Agent findings are inaccurate or lose important context | Preserve inspectable evidence and revisions; validate decision-batch records; audit broader coverage and measure correction effort. |
 | Coverage incentives favor large PRs | Count marginal independent coverage and retain urgent single-item work. |
 | Stale register or automated summaries | Revision tracking, periodic reconciliation, and explicit human review. |
 | Demand overrepresented by vocal participants | Separate duplicates and independent needs; state GitHub participation limits. |
@@ -307,11 +407,11 @@ Scene-representation examples are therefore unnecessary.
 
 ## Questions for Review
 
-1. Would prepared, source-linked batches help Pixar/OpenUSD's existing review process?
-2. What sample, evidence, and review format would fit available capacity?
+1. Does the prepared batch enable useful decisions within an agreed maintainer time budget?
+2. What evidence, contributor support, and review format would improve that result?
 3. What verification and release conditions should support a resolution claim?
 4. Which questions could benefit from TAC coordination, and which existing forums should decide them?
-5. Is OpenUSD-proposals an appropriate home, and where should continuing records live?
+5. What measured preparation rates, evidence quality, and upkeep costs would justify wider coverage, and where should continuing records live?
 
 ## References and Proposal Precedents
 
