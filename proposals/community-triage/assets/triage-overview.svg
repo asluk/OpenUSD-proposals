@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1350" viewBox="0 0 1200 1350" role="img" aria-labelledby="title desc">
+<title id="title">Turn community needs into verified outcomes</title>
+<desc id="desc">OpenUSD community triage working draft. October 3–4, 2026 snapshot: 4,391 inventoried items, 1,081 open items, 26 preliminary recommendations. 587 of 728 open OpenUSD issues had no update for at least one year. Four candidate portfolios, three first actions, and an evidence review loop inform future Pixar and TAC discussion.</desc>
+<style>text {font-family:Arial,Helvetica,sans-serif;fill:#102B50} .small{font-size:20px} .body{font-size:23px} .label{font-size:22px;font-weight:700} .title{font-size:49px;font-weight:700}</style>
+<rect x="0" y="0" width="1200" height="1350" rx="0" fill="#F6FAFD"/>
+<rect x="0" y="0" width="1200" height="205" rx="0" fill="#0555B6"/>
+<polygon points="922,0 1200,0 1200,196" fill="#34C6F3" opacity="0.15"/>
+<polygon points="964,0 1200,0 1200,151" fill="#34C6F3" opacity="0.22"/>
+<polygon points="1004,0 1200,0 1200,109" fill="#34C6F3" opacity="0.3"/>
+<text x="48" y="42" font-size="20" font-weight="700" style="fill:#FFFFFF">OPENUSD COMMUNITY TRIAGE  /  WORKING DRAFT</text>
+<text x="48" y="101" font-size="49" font-weight="700" style="fill:#FFFFFF">Turn community needs</text>
+<text x="48" y="156" font-size="49" font-weight="700" style="fill:#FFFFFF">into verified outcomes</text>
+<text x="49" y="185" font-size="22" font-weight="400" style="fill:#D6EDFF">Requests → existing work → decisions → roadmap evidence</text>
+<rect x="48" y="229" width="356" height="140" rx="16" fill="#fff" stroke="#D3E6F2"/>
+<g transform="translate(73 254)">
+<path d="M0 10 L24 0 L48 10 L24 20 Z" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M0 18 L24 8 L48 18 L24 28 Z" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M0 26 L24 16 L48 26 L24 36 Z" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<text x="141" y="286" font-size="43" font-weight="700" style="fill:#0555B6">4,391</text>
+<text x="73" y="322" font-size="22" font-weight="700" style="fill:#102B50">items inventoried</text>
+<text x="73" y="350" font-size="19" font-weight="400" style="fill:#102B50">Three repositories</text>
+<rect x="422" y="229" width="356" height="140" rx="16" fill="#fff" stroke="#D3E6F2"/>
+<g transform="translate(447 254)">
+<path d="M2 2 H43 V30 H19 L8 41 V30 H2 Z M12 12 H33 M12 20 H28" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<text x="515" y="286" font-size="43" font-weight="700" style="fill:#0555B6">1,081</text>
+<text x="447" y="322" font-size="22" font-weight="700" style="fill:#102B50">open items</text>
+<text x="447" y="350" font-size="19" font-weight="400" style="fill:#102B50">772 issues + 309 PRs</text>
+<rect x="796" y="229" width="356" height="140" rx="16" fill="#fff" stroke="#D3E6F2"/>
+<g transform="translate(821 254)">
+<path d="M10 0 H36 V43 H2 V0 H10 M11 0 V-4 H28 V0 M12 12 H28 M12 22 H28 M12 32 H25" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<text x="889" y="286" font-size="43" font-weight="700" style="fill:#0555B6">26</text>
+<text x="821" y="322" font-size="22" font-weight="700" style="fill:#102B50">candidate recommendations</text>
+<text x="821" y="350" font-size="19" font-weight="400" style="fill:#102B50">Source links + acceptance criteria</text>
+<rect x="48" y="390" width="1104" height="105" rx="16" fill="#E8F4FA"/>
+<text x="72" y="426" font-size="24" font-weight="700" style="fill:#102B50">587 / 728 open OpenUSD issues had no update for ≥1 year</text>
+<text x="72" y="458" font-size="21" font-weight="400" style="fill:#102B50">Age guides reassessment; it does not establish resolution.</text>
+<rect x="855" y="448" width="263" height="12" rx="6" fill="#FFFFFF"/>
+<rect x="855" y="448" width="212.0618131868132" height="12" rx="6" fill="#2091D0"/>
+<text x="1017" y="430" font-size="28" font-weight="700" style="fill:#0555B6">80.6%</text>
+<text x="48" y="536" font-size="22" font-weight="700" style="fill:#0555B6">FOUR CANDIDATE PORTFOLIOS</text>
+<rect x="48" y="558" width="543" height="114" rx="16" fill="#fff" stroke="#D3E6F2"/>
+<g transform="translate(70 582)">
+<path d="M0 12 L22 0 L44 12 L22 25 Z M0 12 V36 L22 49 L44 36 V12 M22 25 V49 M12 6 L34 19" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<text x="136" y="595" font-size="25" font-weight="700" style="fill:#102B50">Build &amp; distribution</text>
+<text x="136" y="626" font-size="21" font-weight="400" style="fill:#102B50">Portable CMake, development trees,</text>
+<text x="136" y="653" font-size="21" font-weight="400" style="fill:#102B50">and useful Python packages.</text>
+<rect x="609" y="558" width="543" height="114" rx="16" fill="#fff" stroke="#D3E6F2"/>
+<g transform="translate(631 582)">
+<path d="M23 8 V23 M23 23 L5 36 M23 23 L41 36" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="23" cy="5" r="5" fill="none" stroke="#2091D0" stroke-width="3"/>
+<circle cx="5" cy="40" r="5" fill="none" stroke="#2091D0" stroke-width="3"/>
+<circle cx="41" cy="40" r="5" fill="none" stroke="#2091D0" stroke-width="3"/>
+</g>
+<text x="697" y="595" font-size="25" font-weight="700" style="fill:#102B50">Hydra reliability</text>
+<text x="697" y="626" font-size="21" font-weight="400" style="fill:#102B50">Material bindings, nested instances,</text>
+<text x="697" y="653" font-size="21" font-weight="400" style="fill:#102B50">and consistent live edits.</text>
+<rect x="48" y="689" width="543" height="114" rx="16" fill="#fff" stroke="#D3E6F2"/>
+<g transform="translate(70 713)">
+<path d="M8 44 V5 M8 24 H30 V5 M8 35 H40" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="8" cy="4" r="4" fill="none" stroke="#2091D0" stroke-width="3"/>
+<circle cx="30" cy="4" r="4" fill="none" stroke="#2091D0" stroke-width="3"/>
+<circle cx="43" cy="35" r="4" fill="none" stroke="#2091D0" stroke-width="3"/>
+</g>
+<text x="136" y="726" font-size="25" font-weight="700" style="fill:#102B50">Composition &amp; scale</text>
+<text x="136" y="757" font-size="21" font-weight="400" style="fill:#102B50">Variants, instancing,</text>
+<text x="136" y="784" font-size="21" font-weight="400" style="fill:#102B50">and animation timing.</text>
+<rect x="609" y="689" width="543" height="114" rx="16" fill="#fff" stroke="#D3E6F2"/>
+<g transform="translate(631 713)">
+<path d="M4 0 V43 M22 0 V43 M40 0 V43" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="-1" y="9" width="10" height="8" rx="2" fill="#2091D0"/>
+<rect x="17" y="28" width="10" height="8" rx="2" fill="#2091D0"/>
+<rect x="35" y="17" width="10" height="8" rx="2" fill="#2091D0"/>
+</g>
+<text x="697" y="726" font-size="25" font-weight="700" style="fill:#102B50">Metadata &amp; presentation</text>
+<text x="697" y="757" font-size="21" font-weight="400" style="fill:#102B50">Shader UI, text, LineStyle,</text>
+<text x="697" y="784" font-size="21" font-weight="400" style="fill:#102B50">and localization.</text>
+<text x="48" y="840" font-size="22" font-weight="700" style="fill:#0555B6">START WITH USEFUL, REVIEWABLE ACTIONS</text>
+<rect x="48" y="862" width="356" height="137" rx="16" fill="#FFFFFF" stroke="#D3E6F2"/>
+<text x="71" y="896" font-size="23" font-weight="700" style="fill:#2091D0">01</text>
+<text x="71" y="930" font-size="22" font-weight="700" style="fill:#102B50">Reconcile superseded work</text>
+<text x="71" y="960" font-size="20" font-weight="400" style="fill:#102B50">Compare residual needs</text>
+<text x="71" y="986" font-size="20" font-weight="400" style="fill:#102B50">with incorporated fixes.</text>
+<rect x="422" y="862" width="356" height="137" rx="16" fill="#FFFFFF" stroke="#D3E6F2"/>
+<text x="445" y="896" font-size="23" font-weight="700" style="fill:#2091D0">02</text>
+<text x="445" y="930" font-size="22" font-weight="700" style="fill:#102B50">Revalidate behavior</text>
+<text x="445" y="960" font-size="20" font-weight="400" style="fill:#102B50">Reproduce and measure</text>
+<text x="445" y="986" font-size="20" font-weight="400" style="fill:#102B50">on current revisions.</text>
+<rect x="796" y="862" width="356" height="137" rx="16" fill="#FFFFFF" stroke="#D3E6F2"/>
+<text x="819" y="896" font-size="23" font-weight="700" style="fill:#2091D0">03</text>
+<text x="819" y="930" font-size="22" font-weight="700" style="fill:#102B50">Advance existing PRs</text>
+<text x="819" y="960" font-size="20" font-weight="400" style="fill:#102B50">Verify each requirement</text>
+<text x="819" y="986" font-size="20" font-weight="400" style="fill:#102B50">before proposing new work.</text>
+<text x="48" y="1028" font-size="21" font-weight="700" style="fill:#102B50">Urgent correctness and security reports take precedence.</text>
+<text x="48" y="1076" font-size="22" font-weight="700" style="fill:#0555B6">A LIVING EVIDENCE LOOP</text>
+<rect x="48" y="1098" width="199" height="53" rx="12" fill="#E8F4FA"/>
+<text x="71" y="1132" font-size="24" font-weight="700" style="fill:#0555B6">Intake</text>
+<path d="M254 1124 H266 M260 1119 L266 1124 L260 1129" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="274" y="1098" width="199" height="53" rx="12" fill="#E8F4FA"/>
+<text x="297" y="1132" font-size="24" font-weight="700" style="fill:#0555B6">Map</text>
+<path d="M480 1124 H492 M486 1119 L492 1124 L486 1129" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="500" y="1098" width="199" height="53" rx="12" fill="#E8F4FA"/>
+<text x="523" y="1132" font-size="24" font-weight="700" style="fill:#0555B6">Recommend</text>
+<path d="M706 1124 H718 M712 1119 L718 1124 L712 1129" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="726" y="1098" width="199" height="53" rx="12" fill="#E8F4FA"/>
+<text x="749" y="1132" font-size="24" font-weight="700" style="fill:#0555B6">Decide</text>
+<path d="M932 1124 H944 M938 1119 L944 1124 L938 1129" fill="none" stroke="#2091D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="952" y="1098" width="199" height="53" rx="12" fill="#0555B6"/>
+<text x="975" y="1132" font-size="22" font-weight="700" style="fill:#FFFFFF">Follow through</text>
+<path d="M1051 1160 V1174 H148 V1160 M143 1165 L148 1160 L153 1165" fill="none" stroke="#2091D0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="395" y="1199" font-size="20" font-weight="400" style="fill:#102B50">New evidence and changed revisions</text>
+<text x="296" y="1222" font-size="18" font-weight="400" style="fill:#102B50">Verify implemented requirements; track pending decisions.</text>
+<rect x="0" y="1230" width="1200" height="120" rx="0" fill="#102B50"/>
+<text x="48" y="1264" font-size="25" font-weight="700" style="fill:#FFFFFF">Evidence for future Pixar and TAC discussions</text>
+<text x="48" y="1297" font-size="18" font-weight="400" style="fill:#D6EDFF">Snapshot: Oct 3–4, 2026; non-atomic. Full semantic reading unfinished.</text>
+<text x="48" y="1324" font-size="18" font-weight="400" style="fill:#D6EDFF">No independent builds or behavioral closure verification. Recommendations are preliminary.</text>
+</svg>
