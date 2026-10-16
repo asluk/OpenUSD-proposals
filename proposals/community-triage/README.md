@@ -29,8 +29,11 @@ alternatives, dependencies, and remaining uncertainty.
 The intended result is broader community coverage, better reuse of contributions,
 focused expert decisions, and reliable follow-through. A living disposition record
 would connect needs to accepted decisions, implementation, interoperability checks,
-and release or adoption. Recorded deferrals and declines would also leave useful
-rationale and revisit conditions. The benefits would be measured in operation.
+and release or adoption. Visible changes and rationale would let contributors
+help check that the integrated result still meets the original need, with credit
+preserved through subsequent revisions. Recorded deferrals and declines
+would leave useful rationale and revisit conditions. The benefits would be
+measured in operation.
 
 ![Continuous triage connects community needs to checked decisions, implementation paths, verified capabilities, and roadmap learning.](assets/triage-overview.png)
 
@@ -39,7 +42,9 @@ rationale and revisit conditions. The benefits would be measured in operation.
 **Navigate:** [Strategic purpose](#problem-and-strategic-purpose) ·
 [Operating model](#operating-model-and-agentic-assistance) ·
 [Lessons from other communities](#lessons-from-other-communities) ·
-[Workflow](#continuous-workflow) · [Measures](#measures-and-staged-adoption) ·
+[Workflow](#continuous-workflow) ·
+[Review and integration](#transparent-review-and-integration) ·
+[Measures](#measures-and-staged-adoption) ·
 [Discussion path](#discussion-path) ·
 [Initial evidence](#appendix-initial-evidence-and-candidate-portfolios) ·
 [Candidate register](#candidate-register)
@@ -60,6 +65,13 @@ part of a requirement, or lack release and adoption evidence. A deferred need ca
 become actionable when a dependency changes. Repeated investigation consumes
 expert time when these relationships and prior rationales are not maintained.
 
+Transparency makes that continuity useful to the community. Contributors and
+reviewers need to see how requirements, technical claims, and decisions change
+through revision and integration. Making substantive changes and their rationale
+visible gives them an opportunity to catch technical drift, contribute missing
+domain knowledge, and check that the delivered result meets the intended need.
+That extends review coverage and preserves useful context for later corrections.
+
 Triage identifies the need, its evidence, and the next useful question. Disposition
 records an authorized decision and rationale. Follow-through connects that decision
 to action and outcome. Together they serve five strategic purposes:
@@ -75,7 +87,7 @@ to action and outcome. Together they serve five strategic purposes:
 The process should work across changing components, repositories, and domains.
 Its scope follows community requirements and their relationships, including work
 across independently maintained implementations and evolving standards. Shared
-semantics, compatibility expectations, and reproducible checks provide common
+behavior, compatibility expectations, and reproducible checks provide common
 ground for tools, content, and agents to participate across domains. The initial
 inventory and recommendations supply concrete examples of preparation, with
 separate [research and trend analysis](research/triage-comparisons.md) to test
@@ -121,9 +133,12 @@ expose those constraints and help contributors take on suitable work.
 | Maintainers and standards authorities decide | Assess design, scope, priorities, implementation, integration, or specification questions through existing processes. | Authorized rationale, accepted next steps, unresolved objections, and revisit conditions. |
 
 Community participants follow through by implementing, reviewing, testing, and
-updating outcomes. Reusable knowledge then informs subsequent preparation. Domain
-experts contribute requirements and acceptance evidence; triage is not solely
-administrative work delegated to repository maintainers.
+updating outcomes. Agents and contributors can prepare comparisons between
+submitted work and public development updates, check material differences, and
+bring focused findings to maintainers. Maintainers decide how to integrate and
+release the result. These roles continue beyond an initial review or disposition.
+Domain experts contribute requirements and acceptance evidence; reusable knowledge
+informs subsequent preparation.
 
 Agentic assistance is a continuing operating pillar. An assistant would follow a
 bounded research objective across sources, perform the next relevant read or check,
@@ -195,6 +210,7 @@ flowchart TD
     E -->|Design or evidence needed| B
     E --> F["Implementation, extension, infrastructure, or standards path"]
     F --> G["Verify applicable requirements; track release and adoption"]
+    G -->|Material changes or new questions| B
     E --> H["Record deferral, decline, or acknowledged routing"]
     G --> I["Update residual needs and roadmap learning"]
     H --> I
@@ -224,6 +240,14 @@ alternatives and a requested decision; an accepted owner where available;
 blockers and revisit conditions; and decisions, verification, release, and remaining
 needs. Keep recommendation and authoritative state separate. A routed item records
 whether the receiving forum has acknowledged the handoff.
+
+For contributions selected for follow-through, connect existing PR discussion,
+submitted and exported revisions, available validation evidence, and release
+references as useful to the question being assessed. Record material differences
+and any information still needed to understand them. An unavailable internal
+record is an evidence limit, not proof that review or testing did not occur. The
+[integration practices below](#transparent-review-and-integration) describe how
+contributors could prepare these connections.
 
 Enumerate paginated collections and deduplicate identities. Read discussions,
 reviews, changed files, and linked evidence to the depth needed for each claim.
@@ -260,6 +284,44 @@ changes; unrelated changes should remain separate. Urgent correctness work can
 take precedence over broad coverage. The preliminary register supplies examples,
 not a permanent taxonomy or an approved ranking.
 
+### Transparent Review and Integration
+
+OpenUSD's [existing contribution workflow](https://openusd.org/release/contributing_to_usd.html)
+combines public PR review with internal integration and correctness and performance
+testing on production assets. Changes are then exported to the public development
+branch. The proposed capability would help community participants follow work
+across that boundary: connect the submitted contribution to the exported result,
+identify substantive differences, and prepare focused review of changed behavior
+or technical claims.
+
+Contributors and agents could assemble these comparisons from existing public
+records, making it easier for maintainers and domain experts to review the
+differences and address remaining questions. Where existing records leave a
+material gap, agree on the smallest additional handoff that would support useful
+review and correction.
+
+1. **Connect available records.** For a selected contribution, link the source PR
+   to the exported revision and relevant discussion or release notes. Identify
+   substantive differences and reuse existing explanations of their rationale.
+   Include generated artifacts where they affect what users receive.
+2. **Prepare focused community review.** Contributors and agents can check changed
+   behavior, technical claims, and examples against the integrated revision and
+   relevant contracts, then bring reproducible findings to maintainers. Public
+   development updates and release candidates provide review opportunities. Where
+   practical, earlier visibility of material revisions could add useful coverage;
+   the timing and form would be agreed with maintainers. This support fits the
+   existing integration process without adding a contributor approval gate.
+3. **Resolve specific gaps and follow corrections.** When a comparison cannot be
+   established or a substantive change lacks an accessible explanation, prepare
+   a precise question for maintainers. A link or short clarification may be enough.
+   Connect any resulting correction to the affected revision, checks, and release
+   status so subsequent contributors can reuse the finding.
+
+Preserve contributor credit as work is revised. Evaluate this support by additional
+useful review, errors identified, and easier follow-through relative to total
+preparation and maintainer effort. Start by establishing what existing records
+already provide and where additional information would materially help.
+
 ### Roadmap Feedback and Domain Evolution
 
 Demand briefs connect use cases to evidence, independent needs, alternatives,
@@ -290,6 +352,7 @@ duration is an optional evaluation choice, not the scope of the proposal.
 | Decision flow | Decision-ready cases, authorized dispositions, and waiting cases by stage, with rationale and blockers. Record time to assessment and disposition separately. |
 | Expert effort | Time per useful decision and per batch; compare cases of similar complexity with and without prepared records where feasible. |
 | Verified outcomes | Independent requirements satisfied, partial coverage, accepted work completed, and release/adoption evidence. Closures alone are insufficient. |
+| Review and integration visibility | For selected contributions, assess what existing public records let reviewers connect and check; record specific information gaps, useful findings, and resulting corrections. Count preparation and maintainer effort together. |
 | Roadmap and learning | Unmet needs surfaced, cross-group questions considered, prior evidence reused, and conclusions changed after new evidence. |
 
 For timing, report medians and upper percentiles where samples permit, plus the
@@ -311,8 +374,10 @@ The inventory and candidate register do not yet establish that result.
 Bring Pixar/OpenUSD maintainers a concrete operating proposal and checked examples.
 Discuss the desired continuity from requirements to outcomes, how contributors
 can support it, which evidence makes decisions useful, and the participation and
-review capacity available. Agree on a practical initial evaluation and how the
-record would be maintained and corrected.
+review capacity available. Map what existing public records already provide for
+following contributions through integration, and identify specific gaps that
+contributors could help bridge. Agree on a practical evaluation and any small
+additional handoffs needed to support it.
 
 Bring relevant AOUSD forums sourced questions about shared behavior, compatibility,
 domain needs, and dependencies between implementation and standards work. TAC
@@ -330,6 +395,7 @@ interfaces between existing processes.
 | Closure incentives obscure residual needs | Count independent requirements, partial coverage, rationale, and verified outcomes. |
 | Vocal or well-represented users dominate signals | State source limits and invite domain evidence and corrections. |
 | Recommendations become perceived assignments | Separate proposed actions from accepted owners and authorized decisions. |
+| Material changes are difficult for community reviewers to follow | Connect existing public records, prepare focused comparisons and checks, and ask maintainers about specific remaining gaps. |
 
 Labels and project boards can support discovery and workflow; deeper relationships
 can live in linked records. A versioned register allows evaluation before a
@@ -337,9 +403,11 @@ dedicated service. Ad hoc review can remain useful, while shared records preserv
 continuity between reviews. Staffing and stewardship remain necessary even with
 better automation.
 
-This proposal introduces no schema, file-format or runtime change, roadmap dates,
-automatic closure or merge policy, or new authority over repositories and standards
-groups. It proposes a continuing community capability and evidence for evaluating it.
+The proposed capability supports existing repository and standards processes.
+Review and integration practices would be agreed with the relevant maintainers;
+implementation and release decisions remain with those authorities. The proposal
+defines no schema, file-format or runtime change, roadmap dates, or automatic
+closure or merge actions.
 
 ## Questions for Review
 
@@ -348,6 +416,7 @@ groups. It proposes a continuing community capability and evidence for evaluatin
 3. What evidence and verification conditions make a recommendation decision-ready or an outcome resolved?
 4. How should responsibilities and handoffs work across maintainers, independent contributors, and relevant AOUSD forums?
 5. What coverage, quality, effort, and outcome measures would justify sustained participation and wider scope?
+6. What existing records support community review through integration, and where would a small additional handoff materially improve coverage?
 
 ## References and Proposal Precedents
 
@@ -366,6 +435,7 @@ The original diagrams use blues and layered geometry inspired by
 [AOUSD's public website](https://aousd.org/) and [media assets](https://aousd.org/media-assets/),
 with clean sans-serif typography. They illustrate this working proposal and its
 qualified supporting evidence.
+
 ## Appendix: Initial Evidence and Candidate Portfolios
 
 The following findings are from retained, non-atomic October 3–4, 2026 snapshots.
