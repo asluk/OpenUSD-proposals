@@ -6,201 +6,218 @@
 
 ## Summary
 
-This proposal defines requirements for ownership and naming isolation across USD
-extensions. An owner reserves an extension name and uses prescribed naming
-conventions for the schemas, properties, and other identifiers it introduces.
-One reservation establishes the extension's naming scope. Individual identifiers
-within that scope require no separate reservation or feature approval.
+This proposal establishes requirements for naming independently governed USD
+extensions. An owner reserves an extension's naming scope and uses prescribed
+conventions for the schema identifiers, property names, and other covered names
+it introduces. One reservation must suffice for those conforming names without
+separate allocation or approval of each identifier.
 
-The goal is to let independently governed capabilities develop and deploy in
-parallel while maintaining predictable USD behavior across tools and over time.
-The extension model, including its validation requirements, must be independent
-of OpenUSD's plugin system. Vendors can declare supported combinations through
-their own profiles; independent deployment implies no compatibility claim for
-arbitrary combinations.
+The naming contract must establish ownership, distinguish independent definitions,
+detect naming conflicts, and support identifier transitions. Its rules and
+validation must be usable independently of OpenUSD's plugin system. Reservation
+must be lightweight enough to support internal prototyping without a complete
+feature specification or a commitment to publish.
 
-This is a requirements proposal. Concrete naming syntax, reservation procedures,
-and governance responsibilities remain to be selected. It develops the Namespace
-and Prefix Isolation requirement in
-[Sean Snyders' USD Extension Ecosystem Governance proposal](https://docs.google.com/document/d/1zL7Igy5QN6bTHZavczkjaW2U5TBk95hP_Ooa_zL-tJc/edit).
+This proposal develops the Namespace and Prefix Isolation requirement in the
+[Steering Committee's USD Extension Ecosystem Governance working proposal](https://docs.google.com/document/d/1zL7Igy5QN6bTHZavczkjaW2U5TBk95hP_Ooa_zL-tJc/edit),
+led by Sean Snyders. Naming isolation is one foundation of that broader work.
+It establishes how definitions are named and distinguished; it does not approve
+their semantics, establish implementation support, or define consumer behavior.
+Concrete syntax, reservation procedures, and maintenance responsibilities remain
+open for review.
 
 ## Motivation
 
-Stakeholders are already developing and deploying USD schemas. Without common
-ownership and naming rules, independent definitions can acquire the same
-identifiers. Depending on the surface and consumer, the result can be a
-registration error, ambiguous interpretation, or silent use of the wrong
-definition. Divergent conventions also increase the cost of moving content
-between tools and reconciling independently developed capabilities.
+Stakeholders are already developing and deploying USD schemas. Independent
+definitions can acquire the same schema identifiers or property names, producing
+registration errors, ambiguous interpretation, or silent use of the wrong
+definition. The problem affects both the names registered by implementations
+and those exchanged in authored content.
 
-USD exposes several naming surfaces: typed schema identifiers, applied API schema
-identifiers, property names, metadata keys, capability and profile identifiers,
-file format identifiers, and asset resolver identifiers. A library name or runtime
-registration convention does not necessarily qualify the identifiers authored
-into a scene. Isolation must cover the names exchanged in content as well as
-those registered by an implementation.
+A library prefix does not necessarily qualify a scene-facing schema name. A
+typed schema name does not automatically qualify its associated applied APIs
+or properties. Property opinions may be authored in separate layers without a
+local type declaration. A naming convention must address these surfaces together
+so independently authored content can be combined without confusing unrelated
+definitions.
 
-Common rules support two related goals. Reliability requires predictable content
-across tools and over time. Leadership requires faster deployment in parallel
-across domains, with a path to shared standards where useful. Establishing
-ownership and naming scope should enable that work without requiring central
-approval of every feature.
+Common naming rules contribute to reliable content across tools and over time.
+Lightweight reservation also supports faster development in parallel across
+domains. Those are contributions to the broader reliability and leadership
+goals, not claims that naming alone provides behavioral interoperability or a
+complete pathway for extension deployment.
 
-Naming isolation is distinct from discovery. A catalog can help people find
-existing work, but the naming contract must be usable before a complete
-discovery or distribution service exists. Conversely, a unique prefix does not
-establish that a consumer implements the extension or that its behavior is
-compatible with another extension.
+Naming isolation must be usable before a complete discovery or distribution
+service exists. Discovery can help people find existing work, but listing an
+extension neither establishes ownership by itself nor prevents its identifiers
+from colliding.
 
-## Goals and Scope
+## Scope
 
-The initial naming conventions cover typed schemas, applied API schemas, and
-properties. They must also define how these names relate to metadata keys and
-capability/profile identifiers so those surfaces do not develop incompatible
-ownership conventions.
+The initial contract covers typed schema identifiers, applied API schema
+identifiers, and property names. It must explain how their ownership scopes
+relate to metadata keys and capability/profile identifiers so these surfaces do
+not develop contradictory naming conventions. File format and asset resolver
+identifiers remain in the inventory for subsequent work.
 
-The proposal requires:
+The proposal addresses allocation of naming scope, naming conventions, delegation,
+collision handling, naming validation, and identifier transitions. Identifier
+migration includes changes caused by ownership transfer or incompatible revisions;
+this proposal does not define a general semantic versioning system.
 
-- Legible ownership and isolation of independent definitions, including opinions
-  authored in separate layers.
-- Lightweight entry for internal prototypes and independently deployed extensions.
-- Explicit policies for incompatible revisions and ownership transfers.
-- Validation rules that any implementation can use, with proportionate cost.
-- A boundary between independently governed domain behavior and changes to shared
-  USD contracts.
-
-File format and asset resolver identifiers remain in the extension inventory for
-subsequent work. Binary loading, distribution, sandboxing, certification, and a
-complete extension catalog are outside this proposal. It also does not define
-the full shared baseline, select a naming syntax, or prescribe the organization
-of a multi-part specification.
+The broader extension model must address dependencies, unsupported capabilities,
+behavioral compatibility, support claims, deployment policies, and standardization.
+This proposal identifies where those concerns use naming information. It does
+not set their policies. Binary loading, distribution, sandboxing, certification,
+and a complete extension catalog are also outside its scope.
 
 ## Terminology
 
-- **Owner:** The vendor, community project, multi-organization collaboration, or
-  standards body governing an extension's definitions.
-- **Extension reservation:** A record of an extension name and its owner. Together
-  with mandatory naming conventions, it establishes the scope for identifiers
-  introduced by that extension.
-- **Prefix:** The leading token or sequence of tokens identifying ownership or
-  scope in a name.
-- **Namespace:** The space of identifiers scoped by a prefix.
-- **Baseline USD:** The shared capabilities and behavioral commitments on which
-  extensions rely. This is a working term for this proposal, not an agreed
-  inventory or a synonym for everything shipped in OpenUSD.
-- **Additive extension:** Domain interpretation or computation built on existing
-  USD composition and value resolution. Its authored opinions can change resolved
-  values through ordinary USD mechanisms without changing those mechanisms.
+- **Owner:** The vendor, community project, collaboration, or standards body
+  authorized to govern a naming scope. Naming authority is distinct from
+  intellectual-property ownership of an asset or implementation.
+- **Extension:** A related set of definitions governed by an owner. This term
+  identifies the unit whose naming scope is reserved; it does not prescribe how
+  the definitions are packaged, loaded, or standardized.
+- **Reservation:** An allocation associating an extension name, its owner, and
+  the naming scope the owner may use under the applicable conventions.
+- **Prefix:** The leading token or sequence of tokens denoting ownership or
+  scope in an identifier.
+- **Namespace:** The space of names scoped by a prefix or equivalent qualification.
+- **Naming surface:** A class of identifiers with its own syntax and lookup
+  context, such as typed schema identifiers or property names.
 
 Ownership, maturity, version, and implementation support are separate facts.
-Ownership identifies who controls a definition. Maturity describes its review or
-production status. Version identifies a semantic contract. Implementation support
-is a claim requiring evidence. A maturity marker such as `Prelim` does not
-reserve ownership, and an owner's name does not imply engine exclusivity.
+A marker such as `Prelim` describes maturity, not ownership. A project name does
+not establish engine exclusivity. Implementing an existing definition does not
+create a new naming authority for it.
 
 ## Functional Requirements
 
 ### R1. Ownership Legibility
 
-The naming convention must make the governing ownership scope apparent from an
-extension identifier without relying on a pipeline-specific convention.
+The naming convention must make an identifier's governing ownership scope
+apparent without relying on a pipeline-specific convention. The relationship
+between that scope and its owner must be verifiable against the reservation
+information. A product name or trademark alone does not establish an allocation.
 
 ### R2. Hierarchical Scoping
 
-The convention must support both an owner hierarchy and a domain or feature
-hierarchy. Delimiter, casing, and token order may vary by naming surface.
+The convention must support owner hierarchies and domain or feature hierarchies.
+It must distinguish independent extensions under the same owner as well as
+extensions governed by different owners. Delimiter, casing, and token order
+remain choices for the concrete convention.
 
-### R3. Owner Sub-Hierarchies
+### R3. Owner Sub-Hierarchies and Delegation
 
-An owner must be able to define its own sub-hierarchy independently of the
-extension's domain hierarchy. The rules must support both a flat owner name and
-nested ownership scopes without assigning fixed meanings to the intermediate
-levels. This applies equally to vendors, projects, collaborations, and standards
-bodies.
+An owner must be able to define and delegate sub-scopes independently of the
+domain hierarchy. Both a flat owner scope and nested scopes must be expressible.
+The convention must not assign fixed meanings to an owner's intermediate levels.
+Delegation must identify the authority responsible for the delegated scope.
 
-### R4. Naming Conventions Across Surfaces
+### R4. Naming Across Surfaces
 
-Each covered surface must have specific naming rules derived from the extension
-reservation and its ownership scope. Typed schema names, applied API identifiers,
-and property names must all follow their applicable rules. Syntax may differ by
-surface, but each convention must satisfy R1-R3 and preserve isolation when
-content is composed from independently authored layers.
+Every covered surface must have specific rules connecting an extension's
+reservation to the identifiers it introduces. Syntax may differ by surface,
+but the rules must preserve ownership legibility and isolate independent
+definitions, including opinions authored in separate layers.
 
-One extension reservation must suffice for all conforming identifiers it
-introduces. Individual identifiers require no additional reservation. Reusing an
-existing definition retains that definition's governing identity; implementing it
-does not create a separately owned definition.
+One extension reservation must suffice for all names it introduces in conformance
+with those rules. Individual identifiers need no further reservation. Reuse of
+an existing definition retains its existing identity and ownership scope.
 
-### R5. Reservation and Collision Handling
+### R5. Allocation and Collision Handling
 
-The reservation procedure must establish the extension name, its owner, and any
-delegated sub-scopes. The naming and validation rules must identify violations
-and conflicting definitions and specify how they are reported and resolved.
-A consumer must not silently substitute a conflicting definition.
+The naming contract must establish how ownership and delegation are recorded,
+what constitutes a conflicting allocation or definition, and how conflicts are
+reported and resolved. It must distinguish intended reuse of a definition from
+independent definitions claiming the same name. A consumer must not silently
+substitute a conflicting definition.
 
-Reservation establishes naming scope. It does not approve feature semantics or
-make a support or endorsement claim.
+A reservation allocates naming scope. It does not approve extension semantics
+or make an endorsement, compatibility, or implementation-support claim.
 
-### R6. Evolution and Ownership Transfer
+### R6. Identifier Evolution and Ownership Transfer
 
-Independently governed extensions may remain independent or seek broader
-agreement. Work may enter directly under community or multi-organization
-governance. Adoption or a change of maturity alone does not transfer ownership
-or imply AOUSD ratification or baseline inclusion.
+The contract must provide policies for changes to reserved scope and derived
+identifiers. Identifiers do not inherently survive an ownership transfer.
+Transfers must identify predecessor and successor scopes, grace periods, and
+migration paths for affected names.
 
-Identifiers do not inherently survive a transfer of ownership. A transfer must
-define the relationship between predecessor and successor definitions, grace
-periods, and migration paths. Incompatible revisions likewise require explicit
-version and compatibility policies. Both kinds of transition must account for
-typed names, applied API identifiers, properties, and mixed composed content.
+Policies must account for typed names, applied API identifiers, property names,
+and mixed composed content. They must also state how identifiers distinguish
+incompatible revisions where needed. Wider adoption or a change in maturity
+alone does not necessarily change ownership. Naming policies must not impose a
+universal promotion or renaming sequence.
 
-### R7. Lightweight Entry
+### R7. Lightweight Reservation
 
-Beginning an internal prototype must be as lightweight as reserving an extension
-name. Reservation must not require a complete specification, implementation,
-commitment to publish, or AOUSD approval of feature semantics. Conforming
-identifiers can then be defined without individual approvals.
-
-Documentation and evidence increase with the publication, compatibility, support,
-or standardization commitments being made. Additive domain behavior can develop
-and deploy among supporting consumers without central feature approval. Changes
-to existing shared contracts, or use of another owner's namespace, require the
-relevant agreement.
+Beginning an internal prototype must be as lightweight as reserving an extension's
+naming scope. Reservation must not require a complete specification,
+implementation, commitment to publish, or review of feature semantics. An owner
+can define conforming names within the allocated scope without individual
+approvals. The reservation procedure and upkeep must remain proportionate to
+the naming authority being allocated.
 
 ### R8. Implementation Independence
 
-The vendor extension paradigm, naming conventions, and validation contract must
-be definable and usable independently of OpenUSD's plugin system. Specify the
-required inputs, conformance conditions, and diagnostic meaning so other
-implementations can provide equivalent validation. OpenUSD may implement the
-contract through its existing facilities without making them prerequisites for
-other implementations.
+The naming contract and its validation must be definable and usable without
+OpenUSD's plugin system, schema registry, code generator, or dynamic loading.
+Specify naming rules, required inputs, and diagnostic meaning independently of
+those facilities. OpenUSD may use them to implement the contract; other
+implementations must be able to provide equivalent naming validation without
+adopting them.
 
-### R9. Validation and Performance
+### R9. Naming Validation and Cost
 
-Naming conformance and collision detection are validation concerns. The contract
-must distinguish checks on extension definitions from checks on authored layers
-or composed content and identify the inputs needed for each.
+Validation must distinguish checks on reservations and extension definitions
+from checks on authored layers or composed content. Its results must state
+their scope and identify missing inputs that prevent a conformance determination.
+The absence of a detected collision must not imply that definitions outside the
+checked inputs were examined.
 
-Validation must support appropriate workflow boundaries and reuse of results
-under stated validity conditions. Full naming validation must not be required on
-every composition operation or value query. The requirements do not prescribe
-a caching strategy or assume that validation has no cost.
+Naming checks must support appropriate workflow boundaries and reuse of valid
+results. Full validation must not be required on every composition operation or
+value query. These requirements neither prescribe a caching strategy nor assume
+that validation has no cost.
 
-Validation of naming or declarations does not prove semantic compatibility,
-implementation support, or support for a combination of extensions.
+## Naming Contract
 
-## Design Considerations
+### Allocation and Authority
 
-### Naming Scope and Hierarchy
+A concrete convention must explain the relationship between owner scope,
+extension name, and the names introduced by that extension. An owner may govern
+several extensions, and a collaboration may be the owner from the outset. The
+allocation must distinguish their scopes without requiring that every extension
+begin as a single-vendor effort.
 
-The extension reservation and naming conventions work together. Reserving only
-the extension name is insufficient if the schema and property names it
-introduces remain unconstrained. Once those rules are defined, reserving each
-individual identifier would add unnecessary administration.
+The reservation information must be sufficient to identify the owner, the
+allocated scope, and any relevant delegation or transition. The exact record
+format, allocation procedure, and means of obtaining that information remain
+design choices. The allocation must be unambiguous without requiring a complete
+catalog of every extension, definition, or implementation.
 
-The following scopes illustrate the two hierarchy axes. They do not prescribe
-syntax or allocate names:
+Reserving an extension name is sufficient only in conjunction with naming rules
+that isolate its derived identifiers. Administrative review concerns the naming
+allocation. Whether the extension's feature semantics require any other review
+belongs to the broader extension-governance process.
+
+### Names Across Surfaces
+
+The convention must specify how the same reservation governs typed schema names,
+applied API names, and property names. It must also explain how the allocated
+scope is recognizable when a property opinion appears without a local type or
+API declaration. Association with a typed schema is not a substitute for a rule
+on a separately addressable identifier.
+
+Names on different surfaces need not share a literal spelling. They must have
+an unambiguous relationship to the reservation under the rules for their lookup
+contexts. Internal implementation names and names authored into content must be
+identified separately. API instance names likewise must not be confused with
+ownership qualification of the API definition.
+
+Owner and domain hierarchy are independent axes. The following examples
+illustrate that distinction, not an allocated scope or prescribed syntax:
 
 | Owner hierarchy | Domain hierarchy | Illustrative combined scope |
 |---|---|---|
@@ -208,182 +225,135 @@ syntax or allocate names:
 | `yoyodyne.tierA` | `dimensional.contabulator` | `yoyodyne.tierA.dimensional.contabulator` |
 | `yoyodyne` | `dimensional.contabulator` | `yoyodyne.dimensional.contabulator` |
 
-An owner's intermediate levels may represent working groups, divisions, tiers,
-or another structure of its choosing. `yoyodyne` is the placeholder vendor used
-in the Profiles proposal. A shared domain token such as `brep` does not itself
-establish ownership.
+An owner's levels might represent working groups, divisions, or another internal
+structure. `yoyodyne` is the placeholder used in the Profiles proposal. Owner-first
+naming is a candidate, but the requirements do not select token order or casing.
 
-Owner-first naming is one candidate. Other token orders must still make
-ownership clear and isolate independently governed definitions. A product name,
-trademark, internal library prefix, or runtime registration mechanism does not
-automatically reserve every scene-facing identifier.
-
-### Shared Behavior and Independent Extensions
-
-Baseline commitments should reference existing specifications and versions,
-including the [AOUSD Core Specification](https://aousd.org/usd-core-specification/),
-and identify additional shared contracts where needed. They should not form a
-second Core Specification or depend on inclusion in an OpenUSD distribution.
-
-An additive extension interprets or computes from normally resolved USD values.
-Geospatial positioning and B-Rep illustrate how new domain behavior can require
-integration with shared facilities such as
-[UsdGeom transforms](https://openusd.org/release/api/class_usd_geom_xformable.html).
-Using an existing contract, adding an integration requirement for supporting
-consumers, and changing that contract are different commitments. A new
-integration requirement alone does not require central governance. Redefining an
-existing shared identifier or changing shared composition, value-resolution, or
-behavioral rules requires the relevant broader agreement.
-
-Published extensions must state their semantics, baseline/version dependencies,
-and behavior when a consumer lacks support. Preserving data is distinct from
-interpreting it. Published
-[Core Specification 1.0.1](https://github.com/aousd/specifications-public/blob/main/core/1.0.1/core_spec.md#extension-metadata-fields)
-leaves reading and authoring unknown extension metadata fields to implementations
-and does not permit those fields to be required to consume a layer. Its
-[schema scope](https://github.com/aousd/specifications-public/blob/main/core/1.0.1/core_spec.md#scope-5)
-also leaves schema definition and ingestion mechanisms implementation-defined.
-These provisions do not establish blanket preservation of arbitrary extension
-data through every operation. Expectations must identify the surface, operation,
-dependency, and relevant version.
-
-### Profiles and Support Claims
-
-Independent extensions can prescribe incompatible domain behavior even when
-their names are isolated and each is additive. Two extensions might, for
-example, direct the pose of the same robot link. Neither independent deployment
-nor naming conformance claims that the combination is supported.
-
-Vendors can define their own profiles declaring supported combinations. The
-mapping from extension identifiers to capability and profile identifiers must
-be explicit, as must the evidence behind a support claim.
-
-The current
-[UsdProfiles overview](https://github.com/PixarAnimationStudios/OpenUSD/blob/dev/docs/user_guides/schemas/UsdProfiles/overview.md)
-distinguishes capability usage and compatibility claims from the registry that
-loads capability definitions. [ClaimsAPI](https://github.com/PixarAnimationStudios/OpenUSD/blob/dev/docs/user_guides/schemas/UsdProfiles/ClaimsAPI.md)
-supports degradation classes (`hard`, `soft`, and `enhancement`) and profile
-compatibility claims with exceptions. It provides a candidate declaration
-mechanism, not proof of conformance or a namespace reservation system.
-
-The semantics of these declarations and queries must remain distinct from how
-an implementation discovers definitions. Another implementation could obtain
-equivalent definitions from a manifest, database, or service without adopting
-OpenUSD's `plugInfo.json` registry mechanism.
+Existing shared definitions may be reused under their own identities. The naming
+rules apply to definitions an extension introduces; they do not require an
+implementer to rename another owner's definition. Adoption of the convention
+also needs a transition policy for existing names, rather than assuming that
+all deployed content can be renamed immediately.
 
 ### Validation
 
-Naming checks belong within the broader validation paradigm represented by
+Naming validation falls within the broader validation paradigm represented by
 OpenUSD's
 [`usdValidation` framework](https://openusd.org/dev/api/md_pxr_2usd_validation_2usd_validation_2_r_e_a_d_m_e.html).
-The framework supports core, schema, and client rules, with validators registered
-through plugins or directly through registry APIs.
-[`UsdValidationContext`](https://openusd.org/dev/api/class_usd_validation_context.html)
-can run selected validators over layers, stages, or prims.
+The framework provides an implementation reference, not the definition of naming
+conformance. Its APIs, plugins, and registry must not become normative inputs
+to an otherwise implementation-independent contract.
 
-These facilities provide an implementation reference. The extension contract
-must specify validation inputs, conformance conditions, and diagnostics
-independently of those APIs. A scene alone may not contain enough information
-to establish ownership or identify the applicable definition; a validator may
-also need reservation records and extension definitions. Missing inputs must
-not be mistaken for successful validation of the corresponding requirements.
+Validation rules must identify which inputs support each check. Reservation
+checks examine allocation and delegation. Definition checks examine whether
+introduced names conform to the allocated scope and whether supplied definitions
+conflict. Content checks examine names in the relevant authored or composed
+context using the applicable definitions and reservation information.
 
-Checks can run when definitions are published or installed, and at asset or
-workflow boundaries appropriate to the check. Definition checks and composed
-content checks have different scopes and costs. The contract should permit
-reuse of valid results without imposing a particular scheduler or runtime hook.
+A scene alone may not contain all those inputs. A validator must distinguish
+nonconformance from an inability to determine conformance. Definitions can be
+checked when published or installed; content checks can run at suitable asset
+or workflow boundaries. Results may be reused while their stated validity
+conditions hold. No scheduler, transport protocol, or cache design is selected.
 
-### Versioning and Migration
+Naming validation establishes only the naming conditions it checked. It does not
+verify extension semantics, approve a support claim, or prove that a combination
+of extensions behaves correctly.
 
-Ownership migration extends the existing schema-evolution problem. OpenUSD's
-[schema-versioning design](https://openusd.org/dev/wp_schema_versioning.html)
-distinguishes identifiers, families, and major versions. `Cylinder` and
-[`Cylinder_1`](https://openusd.org/dev/api/class_usd_geom_cylinder__1.html)
-provide separate definitions; the latter exposes top and bottom radii. Different
-prims in a composed scene can use different versions. Opinions on the same prim
-resolve to a single typed-schema identifier without automatically translating
-an old property representation into a new one.
+### Identifier Evolution
 
-An ownership transfer can change the prefix, schema family, and property names.
-Current schema-family/version machinery does not by itself express that entire
-relationship. The transition policy must identify predecessor and successor
-contracts, grace periods, migration paths, and expectations for mixed content.
+An ownership change can affect the reserved extension name, schema identifiers,
+and property prefixes. Its transition policy must identify which names change,
+the relationship between old and new names, the grace period, and the migration
+path. It must state what happens when content uses both naming generations.
 Automatic aliasing or conversion is not assumed.
+
+Schema versioning provides relevant precedent. OpenUSD's
+[versioning design](https://openusd.org/dev/wp_schema_versioning.html)
+distinguishes schema identifiers, families, and major versions. `Cylinder` and
+[`Cylinder_1`](https://openusd.org/dev/api/class_usd_geom_cylinder__1.html)
+have separate definitions, with the latter exposing top and bottom radii.
+Different prims can use different versions; opinions on one prim resolve to one
+typed-schema identifier without automatic translation of the old properties.
+
+Ownership migration extends that problem because prefixes, families, and property
+names can change together. Existing schema-family machinery does not by itself
+express the full relationship. This proposal requires explicit identifier relationships and
+migration policies around those changes; the semantic conversion of data and
+general schema-versioning policy remain separate work.
+
+## Relationship to Extension Governance
+
+The Steering Committee's broader extension work addresses discovery,
+dependencies, compatibility, trust, lifecycle, and standardization. Names are
+inputs to that work. The distinction is consequential in several places:
+
+| Broader concern | Contribution of the naming contract |
+|---|---|
+| Discovery and distribution | Identifiable owners and definitions that a catalog can reference. Reservation does not require a complete catalog or package system. |
+| Dependencies and profiles | Unambiguous identifiers for declarations to reference. Naming does not define dependency satisfaction or profile compatibility. |
+| Unsupported capabilities | Distinguishable names even when a consumer lacks an implementation. Consumer fallback, warnings, refusal, or preservation obligations are defined elsewhere. |
+| Independent deployment and shared behavior | Naming authority for an extension's own definitions. A prefix grants no authority to redefine another owner's names or shared behavioral contracts. |
+| Standardization and maturity | Explicit ownership and identifier transitions. Adoption, review status, ownership transfer, and standardization are distinct events. |
+
+The broader vendor extension model also needs implementation-independent
+contracts. This proposal establishes that requirement for its naming and
+naming-validation portion. It does not settle the wider model by selecting an
+OpenUSD plugin mechanism, a shared baseline, an additive-behavior boundary, or a
+support-claim policy. Vendors' profiles can describe supported combinations;
+naming conformance itself carries no such claim.
 
 ## Precedents and Alternatives
 
-### glTF and OpenGL Extensions
-
 The [glTF extension process](https://github.com/KhronosGroup/glTF/blob/main/extensions/README.md)
-provides a useful precedent for lightweight allocation. A vendor requests a
-prefix through a GitHub issue containing the prefix, vendor name, and URL or
-contact. Membership is not required, and a completed extension specification is
-not an input to prefix reservation. The
+separates lightweight prefix allocation from publication of feature
+specifications. A prefix request supplies a vendor name, requested prefix, and
+URL or contact through a GitHub issue; membership and a completed feature
+specification are not prerequisites. Its
 [prefix table](https://github.com/KhronosGroup/glTF/blob/main/extensions/Prefixes.md)
-records companies and projects. The
-[Bevy request](https://github.com/KhronosGroup/glTF/issues/2497), for example,
-is a short request with a contact URL. Naming rules and the process for publishing
-an extension specification are specified separately.
+records companies and projects. This illustrates how an allocation procedure
+can remain small while naming rules govern identifiers introduced under it.
 
 The current
 [OpenGL registry instructions](https://github.com/KhronosGroup/OpenGL-Registry#defining-new-extensions)
-separate reserving enumerant blocks through a small XML-file pull request from
-completing and registering an extension specification. Allocation becomes
-official when the reservation is merged. The repository cautions that its older
-process documents are largely outdated.
-
-The applicable principle is separating administrative allocation from approval
-of feature semantics. USD need not adopt OpenGL's numeric allocation scheme,
-and a glTF owner-prefix reservation is not identical to a USD extension-name
-reservation. USD also needs explicit conventions covering each schema and
-property naming surface, including separately authored layers.
-
-Neither precedent requires a universal vendor-to-multi-vendor-to-standard
-sequence. The glTF registry distinguishes prefix categories from specification
-maturity and includes ratified extensions retaining `EXT` names. Wider adoption,
-ownership transfer, and standardization must be treated as distinct events.
-
-### USD Profiles
+similarly separate reservation of shared enumerant resources from completion and
+registration of an extension specification. USD need not adopt numeric allocation
+or reproduce every Khronos process. The relevant precedent is separating naming
+administration from feature approval.
 
 [USD Profiles and Capabilities](https://github.com/PixarAnimationStudios/OpenUSD-proposals/tree/main/proposals/profiles)
-provides an existing naming and declaration precedent. Its proposal history
-includes an illustrative vendor-to-working-group-to-core progression; that
-example does not establish a mandatory promotion or renaming sequence here.
-Current implementation documentation is the reference for the shipped APIs.
+provides a USD naming precedent and demonstrates why capability identifiers also
+need ownership conventions. Its illustrative vendor-to-working-group-to-core
+progression does not establish a mandatory renaming sequence. The glTF registry
+likewise distinguishes prefix categories from maturity and includes ratified
+extensions retaining `EXT` names.
 
-### Other Naming Approaches
+[IETF RFC 6838](https://www.rfc-editor.org/rfc/rfc6838) provides an allocation
+precedent through media-type registration trees. In contrast,
+[custom-element naming rules](https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name)
+separate custom names from built-in names without isolating independently chosen
+custom names from one another. A maturity marker such as `Prelim` has a similar
+limitation for unrelated preliminary USD extensions.
 
-[IETF RFC 6838](https://www.rfc-editor.org/rfc/rfc6838) uses registration trees for
-media types, including vendor and personal trees. It offers a precedent for
-explicit allocation and ownership records, but USD need not reproduce that
-registration process.
-
-[W3C custom elements](https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name)
-use a naming rule that separates custom names from built-in element names. That
-structural separation alone does not isolate independently chosen custom names.
-Similarly, a maturity prefix such as `Prelim` cannot distinguish two unrelated
-preliminary USD extensions.
-
-Package qualification is another way to scope identifiers. To meet this
-proposal's requirements, it would need to preserve legible ownership and naming
-isolation in exchanged content and separately authored layers. Neither a
-package-local short name nor a discovery catalog alone provides that contract.
+Package qualification is another possible scoping mechanism. It must still
+satisfy ownership legibility and preserve identity when names move between
+dependency sets or appear in separately authored layers. Neither short names
+within a package nor an index of implementations alone establishes those rules.
 
 ## Case Studies
 
-### B-Rep Preliminary Schemas
+### B-Rep
 
 The [B-Rep prefix change](https://github.com/aousd/OpenUSD-proposals/pull/2)
-illustrates why each naming surface needs a rule. In the
+exposes several naming surfaces. In the
 [reviewed revision](https://github.com/umhoefer/OpenUSD-proposals/commit/3f3350ae7bf45cc9c06c2d566223d3579c0aacc1),
-the typed schema is `PrelimBrepArray` and the library prefix is `PrelimUsdSolid`.
-Applied API names such as `BrepPointAPI` and `BrepCurve3dNurbAPI` and the `brep:`
-property prefix do not carry the same marker. The work was developed through
-the Geometry Working Group and involved multiple organizations; a single-vendor
-owner would not describe its stewardship accurately. `Prelim` identifies
-maturity, not ownership.
+the typed name is `PrelimBrepArray`, the library prefix is `PrelimUsdSolid`, and
+applied APIs include `BrepPointAPI` and `BrepCurve3dNurbAPI`. Properties use `brep:`.
+The work involves multiple organizations through the Geometry Working Group;
+single-vendor ownership would not describe that stewardship accurately.
+`Prelim` identifies maturity but does not reserve ownership.
 
-The following illustrative excerpt is not a complete B-Rep asset:
+An illustrative excerpt shows the distinct identifiers:
 
 ```usda
 def PrelimBrepArray "Cube" (
@@ -395,94 +365,88 @@ def PrelimBrepArray "Cube" (
 }
 ```
 
-The type name, API identifiers, property names, and API instance names are
-different surfaces. `libraryPrefix` qualifies an internal type name but does
-not automatically qualify every scene-facing identifier. A property opinion can
-also be authored in an override layer without a local type declaration or
-`apiSchemas` opinion. Its interpretation then depends on the composed prim and
-applicable schema definition.
+This is not a complete asset or a proposed final spelling. The naming convention
+must relate the typed name, each API definition, and the property prefix to the
+reserved scope. API instances such as `vertexPoint` and `edge3dNurb` do not
+reserve the API definition's name. Property opinions in separate layers must
+remain distinguishable without assuming a local type declaration.
 
-Applicability does not reserve a name. `apiSchemaCanOnlyApplyTo` guides
-[`CanApplyAPI`](https://github.com/PixarAnimationStudios/OpenUSD/blob/v26.08/pxr/usd/usd/prim.cpp#L645);
-[`ApplyAPI`](https://github.com/PixarAnimationStudios/OpenUSD/blob/v26.08/pxr/usd/usd/prim.cpp#L825)
-does not itself enforce that target list. Another definition of `BrepPointAPI`
-can still collide regardless of intended target types.
+Applicability also does not reserve a name. `apiSchemaCanOnlyApplyTo` guides
+[`CanApplyAPI`](https://github.com/PixarAnimationStudios/OpenUSD/blob/v26.08/pxr/usd/usd/prim.cpp#L645),
+while [`ApplyAPI`](https://github.com/PixarAnimationStudios/OpenUSD/blob/v26.08/pxr/usd/usd/prim.cpp#L825)
+does not itself enforce the target list. Another independent definition of
+`BrepPointAPI` can still collide regardless of intended target types.
 
-An earlier revision used the internal type name
-`PrelimUsdSolidPrelimBrepArray` in four applicability entries. The repeated
-`Prelim` follows from combining the library prefix and class name; it was not
-itself the error. Those entries require the schema identifier `PrelimBrepArray`.
-[The October 5 correction](https://github.com/aousd/OpenUSD-proposals/pull/2#issuecomment-5998372106)
-is present in the reviewed revision. This resolves the source lookup issue;
-generated-plugin end-to-end validation is a separate task.
+The distinction between internal and scene-facing names matters here. Four
+applicability entries previously used `PrelimUsdSolidPrelimBrepArray`; those
+entries require the schema identifier `PrelimBrepArray`. The repeated `Prelim`
+was not itself the error. The
+[October 5 correction](https://github.com/aousd/OpenUSD-proposals/pull/2#issuecomment-5998372106)
+is present in the reviewed revision. This is a source-level naming observation,
+not generated-plugin end-to-end verification.
 
-One extension reservation must cover the typed name, applied API names, and
-properties through their respective naming rules. Changing maturity alone need
-not transfer ownership. If ownership changes, migration must account for
-`typeName`, `apiSchemas`, and property opinions; renaming only the typed schema
-does not migrate the other surfaces. The
-[schema-generation guide](https://openusd.org/release/api/_usd__page__generating_schemas.html)
-describes the distinction between authored opinions and built-in schema
-properties, which can exist without individual authored specs.
+The naming test is whether one reservation and its rules cover all these
+surfaces, reject an independently conflicting definition, and support a managed
+transition if ownership changes. A typed-name migration alone does not migrate
+API or property opinions. Domain interpretation of B-Rep data is outside that
+test.
 
 ### ROS and Newton
 
-[REP 158](https://reps.openrobotics.org/rep-0158-2006/) develops USD conventions
-for robotics. The [ROS schemas](https://github.com/ros-simulation/openusd-schemas/blob/main/core/ros/schema.usda)
-use names such as `RosContextAPI`, `ros:` properties, and the separate internal
-library prefix `UsdRos`. Each surface needs an explicit ownership convention.
-A runtime ROS namespace such as `/robot_1/camera` serves a different purpose
-from a USD prim path or extension-ownership prefix.
+[REP 158](https://reps.openrobotics.org/rep-0158-2006/) and the
+[ROS schema definitions](https://github.com/ros-simulation/openusd-schemas/blob/main/core/ros/schema.usda)
+provide another cross-surface example: `RosContextAPI`, `ros:` properties, and
+the internal library prefix `UsdRos`. A runtime ROS namespace such as
+`/robot_1/camera` has a separate purpose from extension ownership or a USD prim
+path. The convention must establish which names qualify the definitions
+exchanged in USD content.
 
-During review, [REP pull request #30](https://github.com/openrobotics/reps/pull/30)
-removed an intermediate `ExtendedPhysics` stage in favor of separately layered,
-prefixed engine extensions, mappings where semantics align, and reporting when
-features are ignored or approximated. This is a deployment precedent, not a
-mandatory promotion ladder.
+The engine-prefixed layering discussed in
+[REP pull request #30](https://github.com/openrobotics/reps/pull/30)
+illustrates independently named definitions. Their naming scopes must remain
+distinct when their layers contribute to the same scene. This does not test
+simulation equivalence, mappings between engine behaviors, or consumer fallback.
 
 A project such as [Newton](https://github.com/newton-physics) may govern an
-extension implemented by several engines without transferring it to AOUSD.
-A project prefix establishes neither engine exclusivity nor equivalent behavior.
-Ordinary composition, naming isolation, and simulation portability are separate
-guarantees. Supported combinations belong in explicit vendor-profile claims.
-
-ROS integration can interpret normally resolved USD values and add domain
-behavior without changing composition or value resolution. The extension must
-still distinguish required capabilities from features that may be ignored or
-approximated and state how consumers expose missing support.
+extension implemented by multiple engines. Its reservation identifies the
+project's naming authority, not the set of engines that support it. Additional
+adopters need not acquire ownership, and adoption alone need not rename its
+identifiers. A transfer of naming authority requires the transition policy in
+R6.
 
 ## Open Questions
 
-1. What is the minimum reservation record, and which concrete naming conventions
-   satisfy the requirements across schemas, properties, metadata, and capability
-   identifiers? Which existing identifiers require a transition policy?
-2. Which inputs and diagnostic definitions are needed for equivalent validation
-   across implementations? How should validation scope and the validity of reused
-   results be specified?
-3. Which existing shared contracts must extensions declare as dependencies, and
-   which domain-integration cases require a change to those contracts?
-4. How should predecessor and successor definitions be related across ownership
-   transfers, including grace periods and mixed composed content? Which parts
-   extend beyond existing schema-family/version mechanisms?
-5. Who maintains the reservation records and naming conventions, resolves
-   ownership disputes, and approves changes to the shared rules?
+1. What minimum reservation information establishes ownership and delegation,
+   and who maintains the records and resolves competing allocations?
+2. Which concrete conventions map one extension reservation to typed schema,
+   applied API, and property names, including independent extensions under one
+   owner? How do metadata and capability/profile names refer to those scopes?
+3. What information is needed to validate each surface, and how are conflicting
+   definitions distinguished from intended reuse or insufficient inputs?
+4. Which existing names need transition arrangements, and how should grace
+   periods and mixed old/new content be handled across ownership changes or
+   incompatible identifier revisions?
 
 ## Implementation Plan
 
-The first deliverable is a naming convention for typed schemas, applied API
-schemas, and properties, with a minimal reservation procedure and explicit
-relationships to metadata and capability/profile identifiers. It must support
-lightweight prototyping without depending on a complete catalog or distribution
-service.
+The work has three deliverables:
 
-A second deliverable is an implementation-independent validation contract with
-conforming and nonconforming examples. OpenUSD's validation framework can provide
-one implementation. Equivalent outcomes must be demonstrable without requiring
-its plugin system or registration APIs.
+- A reservation procedure and naming convention covering the initial surfaces,
+  delegation, and relationships to adjacent identifier systems. Completion
+  requires demonstrating that one allocation suffices for conforming names and
+  that independent scopes remain distinct across the covered lookup contexts.
+- An implementation-independent naming-validation contract with conforming,
+  conflicting, nonconforming, and insufficient-input examples. Completion
+  requires equivalent naming determinations without reliance on OpenUSD's
+  plugin system, with validation scope and performance expectations stated.
+- Identifier-transition guidance covering existing names, ownership transfers,
+  grace periods, and mixed composed content. Completion requires a documented
+  transition across typed names, applied APIs, and properties without assuming
+  automatic semantic conversion.
 
-A worked case will exercise reservation, authored and registered names,
-dependencies, unsupported-consumer behavior, vendor-profile claims, incompatible
-revisions, and an ownership transition. The B-Rep and ROS/Newton cases provide
-starting points. The convention, validation contract, and worked case each need
-a maintenance owner and a completion test. Delivery dates and approving forums
-must be agreed by the responsible groups.
+The B-Rep and ROS/Newton cases will exercise the deliverables from reservation
+through authored and registered names, naming validation, and an ownership
+transition. Each deliverable needs an authoring and maintenance owner, review
+and approval route, and delivery date agreed by the responsible groups. The
+worked cases do not require this proposal to settle domain behavior, extension
+dependency resolution, support claims, or deployment governance.
