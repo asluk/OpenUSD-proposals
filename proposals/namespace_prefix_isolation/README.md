@@ -289,15 +289,10 @@ remain independent of its plugins, registry, code generator, and dynamic loading
 #### Asset-pipeline scenario
 
 A pipeline operator combines independently authored layers. The operator needs
-to identify the names in use and the available definitions. A preflight, if
-adopted and run, can examine the following cases:
-
-| Situation | Possible finding | Why it matters |
-|---|---|---|
-| Names follow distinct supplied allocations. | Naming conformance within the checked inputs. | This does not establish behavioral compatibility. |
-| A type or API definition is unavailable. | Unknown definition; limited check coverage. | Unknown must not be confused with invalid or unsupported everywhere. |
-| Supplied allocations or definitions claim the same independent identifier. | Inconsistent inputs or nonconformance. | Otherwise content could be interpreted using the wrong definition. |
-| An unprefixed concrete property appears in another layer. | Ownership needs the resolved type and definition. | A missing or changed type can change interpretation. |
+to identify the names in use and the available definitions.
+[Appendix A](#appendix-a-a-delivery-naming-check) follows one delivery through conforming,
+nonconforming, and insufficient-input cases, with the actor, inputs, and reason
+for checking explicit.
 
 Capability declarations, fallback, preservation of unknown data, and whether
 a workflow stops on an unresolved result belong to broader extension/profile
@@ -327,18 +322,10 @@ separate work.
 #### Promotion guidance and prototype tooling
 
 The guidance should include an explicit mapping and a prototype that exercises
-it. For example, a fictional naming-only transfer using candidate A could be:
-
-| Surface | Yoyodyne | SharedWG |
-|---|---|---|
-| Concrete schema | `YoyodyneBrepArray` | `SharedWGBrepArray` |
-| Applied API instance | `YoyodyneBrepPointAPI:sample` | `SharedWGBrepPointAPI:sample` |
-| API property | `yoyodyne:brep:point:sample:positions` | `sharedwg:brep:point:sample:positions` |
-| Concrete-schema property | `regionCount` | `regionCount` |
-
-The instance name and concrete-schema property remain unchanged. Records must
-link the authorities; whether the reservation identifier changes is separate.
-This is not an actual B-Rep transfer or a selected convention.
+it. [Appendix B](#appendix-b-promotion-and-existing-layers) follows the fictional extension from
+Appendix A into shared stewardship, including a partial rename that leaves a
+shot override targeting the old property. The example selects no promotion or
+naming convention for USD.
 
 The proposed prototype would take an explicit mapping and input layers, show
 planned edits, and produce migrated copies while preserving originals. It
@@ -525,3 +512,86 @@ on the option selected after discussion.
 B-Rep and ROS/Newton provide real cases; the hypothetical promotion tests naming
 transitions without claiming a completed transfer. Each deliverable still needs
 an owner for authoring and maintenance, a review forum, and a date.
+
+## Appendix A: A Delivery Naming Check
+
+Discussion case for R4/R8/R9. The extension and spellings are fictional;
+validation deployment remains open.
+
+A pipeline TD receives a vendor asset and a stronger shot override before
+integration. The supplied allocation `ext-0107` binds schema prefix
+`YoyodyneReview` and API-property prefix `yoyodyne:review`. The asset uses
+`YoyodyneReviewSet` and `YoyodyneReviewAPI:qa`.
+
+```mermaid
+flowchart LR
+    L["Asset + shot override"] --> C["TD checks delivery"]
+    R["Supplied allocation + definitions"] --> C
+    C --> O["Scoped naming result"]
+    style L fill:#FFFFFF,color:#111111,stroke:#0077CF
+    style R fill:#FFFFFF,color:#111111,stroke:#0077CF
+    style O fill:#FFFFFF,color:#111111,stroke:#0077CF
+    style C fill:#0077CF,color:#FFFFFF,stroke:#0077CF
+```
+
+The check would expose missing or inconsistent naming information before
+downstream integration:
+
+| Delivery variation | Expected finding |
+|---|---|
+| Complete supplied definitions | Names conform within the checked inputs. |
+| `YoyodyneReviewAPI` definition missing | Its prefix may match, but API/property-definition checks remain unknown. |
+| API definition introduces `review:qa:status` | Outside the assumed `yoyodyne:review` binding, despite legal USD syntax. |
+
+The unprefixed concrete property `itemCount` also needs the resolved type and
+definition to establish its ownership context. Missing context means unknown;
+it does not establish invalid content. Naming conformance alone establishes
+neither implementation support nor behavioral compatibility.
+
+**Discuss:** Is this useful at delivery? Agree the needed inputs, actor, and
+treatment of unknown results before selecting optional checks or required
+preflight. Deferring validation remains an option.
+
+## Appendix B: Promotion and Existing Layers
+
+R6 discussion case, continuing [Appendix A's](#appendix-a-a-delivery-naming-check) fictional review tags.
+Other organizations adopt the extension, and `SharedWG` accepts stewardship.
+Keeping deployed names is an option. To exercise a rename, assume unchanged
+semantics and this explicit mapping:
+
+| Surface | Vendor | Shared stewardship |
+|---|---|---|
+| Concrete type | `YoyodyneReviewSet` | `SharedWGReviewSet` |
+| Applied API | `YoyodyneReviewAPI:qa` | `SharedWGReviewAPI:qa` |
+| API property | `yoyodyne:review:qa:status` | `sharedwg:review:qa:status` |
+
+The concrete property `itemCount` and API instance `qa` remain unchanged.
+Predecessor/successor authority must be linked; whether allocation identifier
+`ext-0107` changes is a separate policy choice.
+
+The asset authors `approved`; a stronger shot layer overrides the same vendor
+property to `needsReview`. Renaming only the asset leaves the shot opinion
+targeting the old property:
+
+```mermaid
+flowchart LR
+    V["Before<br/>vendor status = needsReview"]
+    P["Asset renamed only<br/>shared = approved<br/>vendor = needsReview"]
+    S["Both layers renamed<br/>shared status = needsReview"]
+    V --> P --> S
+    style V fill:#FFFFFF,color:#111111,stroke:#0077CF
+    style S fill:#FFFFFF,color:#111111,stroke:#0077CF
+    style P fill:#0077CF,color:#FFFFFF,stroke:#0077CF
+```
+
+Here, "vendor" and "shared" refer to the full property names in the table.
+Both opinions survive the partial rename, but the new property keeps the
+asset's original value. Mapping both layers restores the shot override's effect.
+These authored-layer results were checked in OpenUSD 26.08.
+
+**Discuss:** Must promotion rename content? Which old names remain usable, and
+for how long? What happens when a contributing layer cannot be edited?
+
+**Prototype evidence:** migrate copies of both layers, preserve originals and
+the composed value, and report remaining old names or unresolved mappings.
+Semantic conversion remains separate work; the prototype is a proposed deliverable.
