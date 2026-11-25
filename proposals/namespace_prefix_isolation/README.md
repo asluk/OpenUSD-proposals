@@ -6,38 +6,216 @@
 
 ## Summary
 
-USD extensions need distinct names so they can develop independently and exchange
-content without name collisions. This proposal defines requirements for reserving
-a naming scope,
-mapping it to names on each USD surface, and managing ownership changes.
-One reservation covers an extension; owners organize and delegate within it.
+Teams developing USD extensions need to know which names they can use. People
+and tools reading a USD file need to know what those names mean and who governs
+them. This proposal calls for one naming reservation per extension. Its owner can
+publish names within that scope and delegate parts of it to others.
 
-The sections below follow that life cycle through a fictional review-tag
-extension: reservation, naming, delivery, and promotion. Concrete syntax,
-registry procedures, and validation deployment remain open.
+This work develops the Namespace and Prefix Isolation requirement in
+the Steering Committee's working proposal, led by Sean Snyders.
+[USD Extension Ecosystem Governance](https://docs.google.com/document/d/1zL7Igy5QN6bTHZavczkjaW2U5TBk95hP_Ooa_zL-tJc/edit)
 
-This develops the Namespace and Prefix Isolation requirement in the
-[Steering Committee's USD Extension Ecosystem Governance working proposal](https://docs.google.com/document/d/1zL7Igy5QN6bTHZavczkjaW2U5TBk95hP_Ooa_zL-tJc/edit),
-led by Sean Snyders.
+> [!NOTE]
+> **Review order.** The current review starts with the
+> [Problem Statement and Scope](#problem-statement-and-scope), illustrated by
+> the render settings example. Agreement on the problem and its scope provides the basis
+> for reviewing the [Functional Requirements](#functional-requirements).
 
-## Problem and Scope
+## Problem Statement and Scope
 
-Independent definitions can acquire the same identifier, causing registration
-errors or use of the wrong definition. A library prefix does not necessarily
-qualify a scene-facing type or API name. Property opinions can appear in layers
-without a local type declaration. Collision prevention must cover these lookup
-contexts together, while allowing domain extensions to develop independently
-of core OpenUSD's release cadence.
+Two projects can give different definitions the same name. A tool may then
+encounter a registration error or use the wrong definition. Even if two API
+schemas have distinct names, their properties can collide on the same prim.
+A layer can also author a property value while another layer supplies the type
+that gives it meaning.
 
-The initial scope covers typed schema identifiers, applied API identifiers, and
-property names, with mappings to metadata and capability/profile identifiers.
-File-format and asset-resolver identifiers are subsequent work.
+The initial scope covers type names, applied API schema identifiers, and property
+names, with mappings to metadata, capability, and profile identifiers.
+File-format and asset-resolver identifiers are future work. Naming authority
+can be settled independently of feature approval, implementation support,
+compatibility, versioning, and distribution.
 
-Naming allocation does not approve feature semantics or establish implementation
-support. Compatibility, dependencies, fallback and unknown-data preservation,
-distribution, certification, and standardization belong to broader extension
-governance. Semantic conversion and general schema versioning are also separate
-work. Reservation need not wait for a complete discovery or distribution service.
+Renderer developers already use naming conventions to define settings
+independently on the same standard USD type. AOUSD has yet to publish formal
+guidance on these practices or on how extension authors in other domains can
+apply them. Render settings provide a concrete starting point for that guidance.
+
+### Worked example in USD render settings
+
+Suppose a scene author wants a 1920 × 1080 beauty image. USD defines
+`resolution` and `products` on `RenderSettings`. The scene author sets the
+resolution and points `products` at the desired output. Now suppose a renderer
+developer wants scene authors to be able to save an additional setting. Which
+name can the developer use, and how will someone reading the file find its
+definition?
+[OpenUSD render settings](https://openusd.org/release/api/class_usd_render_settings.html)
+
+RenderMan defines its options in `PxrOptionsAPI`, which its plugin auto-applies
+to `RenderSettings`. When Apple’s Dhruv Govil asked how to register a specialized
+`RenderSettings` type for a Hydra renderer he was prototyping, Sebastian Grassia
+explained why they had envisioned auto-applied APIs. A scene author can set
+renderer-specific options on a standard `RenderSettings` prim, and other
+renderers can still read its resolution and products.
+[RenderMan example](https://forum.aousd.org/t/how-to-get-which-autoapply-schemas-apply-to-a-certain-type/527/3) · [Forum exchange](https://forum.aousd.org/t/runtime-schema-registration/1162)
+
+SideFX documents how a scene author can set `karma:global:embreerobust` to
+`true` for more accurate ray intersections. In Autodesk's Arnold example, the
+scene author sets a custom sampling attribute, `arnold:AA_samples`, to `3`.
+[Karma setting](https://www.sidefx.com/docs/houdini/nodes/lop/rendersettings.html#embree-robust-option) · [Arnold scene](https://github.com/Autodesk/arnold-usd/blob/f2517e99175f2d7a0d10306efaab607f02194c09/testsuite/test_2131/data/test.usda)
+
+For multi-GPU path tracing in Omniverse, NVIDIA defines the boolean property
+`omni:rtx:pt:multigpu:enabled`. In this illustrative excerpt, the scene author
+requests that behavior by setting the property to `true` for the beauty render.
+[RTX path-tracing settings](https://nvidia-omniverse.github.io/ovrtx/0.7.0/sensors/cameras/render_modes/path_tracing.html)
+
+```usda
+def RenderSettings "Settings"
+{
+    uniform int2 resolution = (1920, 1080)
+    rel products = [</Render/Beauty>]
+    bool omni:rtx:pt:multigpu:enabled = true
+}
+```
+
+**How would a developer choose a name for the next setting?** Suppose NVIDIA
+held the following reservation for its RTX multi-GPU controls.
+
+| Naming owner | Property scope | Where to find the definition |
+|---|---|---|
+| NVIDIA | `omni:rtx:pt:multigpu` | `OmniRtxSettingsGlobalPtAdvancedAPI_1` in the [RTX schema package](https://docs.omniverse.nvidia.com/kit/docs/omni.usd.schema.render_settings.rtx/1.0.3/Overview.html) |
+
+An RTX developer could choose an unused name within NVIDIA’s reserved scope.
+A developer publishing a different renderer’s settings could do the same
+within that renderer project’s scope.
+
+**How does a reader find the definition?** The file gives the property's name
+and value. A tool with the record above could match the prefix, identify NVIDIA
+as the owner, and look up the full property name in the referenced schema.
+
+Kit can auto-apply the RTX API, so the scene author can set the property
+without writing the API name into the file. A reader without the plugin can
+still read `true`. If the asset requires the feature, should its Profile
+declare that capability and point back to the reservation? For a custom
+attribute such as Arnold's `arnold:AA_samples`, what definition, if any,
+should the reader expect to find?
+[Kit settings](https://docs.omniverse.nvidia.com/kit/docs/omni.usd.schema.render_settings.rtx/1.0.3/SETTINGS.html)
+
+### From renderer practice to AOUSD guidance
+
+The `karma:` and `arnold:` prefixes let a scene author put options for both
+renderers on one prim. RenderMan shows how a plugin can supply the definitions
+for its options while the scene author continues to use standard render settings.
+
+What guidance could a sensor project take from those practices? Its developers
+also need to choose names for an API schema and its properties. Telling them
+to “pick a prefix” leaves two questions open. How do they know which names
+they are entitled to use? When someone encounters one of those names in an
+asset, how do they find the definition? The sample RTX reservation illustrates
+one way to answer both.
+
+> [!NOTE]
+> **Before reviewing the requirements.** Is the naming problem clear, and does
+> the proposed scope cover the right names? If either is unclear or disputed,
+> review should focus on this section first.
+
+## Functional Requirements
+
+The proposed requirements describe what any extension author or reader should
+be able to rely on. They start with choosing distinct, recognizable names
+and follow those names through publication, use in other tools, and changes
+in who governs them.
+
+<a name="r1-consistent-prefixes"></a>
+
+### Consistent Prefixes
+
+Ownership prefixes must be consistent for names governed by the same owner.
+
+> **Example.** A developer adding an Arnold option alongside `arnold:AA_samples`
+> could use the same `arnold:` prefix. A scene author could recognize both as Arnold options.
+
+<a name="r2-hierarchy-and-delegation"></a>
+
+### Hierarchy and Delegation
+
+Owners can organize their naming hierarchy and delegate parts of it however
+they choose.
+
+> **Example.** A robotics project could let its camera group name camera
+> properties and its lidar group name lidar properties under the project's prefix.
+
+<a name="r4-one-reservation-across-surfaces"></a>
+
+### One Reservation Across Surfaces
+
+One reservation must cover an extension's names across all naming surfaces.
+The naming rules must prevent collisions on every surface.
+
+> **Example.** ROS uses `RosContextAPI` for a schema and `ros:` for properties.
+> Reserving only `ros:` would leave the schema name open to a second claim.
+> [ROS case study](#ros-and-newton)
+
+<a name="r5-naming-allocations"></a>
+
+### Naming Allocations
+
+Record who controls each naming scope, and allocate scopes so independent
+owners' names remain distinct.
+
+> **Example.** Two renderers might each define a control called `samples` and
+> count different things. If each developer qualifies `samples` with their own
+> allocated prefix, a scene author can set both values on one `RenderSettings` prim.
+
+<a name="r6-ownership-and-naming-transitions"></a>
+
+### Ownership and Naming Transitions
+
+Support ownership and naming transitions, especially promotion toward shared
+ownership or standardization. Define how existing names and content are handled.
+
+> **Example.** Suppose a vendor's render option becomes a standard setting.
+> A studio reopening an old shot needs to know what its vendor-prefixed name
+> still means and whether to keep using it.
+
+<a name="r7-lightweight-administration"></a>
+
+### Lightweight Administration
+
+Reserving and maintaining a naming scope must require minimal process.
+
+> **Example.** Once the robotics project has reserved its scope, adding a
+> camera property could be a decision for its camera group alone.
+
+<a name="r8-implementation-independence"></a>
+
+### Implementation Independence
+
+The naming rules, and any validation checks defined, must work in any USD
+implementation.
+
+> **Example.** Given the RTX property and the sample reservation above, a Kit
+> tool and an independent USD reader could both identify NVIDIA as its naming owner.
+
+<a name="r9-validation-scope-and-cost"></a>
+
+### Validation Scope and Cost
+
+When validation is performed, it must say what it checked and couldn't determine,
+without excessive runtime cost.
+
+> **Example.** A studio checking 100 shots that use the same render option
+> could look up its reservation once. If the schema were missing, the report
+> could say “Owner confirmed. Expected property type unknown.”
+
+---
+
+> [!NOTE]
+> **End of the current review.** Do the requirements cover what extension
+> authors and readers need across domains? A concrete use case can show
+> where a requirement is missing or unclear.
+>
+> The remaining sections are available for reference. Review of the proposed
+> solutions follows agreement on the problem, scope, and requirements.
 
 ## Terminology
 
@@ -56,51 +234,14 @@ Ownership, maturity, version, and implementation support are separate facts.
 `Prelim` describes maturity, not ownership or reservation lifetime. Implementing
 someone else's definition retains its identity and naming authority.
 
-## Functional Requirements
-
-R3 is incorporated into R2; the other labels are retained for review continuity.
-
-### R1. Consistent Prefixes
-
-Ownership prefixes must be consistent for names governed by the same owner.
-
-### R2. Hierarchy and Delegation
-
-Owners can organize their naming hierarchy and delegate parts of it however
-they choose.
-
-### R4. One Reservation Across Surfaces
-
-One reservation must cover an extension's names across all naming surfaces.
-The naming rules must prevent collisions on every surface.
-
-### R5. Naming Allocations
-
-Record who controls each naming scope, and allocate scopes so independent
-owners' names remain distinct.
-
-### R6. Ownership and Naming Transitions
-
-Support ownership and naming transitions, especially promotion toward shared
-ownership or standardization. Define how existing names and content are handled.
-
-### R7. Lightweight Administration
-
-Reserving and maintaining a naming scope must require minimal process.
-
-### R8. Implementation Independence
-
-The naming rules, and any validation checks defined, must work in any USD
-implementation.
-
-### R9. Validation Scope and Cost
-
-When validation is performed, it must say what it checked and couldn't determine,
-without excessive runtime cost.
-
 ## Naming Contract
 
-### Reservation and Delegation (R1, R2, R5, R7)
+<a name="reservation-and-delegation-r1-r2-r5-r7"></a>
+
+### Reservation and Delegation
+
+See [Consistent Prefixes](#consistent-prefixes), [Hierarchy and Delegation](#hierarchy-and-delegation),
+[Naming Allocations](#naming-allocations), and [Lightweight Administration](#lightweight-administration).
 
 Suppose `Yoyodyne` reserves a fictional review-tag extension as `ext-0107`.
 The record identifies the owner, allocated scope, contact/status information,
@@ -122,7 +263,11 @@ Inactivity alone neither reassigns names nor invalidates existing
 content. Review cadence, expiry, renewal, and reuse remain open; the
 [maintenance precedents](#registry-maintenance-precedents) distinguish them.
 
-### Names Across Surfaces (R4)
+<a name="names-across-surfaces-r4"></a>
+
+### Names Across Surfaces
+
+See [One Reservation Across Surfaces](#one-reservation-across-surfaces).
 
 Per-surface rules must connect every covered identifier unambiguously to its reservation.
 Consider owner `Yoyodyne` and domain/feature components `asset`, `review`.
@@ -183,7 +328,12 @@ A property opinion in another layer can rely on the resolved type. Without that
 type or its definition, ownership may be unknown. Changing the type can
 reinterpret surviving opinions, which transition guidance must address.
 
-### Awareness and Validation (R8, R9)
+<a name="awareness-and-validation-r8-r9"></a>
+
+### Awareness and Validation
+
+See [Implementation Independence](#implementation-independence) and
+[Validation Scope and Cost](#validation-scope-and-cost).
 
 A delivery preflight could identify an asset's naming scopes and available definitions.
 [Appendix A](#appendix-a-a-delivery-naming-check) follows the review-tag extension
@@ -215,7 +365,11 @@ schema registry, code generator, or dynamic loading; its
 [`usdValidation` framework](https://openusd.org/dev/api/md_pxr_2usd_validation_2usd_validation_2_r_e_a_d_m_e.html)
 is one implementation reference.
 
-### Ownership Changes (R6)
+<a name="ownership-changes-r6"></a>
+
+### Ownership Changes
+
+See [Ownership and Naming Transitions](#ownership-and-naming-transitions).
 
 Promotion from vendor ownership toward shared ownership or standardization is
 the lead case. Wider adoption or maturity alone need not change authority or
